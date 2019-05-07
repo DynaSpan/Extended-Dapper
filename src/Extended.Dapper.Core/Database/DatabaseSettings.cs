@@ -14,7 +14,10 @@ namespace Extended.Dapper.Core.Database
 
         public DatabaseProvider DatabaseProvider { get; set; }
 
-        public bool TrustedConnection { get; set; }
+        /// <summary>
+        /// Only implemented on SQL SERVER (MSSQL)
+        /// </summary>
+        public bool? TrustedConnection { get; set; }
     }
 
     public enum DatabaseProvider 

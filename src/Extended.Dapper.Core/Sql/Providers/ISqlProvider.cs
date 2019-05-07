@@ -1,3 +1,5 @@
+using Extended.Dapper.Core.Database;
+
 namespace Extended.Dapper.Core.Sql.Providers
 {
     public interface ISqlProvider
@@ -15,5 +17,12 @@ namespace Extended.Dapper.Core.Sql.Providers
         /// <param name="columnName"></param>
         /// <returns></returns>
         string EscapeColumn(string columnName);
+
+        /// <summary>
+        /// Builds a connection string
+        /// </summary>
+        /// <param name="databaseSettings"></param>
+        /// <returns></returns>
+        string BuildConnectionString(DatabaseSettings databaseSettings);
     }
 }

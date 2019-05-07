@@ -1,53 +1,63 @@
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Text;
 using Dapper;
+using Extended.Dapper.Core.Sql.Providers;
+using MySql.Data.MySqlClient;
 
 namespace Extended.Dapper.Core.Database 
 {
     public class DatabaseFactory : IDatabaseFactory
     {
         private readonly string connectionString;
+        private readonly DatabaseProvider databaseProvider;
 
         /// <summary>
         /// Constructor for the factory
         /// </summary>
-        /// <param name="dbSettings"></param>
-        public DatabaseFactory(DatabaseSettings dbSettings)
+        /// <param name="databaseSettings"></param>
+        public DatabaseFactory(DatabaseSettings databaseSettings)
         {
-            this.connectionString = this.ConstructConnectionString(dbSettings);
+            this.connectionString = this.ConstructConnectionString(databaseSettings);
+            this.databaseProvider = databaseSettings.DatabaseProvider;
+        }
+
+        public DatabaseFactory(string connectionString, DatabaseProvider databaseProvider)
+        {
+            this.connectionString = connectionString;
+            this.databaseProvider = databaseProvider;
         }
 
         /// <inheritdoc />
         public IDbConnection GetDatabaseConnection()
         {
-            return new SqlConnection(this.connectionString);
+            switch (this.databaseProvider)
+            {
+                case DatabaseProvider.MSSQL:
+                    return new SqlConnection(this.connectionString);
+                case DatabaseProvider.MySQL:
+                    return new MySqlConnection(this.connectionString);
+                default:
+                    throw new NotImplementedException();
+            }
         }
 
         /// <summary>
         /// Constructs the connection string based on the
         /// DatabaseSettings
         /// </summary>
-        /// <param name="dbSettings"></param>
+        /// <param name="databaseSettings"></param>
         /// <returns></returns>
-        private string ConstructConnectionString(DatabaseSettings dbSettings)
+        private string ConstructConnectionString(DatabaseSettings databaseSettings)
         {
-            StringBuilder connStringBuilder = new StringBuilder();
+            var provider = SqlProviderHelper.GetProvider(databaseSettings.DatabaseProvider);
 
-            if (dbSettings.Port != null)
-                connStringBuilder.AppendFormat("Server={0},{1};", dbSettings.Host, dbSettings.Port);
-            else
-                connStringBuilder.AppendFormat("Server={0};", dbSettings.Host);
-            
-            connStringBuilder.AppendFormat("Database={0};", dbSettings.Database);
-            connStringBuilder.AppendFormat("User Id={0};", dbSettings.User);
-            connStringBuilder.AppendFormat("Password={0};", dbSettings.Password);
+            if (provider == null)
+                throw new NotImplementedException();
 
-            if (dbSettings.TrustedConnection)
-                connStringBuilder.Append("Trusted_Connection=true;");
-
-            return connStringBuilder.ToString();
+            return provider.BuildConnectionString(databaseSettings);
         }
     }
 }
