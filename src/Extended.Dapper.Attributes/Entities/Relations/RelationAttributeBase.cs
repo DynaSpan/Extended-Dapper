@@ -3,7 +3,7 @@ using System;
 namespace Extended.Dapper.Attributes.Entities.Relations
 {
     /// <summary>
-    /// Implements a one to many relation on a field
+    /// Base class for relation attributes
     /// </summary>
     public abstract class RelationAttributeBase : Attribute
     {
