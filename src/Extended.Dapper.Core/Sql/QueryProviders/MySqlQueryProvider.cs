@@ -1,9 +1,9 @@
 using System.Text;
 using Extended.Dapper.Core.Database;
 
-namespace Extended.Dapper.Core.Sql.Providers
+namespace Extended.Dapper.Core.Sql.QueryProviders
 {
-    public class MySqlProvider : SqlProvider
+    public class MySqlQueryProvider : SqlQueryProvider
     {
         /// <summary>
         /// Escapes a table name in the correct format

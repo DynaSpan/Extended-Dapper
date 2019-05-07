@@ -13,7 +13,7 @@ using Extended.Dapper.Core.Extensions;
 using Extended.Dapper.Core.Helpers;
 using Extended.Dapper.Core.Mappers;
 using Extended.Dapper.Core.Sql.Metadata;
-using Extended.Dapper.Core.Sql.Providers;
+using Extended.Dapper.Core.Sql.QueryProviders;
 using Extended.Dapper.Repositories.Entities;
 
 namespace Extended.Dapper.Core.Sql
@@ -21,7 +21,7 @@ namespace Extended.Dapper.Core.Sql
     public class SqlGenerator : ISqlGenerator
     {
         private readonly DatabaseProvider databaseProvider;
-        private readonly ISqlProvider sqlProvider;
+        private readonly ISqlQueryProvider sqlProvider;
 
         #region Constructor
 
@@ -32,7 +32,7 @@ namespace Extended.Dapper.Core.Sql
         public SqlGenerator(DatabaseProvider databaseProvider = DatabaseProvider.MSSQL)
         {
             this.databaseProvider = databaseProvider;
-            this.sqlProvider      = SqlProviderHelper.GetProvider(databaseProvider);
+            this.sqlProvider      = SqlQueryProviderHelper.GetProvider(databaseProvider);
 
             // Check if it is implemented
             if (this.sqlProvider == null)

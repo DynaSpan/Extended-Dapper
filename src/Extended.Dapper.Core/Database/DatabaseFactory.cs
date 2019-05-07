@@ -4,7 +4,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Text;
 using Dapper;
-using Extended.Dapper.Core.Sql.Providers;
+using Extended.Dapper.Core.Sql.QueryProviders;
 using MySql.Data.MySqlClient;
 
 namespace Extended.Dapper.Core.Database 
@@ -60,7 +60,7 @@ namespace Extended.Dapper.Core.Database
         /// <returns></returns>
         private string ConstructConnectionString(DatabaseSettings databaseSettings)
         {
-            var provider = SqlProviderHelper.GetProvider(databaseSettings.DatabaseProvider);
+            var provider = SqlQueryProviderHelper.GetProvider(databaseSettings.DatabaseProvider);
 
             if (provider == null)
                 throw new NotImplementedException();

@@ -3,9 +3,9 @@ using Extended.Dapper.Core.Database;
 using Extended.Dapper.Core.Mappers;
 using Extended.Dapper.Core.Sql.Metadata;
 
-namespace Extended.Dapper.Core.Sql.Providers
+namespace Extended.Dapper.Core.Sql.QueryProviders
 {
-    public abstract class SqlProvider : ISqlProvider
+    public abstract class SqlQueryProvider : ISqlQueryProvider
     {
         /// <summary>
         /// Escapes a table name in the correct format
