@@ -8,7 +8,8 @@ namespace Extended.Dapper.Core.Sql.Providers
         /// Returns an instance of the correct ISqlProvider
         /// </summary>
         /// <param name="databaseProvider"></param>
-        /// <returns></returns>
+        /// <returns>Instance of ISqlProvider according to the databaseProvider; 
+        /// or null if not implemented</returns>
         public static ISqlProvider GetProvider(DatabaseProvider databaseProvider)
         {
             switch (databaseProvider)

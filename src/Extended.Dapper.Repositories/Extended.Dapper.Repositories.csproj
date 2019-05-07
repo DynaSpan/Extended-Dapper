@@ -5,4 +5,12 @@
     <RootNamespace>Extended.Dapper.Repositories</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="System.ComponentModel.Annotations" Version="4.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Extended.Dapper.Attributes\Extended.Dapper.Attributes.csproj" />
+  </ItemGroup>
+
 </Project>

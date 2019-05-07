@@ -5,6 +5,10 @@ using System.Reflection;
 
 namespace Extended.Dapper.Core.Extensions
 {
+    /// <summary>
+    /// Extensions for all types
+    /// </summary>
+    /// <author>https://github.com/phnx47/MicroOrm.Dapper.Repositories</author>
     internal static class TypeExtensions
     {
         /// <summary>

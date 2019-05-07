@@ -1,13 +1,14 @@
 using System;
+using Extended.Dapper.Attributes.Entities;
 
 namespace Extended.Dapper.Repositories.Entities
 {
     public abstract class Entity : BaseEntity
     {
-        //[UpdatedAt]
+        [UpdatedAt]
         public DateTime? LastEditDate { get; set; }
 
-        //[Deleted]
+        [Deleted]
         public bool Deleted { get; set; }
     }
 }

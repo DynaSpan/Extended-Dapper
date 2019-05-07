@@ -1,4 +1,5 @@
 using Extended.Dapper.Core.Database;
+using Extended.Dapper.Core.Mappers;
 
 namespace Extended.Dapper.Core.Sql.Providers
 {
@@ -8,21 +9,25 @@ namespace Extended.Dapper.Core.Sql.Providers
         /// Escapes a table name in the correct format
         /// </summary>
         /// <param name="tableName"></param>
-        /// <returns></returns>
         string EscapeTable(string tableName);
 
         /// <summary>
         /// Escapes a column in the correct format
         /// </summary>
         /// <param name="columnName"></param>
-        /// <returns></returns>
         string EscapeColumn(string columnName);
 
         /// <summary>
         /// Builds a connection string
         /// </summary>
         /// <param name="databaseSettings"></param>
-        /// <returns></returns>
         string BuildConnectionString(DatabaseSettings databaseSettings);
+
+        /// <summary>
+        /// Generates the SQL select fields for a given entity
+        /// </summary>
+        /// <param name="entityMap"></param>
+        /// <returns></returns>
+        string GenerateSelectFields(EntityMap entityMap);
     }
 }

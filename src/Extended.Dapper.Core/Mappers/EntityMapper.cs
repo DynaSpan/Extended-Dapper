@@ -18,16 +18,12 @@ namespace Extended.Dapper.Core.Mappers
         /// <summary>
         /// Cache entities which have been mapped
         /// </summary>
-        /// <typeparam name="Type"></typeparam>
-        /// <typeparam name="EntityMap"></typeparam>
-        /// <returns></returns>
         private static readonly ConcurrentDictionary<Type, EntityMap> entityMapCache = new ConcurrentDictionary<Type, EntityMap>();
 
         /// <summary>
-        /// Gets (and creates) a map of an entity
+        /// Gets (or creates) a map of an entity
         /// </summary>
         /// <param name="entityType">Type of the entity</typeparam>
-        /// <returns></returns>
         public static EntityMap GetEntityMap(Type entityType)
         {
             if (entityMapCache.ContainsKey(entityType))
@@ -82,8 +78,7 @@ namespace Extended.Dapper.Core.Mappers
         /// <summary>
         /// Maps properties with OneToMany or ManyToOne relations
         /// </summary>
-        /// <param name="relationProperties"></param>
-        /// <returns></returns>
+        /// <param name="relationProperties">Properties with a RelationAttribute</param>
         private static ICollection<SqlRelationPropertyMetadata> GetRelationsMetadata(PropertyInfo[] relationProperties)
         {
             // Filter and get only non collection nested properties

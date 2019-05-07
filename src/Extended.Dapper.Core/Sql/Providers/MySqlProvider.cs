@@ -3,22 +3,31 @@ using Extended.Dapper.Core.Database;
 
 namespace Extended.Dapper.Core.Sql.Providers
 {
-    public class MySqlProvider : ISqlProvider
+    public class MySqlProvider : SqlProvider
     {
-        /// <inheritdoc />
-        public string EscapeTable(string tableName)
+        /// <summary>
+        /// Escapes a table name in the correct format
+        /// </summary>
+        /// <param name="tableName"></param>
+        public override string EscapeTable(string tableName)
         {
             return "`" + tableName + "`";
         }
 
-        /// <inheritdoc />
-        public string EscapeColumn(string columnName)
+        /// <summary>
+        /// Escapes a column in the correct format
+        /// </summary>
+        /// <param name="columnName"></param>
+        public override string EscapeColumn(string columnName)
         {
             return "`" + columnName + "`";
         }
 
-        /// <inheritdoc />
-        public string BuildConnectionString(DatabaseSettings databaseSettings)
+        /// <summary>
+        /// Builds a connection string
+        /// </summary>
+        /// <param name="databaseSettings"></param>
+        public override string BuildConnectionString(DatabaseSettings databaseSettings)
         {
             StringBuilder connStringBuilder = new StringBuilder();
 

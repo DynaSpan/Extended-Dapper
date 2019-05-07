@@ -25,18 +25,18 @@ namespace Extended.Dapper.Core.Sql
 
         #region Constructor
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="databaseProvider">Which database we connect to; defaults to MSSQL</param>
         public SqlGenerator(DatabaseProvider databaseProvider = DatabaseProvider.MSSQL)
         {
             this.databaseProvider = databaseProvider;
+            this.sqlProvider      = SqlProviderHelper.GetProvider(databaseProvider);
 
-            switch (databaseProvider)
-            {
-                case DatabaseProvider.MSSQL:
-                    this.sqlProvider = new MsSqlProvider();
-                    break;
-                default:
-                    throw new NotImplementedException();
-            }
+            // Check if it is implemented
+            if (this.sqlProvider == null)
+                throw new NotImplementedException();
         }
 
         #endregion
@@ -66,7 +66,7 @@ namespace Extended.Dapper.Core.Sql
             var sqlBuilder = new StringBuilder();
             var joinBuilder = new StringBuilder();
 
-            sqlBuilder.AppendFormat("SELECT {0}", SqlGeneratorHelper.GenerateSelectFields(entityMap, this.sqlProvider));
+            sqlBuilder.AppendFormat("SELECT {0}", this.sqlProvider.GenerateSelectFields(entityMap));
 
             if (entityMap.RelationPropertiesMetadata != null && entityMap.RelationPropertiesMetadata.Count > 0)
             {
@@ -74,12 +74,12 @@ namespace Extended.Dapper.Core.Sql
                 {
                     var relationEntityMap = EntityMapper.GetEntityMap(metadata.PropertyInfo.GetType());
 
-                    sqlBuilder.AppendFormat(", {0}", SqlGeneratorHelper.GenerateSelectFields(relationEntityMap, this.sqlProvider));
-                    
-                    string joinType = string.Empty;
+                    sqlBuilder.AppendFormat(", {0}", this.sqlProvider.GenerateSelectFields(relationEntityMap));
 
                     // Check the type of relation
                     var relationAttr = metadata.PropertyInfo.GetCustomAttribute<RelationAttributeBase>();
+
+                    string joinType = string.Empty;
 
                     if (relationAttr is ManyToOneAttribute)
                         joinType = "INNER JOIN";
@@ -96,7 +96,8 @@ namespace Extended.Dapper.Core.Sql
                 }
             }
 
-            sqlBuilder.AppendFormat("FROM {0}", this.sqlProvider.EscapeTable(entityMap.TableName));
+            sqlBuilder.AppendFormat("FROM {0} ", this.sqlProvider.EscapeTable(entityMap.TableName));
+            sqlBuilder.Append(joinBuilder.ToString());
 
             return sqlBuilder.ToString();
         }
