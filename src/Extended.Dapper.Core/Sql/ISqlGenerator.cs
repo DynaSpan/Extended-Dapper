@@ -1,6 +1,5 @@
 using System;
 using System.Linq.Expressions;
-using Extended.Dapper.Repositories.Entities;
 
 namespace Extended.Dapper.Core.Sql
 {

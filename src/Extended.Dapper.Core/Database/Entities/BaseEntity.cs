@@ -1,7 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace Extended.Dapper.Repositories.Entities
+namespace Extended.Dapper.Core.Database.Entities
 {
     public abstract class BaseEntity
     {

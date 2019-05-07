@@ -14,7 +14,6 @@ using Extended.Dapper.Core.Helpers;
 using Extended.Dapper.Core.Mappers;
 using Extended.Dapper.Core.Sql.Metadata;
 using Extended.Dapper.Core.Sql.QueryProviders;
-using Extended.Dapper.Repositories.Entities;
 
 namespace Extended.Dapper.Core.Sql
 {

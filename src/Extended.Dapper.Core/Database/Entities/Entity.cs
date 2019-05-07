@@ -1,7 +1,7 @@
 using System;
 using Extended.Dapper.Attributes.Entities;
 
-namespace Extended.Dapper.Repositories.Entities
+namespace Extended.Dapper.Core.Database.Entities
 {
     public abstract class Entity : BaseEntity
     {

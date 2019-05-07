@@ -12,7 +12,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Extended.Dapper.Repositories\Extended.Dapper.Repositories.csproj" />
     <ProjectReference Include="..\Extended.Dapper.Attributes\Extended.Dapper.Attributes.csproj" />
   </ItemGroup>
 
