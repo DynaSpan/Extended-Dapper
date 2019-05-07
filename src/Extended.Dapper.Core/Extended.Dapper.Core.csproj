@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <RootNamespace>Extended.Dapper.Core</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dapper" Version="1.60.9" />
+    <PackageReference Include="System.ComponentModel.Annotations" Version="4.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Extended.Dapper.Repositories\Extended.Dapper.Repositories.csproj" />
+    <ProjectReference Include="..\Extended.Dapper.Attributes\Extended.Dapper.Attributes.csproj" />
+  </ItemGroup>
+
+</Project>
