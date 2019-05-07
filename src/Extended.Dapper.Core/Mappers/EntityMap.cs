@@ -1,6 +1,8 @@
+using System.Collections.Generic;
 using System.Reflection;
+using Extended.Dapper.Core.Sql.Metadata;
 
-namespace Extended.Dapper.Core.Sql
+namespace Extended.Dapper.Core.Mappers
 {
     public class EntityMap
     {
@@ -25,9 +27,19 @@ namespace Extended.Dapper.Core.Sql
         public PropertyInfo[] MappedProperties { get; set; }
 
         /// <summary>
+        /// Contains all the mapped properties
+        /// </summary>
+        public ICollection<SqlPropertyMetadata> MappedPropertiesMetadata { get; set; }
+
+        /// <summary>
         /// Contains all the primary key properties
         /// </summary>
         public PropertyInfo[] PrimaryKeyProperties { get; set; }
+
+        /// <summary>
+        /// Contains all the primary key properties
+        /// </summary>
+        public ICollection<SqlPropertyMetadata> PrimaryKeyPropertiesMetadata { get; set; }
 
         /// <summary>
         /// Contains all properties with relations
@@ -35,8 +47,18 @@ namespace Extended.Dapper.Core.Sql
         public PropertyInfo[] RelationProperties { get; set; }
 
         /// <summary>
+        /// Contains all properties with relations
+        /// </summary>
+        public ICollection<SqlRelationPropertyMetadata> RelationPropertiesMetadata { get; set; }
+
+        /// <summary>
         /// Contains the UpdatedAt property (if set; null otherwise)
         /// </summary>
         public PropertyInfo UpdatedAtProperty { get; set; }
+
+        /// <summary>
+        /// Metadata of the [UpdatedAt] property (or null if none)
+        /// </summary>
+        public SqlPropertyMetadata UpdatedAtPropertyMetadata { get; set; }
     }
 }

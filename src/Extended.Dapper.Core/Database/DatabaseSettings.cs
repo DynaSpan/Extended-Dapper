@@ -12,15 +12,14 @@ namespace Extended.Dapper.Core.Database
 
         public string Database { get; set; }
 
-        public DatabaseType ServerEdition { get; set; }
+        public DatabaseProvider DatabaseProvider { get; set; }
 
         public bool TrustedConnection { get; set; }
     }
 
-    public enum DatabaseType 
+    public enum DatabaseProvider 
     {
-        MSSQL2008,
-        MSSQL2012,
-        MSSQL2017
+        MSSQL,
+        MySQL
     }
 }

@@ -3,104 +3,111 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
+using System.Text;
 using Extended.Dapper.Attributes.Entities;
 using Extended.Dapper.Attributes.Entities.Relations;
+using Extended.Dapper.Core.Database;
 using Extended.Dapper.Core.Extensions;
 using Extended.Dapper.Core.Helpers;
+using Extended.Dapper.Core.Mappers;
 using Extended.Dapper.Core.Sql.Metadata;
+using Extended.Dapper.Core.Sql.Providers;
 using Extended.Dapper.Repositories.Entities;
 
 namespace Extended.Dapper.Core.Sql
 {
-    public abstract class SqlGenerator<T> : ISqlGenerator where T : BaseEntity
+    public class SqlGenerator : ISqlGenerator
     {
-        /// <summary>
-        /// Contains information about the entity
-        /// </summary>
-        public EntityMap EntityMap { get; set; }
+        private readonly DatabaseProvider databaseProvider;
+        private readonly ISqlProvider sqlProvider;
 
-        /// <summary>
-        /// Contains all the properties
-        /// </summary>
-        public ICollection<SqlPropertyMetadata> PropertiesMetadata { get; set; }
+        #region Constructor
 
-        /// <summary>
-        /// Contains all the primary key properties
-        /// </summary>
-        public ICollection<SqlPropertyMetadata> PrimaryKeyPropertiesMetadata { get; set; }
-
-        /// <summary>
-        /// Contains all properties with relations
-        /// </summary>
-        public ICollection<SqlRelationPropertyMetadata> RelationPropertiesMetadata { get; set; }
-
-        /// <summary>
-        /// Metadata of the [UpdatedAt] property (or null if none)
-        /// </summary>
-        public SqlPropertyMetadata UpdatedAtPropertyMetadata { get; set; }
-
-        protected void GetMappedProperties()
+        public SqlGenerator(DatabaseProvider databaseProvider = DatabaseProvider.MSSQL)
         {
-            var entityType      = typeof(T);
-            var entityTypeInfo  = entityType.GetTypeInfo();
-            var tableAttribute  = entityTypeInfo.GetCustomAttribute<TableAttribute>();
+            this.databaseProvider = databaseProvider;
 
-            this.EntityMap = new EntityMap();
-
-            this.EntityMap.TableName    = tableAttribute != null ? tableAttribute.Name : entityTypeInfo.Name;
-            this.EntityMap.TableSchema  = tableAttribute != null ? tableAttribute.Schema : string.Empty;
-            this.EntityMap.Properties   = entityType.FindClassProperties().Where(q => q.CanWrite).ToArray();
-
-            var props = this.EntityMap.Properties.Where(ExpressionHelper.GetPrimitivePropertiesPredicate()).ToArray();
-
-            // Grab all properties with a relation
-            var relationProperties = props.Where(p => 
-                p.GetCustomAttributes<OneToManyAttribute>().Any() || p.GetCustomAttributes<ManyToOneAttribute>().Any()).ToArray();
-
-            this.EntityMap.RelationProperties   = relationProperties;
-            this.RelationPropertiesMetadata     = this.GetRelationsMetadata(relationProperties);
-
-            // Grab all primary key properties
-            var primaryKeyProperties = props.Where(p => p.GetCustomAttributes<KeyAttribute>().Any());
-
-            this.EntityMap.PrimaryKeyProperties = primaryKeyProperties.ToArray();
-            this.PrimaryKeyPropertiesMetadata   = primaryKeyProperties.Select(p => new SqlPropertyMetadata(p)).ToArray();
-
-            // Grab all properties
-            var properties = props.Where(p => !p.GetCustomAttributes<NotMappedAttribute>().Any());
-
-            this.EntityMap.MappedProperties = properties.ToArray();
-            this.PropertiesMetadata         = properties.Select(p => new SqlPropertyMetadata(p)).ToArray();
-
-            // Grab UpdatedAt property if exists
-            var updatedAtProperty = props.FirstOrDefault(p => p.GetCustomAttributes<UpdatedAtAttribute>().Count() == 1);
-
-            if (updatedAtProperty != null 
-                && (updatedAtProperty.PropertyType == typeof(DateTime) || updatedAtProperty.PropertyType == typeof(DateTime?)))
+            switch (databaseProvider)
             {
-                this.EntityMap.UpdatedAtProperty = updatedAtProperty;
-                this.UpdatedAtPropertyMetadata   = new SqlPropertyMetadata(updatedAtProperty);
+                case DatabaseProvider.MSSQL:
+                    this.sqlProvider = new MsSqlProvider();
+                    break;
+                default:
+                    throw new NotImplementedException();
             }
         }
 
-        private ICollection<SqlRelationPropertyMetadata> GetRelationsMetadata(PropertyInfo[] relationProperties)
+        #endregion
+
+        #region Insert implementation
+
+        public static string Insert<T>(T entity)
         {
-            // Filter and get only non collection nested properties
-            var singleJoinTypes = relationProperties.Where(p => !p.PropertyType.IsConstructedGenericType).ToArray();
+            var entityMap = EntityMapper.GetEntityMap(typeof(T));
 
-            var propertyMetadata = new List<SqlRelationPropertyMetadata>();
+            if (entityMap.UpdatedAtProperty != null)
+                entityMap.UpdatedAtProperty.SetValue(entity, DateTime.UtcNow);
 
-            foreach (var propertyInfo in singleJoinTypes)
+            return string.Format("INSERT INTO {0} ({1}) VALUES ({2})", 
+                entityMap.TableName,
+                string.Join(", ", entityMap.MappedPropertiesMetadata.Select(p => p.ColumnName),
+                string.Join(", ", entityMap.MappedPropertiesMetadata.Select(p => p.ColumnName))));
+        }
+
+        #endregion
+
+        #region Select implementation
+
+        public string Select<T>(Expression<Func<T, bool>> predicate)
+        {
+            var entityMap = EntityMapper.GetEntityMap(typeof(T));
+            var sqlBuilder = new StringBuilder();
+            var joinBuilder = new StringBuilder();
+
+            sqlBuilder.AppendFormat("SELECT {0}", SqlGeneratorHelper.GenerateSelectFields(entityMap, this.sqlProvider));
+
+            if (entityMap.RelationPropertiesMetadata != null && entityMap.RelationPropertiesMetadata.Count > 0)
             {
-                var relationInnerProperties = propertyInfo.PropertyType.GetProperties().Where(q => q.CanWrite)
-                    .Where(ExpressionHelper.GetPrimitivePropertiesPredicate()).ToArray();
+                foreach (SqlRelationPropertyMetadata metadata in entityMap.RelationPropertiesMetadata)
+                {
+                    var relationEntityMap = EntityMapper.GetEntityMap(metadata.PropertyInfo.GetType());
 
-                propertyMetadata.AddRange(relationInnerProperties.Where(p => !p.GetCustomAttributes<NotMappedAttribute>().Any())
-                    .Select(p => new SqlRelationPropertyMetadata(propertyInfo, p)).ToArray());
+                    sqlBuilder.AppendFormat(", {0}", SqlGeneratorHelper.GenerateSelectFields(relationEntityMap, this.sqlProvider));
+                    
+                    string joinType = string.Empty;
+
+                    // Check the type of relation
+                    var relationAttr = metadata.PropertyInfo.GetCustomAttribute<RelationAttributeBase>();
+
+                    if (relationAttr is ManyToOneAttribute)
+                        joinType = "INNER JOIN";
+                    else if (relationAttr is OneToManyAttribute)
+                        joinType = "LEFT JOIN";
+
+                    joinBuilder.AppendFormat("{0} {1} ON {2}.{3} = {4}.{5}",
+                        joinType,
+                        this.sqlProvider.EscapeTable(relationAttr.TableName),
+                        this.sqlProvider.EscapeTable(entityMap.TableName),
+                        this.sqlProvider.EscapeColumn(relationAttr.LocalKey),
+                        this.sqlProvider.EscapeTable(relationAttr.TableName),
+                        this.sqlProvider.EscapeColumn(relationAttr.ExternalKey));
+                }
             }
 
-            return propertyMetadata;
+            sqlBuilder.AppendFormat("FROM {0}", this.sqlProvider.EscapeTable(entityMap.TableName));
+
+            return sqlBuilder.ToString();
         }
+
+        #endregion
+    }
+
+    public enum QueryType
+    {
+        Select,
+        Update,
+        Delete
     }
 }

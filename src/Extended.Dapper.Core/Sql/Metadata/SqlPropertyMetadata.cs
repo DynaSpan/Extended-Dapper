@@ -17,6 +17,11 @@ namespace Extended.Dapper.Core.Sql.Metadata
         public string ColumnName { get; set; }
 
         /// <summary>
+        /// Name of the column alias
+        /// </summary>
+        public string ColumnAlias { get; set; }
+
+        /// <summary>
         /// Boolean indicating whether this field should
         /// be updated or not
         /// </summary>
@@ -35,7 +40,10 @@ namespace Extended.Dapper.Core.Sql.Metadata
             var alias = propertyInfo.GetCustomAttribute<ColumnAttribute>();
 
             if (alias != null && !string.IsNullOrEmpty(alias.Name))
+            {
                 this.ColumnName = alias.Name;
+                this.ColumnAlias = propertyInfo.Name;
+            }
             else
                 this.ColumnName = propertyInfo.Name;
 
