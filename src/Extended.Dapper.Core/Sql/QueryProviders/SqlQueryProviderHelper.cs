@@ -1,26 +1,40 @@
+using System;
 using Extended.Dapper.Core.Database;
 
 namespace Extended.Dapper.Core.Sql.QueryProviders
 {
     public static class SqlQueryProviderHelper
     {
+        private static SqlQueryProvider sqlQueryProvider;
+
         /// <summary>
-        /// Returns an instance of the correct ISqlProvider
+        /// Sets the database provider, so the correct SqlQueryProvider is
+        /// returned when GetProvider() is called
         /// </summary>
         /// <param name="databaseProvider"></param>
-        /// <returns>Instance of ISqlProvider according to the databaseProvider; 
-        /// or null if not implemented</returns>
-        public static ISqlQueryProvider GetProvider(DatabaseProvider databaseProvider)
+        public static void SetProvider(DatabaseProvider databaseProvider)
         {
             switch (databaseProvider)
             {
                 case DatabaseProvider.MSSQL:
-                    return new MsSqlQueryProvider();
+                    sqlQueryProvider = new MsSqlQueryProvider();
+                    break;
                 case DatabaseProvider.MySQL:
-                    return new MySqlQueryProvider();
+                    sqlQueryProvider = new MySqlQueryProvider();
+                    break;
                 default:
-                    return null;
+                    throw new NotImplementedException();
             }
+        }
+
+        /// <summary>
+        /// Returns an instance of the correct ISqlProvider
+        /// </summary>
+        /// <returns>Instance of ISqlProvider according to the databaseProvider; 
+        /// or null if not implemented</returns>
+        public static ISqlQueryProvider GetProvider()
+        {
+            return sqlQueryProvider;
         }
     }
 }

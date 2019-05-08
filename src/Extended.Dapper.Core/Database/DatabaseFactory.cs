@@ -20,6 +20,8 @@ namespace Extended.Dapper.Core.Database
         /// <param name="databaseSettings"></param>
         public DatabaseFactory(DatabaseSettings databaseSettings)
         {
+            SqlQueryProviderHelper.SetProvider(databaseSettings.DatabaseProvider);
+
             this.connectionString = this.ConstructConnectionString(databaseSettings);
             this.databaseProvider = databaseSettings.DatabaseProvider;
         }
@@ -31,8 +33,10 @@ namespace Extended.Dapper.Core.Database
         /// <param name="databaseProvider"></param>
         public DatabaseFactory(string connectionString, DatabaseProvider databaseProvider)
         {
+            SqlQueryProviderHelper.SetProvider(databaseProvider);
+
             this.connectionString = connectionString;
-            this.databaseProvider = databaseProvider;
+            this.databaseProvider = databaseProvider;            
         }
 
         /// <summary>
@@ -60,7 +64,7 @@ namespace Extended.Dapper.Core.Database
         /// <returns></returns>
         private string ConstructConnectionString(DatabaseSettings databaseSettings)
         {
-            var provider = SqlQueryProviderHelper.GetProvider(databaseSettings.DatabaseProvider);
+            var provider = SqlQueryProviderHelper.GetProvider();
 
             if (provider == null)
                 throw new NotImplementedException();

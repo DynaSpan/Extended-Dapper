@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Extended.Dapper.Core.Sql.Metadata;
@@ -15,6 +16,11 @@ namespace Extended.Dapper.Core.Mappers
         /// Schema of the table
         /// </summary>
         public string TableSchema { get; set; }
+
+        /// <summary>
+        /// The type of this entity
+        /// </summary>
+        public Type Type { get; set; }
 
         /// <summary>
         /// Contains all properties of this entity
@@ -60,5 +66,13 @@ namespace Extended.Dapper.Core.Mappers
         /// Metadata of the [UpdatedAt] property (or null if none)
         /// </summary>
         public SqlPropertyMetadata UpdatedAtPropertyMetadata { get; set; }
+
+        /// <summary>
+        /// Indicates if this entity implements a logical
+        /// delete system
+        /// </summary>
+        /// <value>true when logical delete is implemented;
+        /// false otherwise</value>
+        public bool LogicalDelete { get; set; }
     }
 }

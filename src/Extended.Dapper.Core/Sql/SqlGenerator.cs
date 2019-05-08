@@ -31,17 +31,23 @@ namespace Extended.Dapper.Core.Sql
         public SqlGenerator(DatabaseProvider databaseProvider = DatabaseProvider.MSSQL)
         {
             this.databaseProvider = databaseProvider;
-            this.sqlProvider      = SqlQueryProviderHelper.GetProvider(databaseProvider);
+            this.sqlProvider      = SqlQueryProviderHelper.GetProvider();
 
             // Check if it is implemented
             if (this.sqlProvider == null)
-                throw new NotImplementedException();
+                throw new ArgumentException(databaseProvider.ToString() + " is currently not implemented");
         }
 
         #endregion
 
         #region Insert implementation
 
+        /// <summary>
+        /// Generates an insert query for a given entity
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
         public static string Insert<T>(T entity)
         {
             var entityMap = EntityMapper.GetEntityMap(typeof(T));
@@ -59,6 +65,12 @@ namespace Extended.Dapper.Core.Sql
 
         #region Select implementation
 
+        /// <summary>
+        /// Generates a select query for an entity
+        /// </summary>
+        /// <param name="predicate"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
         public string Select<T>(Expression<Func<T, bool>> predicate)
         {
             var entityMap = EntityMapper.GetEntityMap(typeof(T));

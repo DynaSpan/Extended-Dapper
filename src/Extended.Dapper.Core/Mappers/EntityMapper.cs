@@ -34,6 +34,7 @@ namespace Extended.Dapper.Core.Mappers
 
             var entityMap = new EntityMap();
 
+            entityMap.Type         = entityType;
             entityMap.TableName    = tableAttribute != null ? tableAttribute.Name : entityTypeInfo.Name;
             entityMap.TableSchema  = tableAttribute != null ? tableAttribute.Schema : string.Empty;
             entityMap.Properties   = entityType.FindClassProperties().Where(q => q.CanWrite).ToArray();
@@ -68,6 +69,8 @@ namespace Extended.Dapper.Core.Mappers
                 entityMap.UpdatedAtProperty         = updatedAtProperty;
                 entityMap.UpdatedAtPropertyMetadata = new SqlPropertyMetadata(updatedAtProperty);
             }
+
+            // TODO implement logical delete
 
             // Add to cache
             entityMapCache.TryAdd(entityType, entityMap);
