@@ -42,11 +42,17 @@ namespace Extended.Dapper.Core.Mappers
             var props = entityMap.Properties.Where(ExpressionHelper.GetPrimitivePropertiesPredicate()).ToArray();
 
             // Grab all properties with a relation
-            var relationProperties = props.Where(p => 
-                p.GetCustomAttributes<OneToManyAttribute>().Any() || p.GetCustomAttributes<ManyToOneAttribute>().Any()).ToArray();
+            var relationProperties = entityMap.Properties.Where(p => p.GetCustomAttributes<RelationAttributeBase>().Any()).ToArray();
 
-            entityMap.RelationProperties         = relationProperties;
-            entityMap.RelationPropertiesMetadata = GetRelationsMetadata(relationProperties);
+            entityMap.RelationProperties = new Dictionary<PropertyInfo, ICollection<SqlRelationPropertyMetadata>>();
+
+            foreach (PropertyInfo pi in relationProperties)
+            {
+                entityMap.RelationProperties.Add(pi, GetRelationsMetadata(pi));
+            }
+
+            // entityMap.RelationProperties         = relationProperties;
+            // entityMap.RelationPropertiesMetadata = GetRelationsMetadata(relationProperties);
 
             // Grab all primary key properties
             var primaryKeyProperties = props.Where(p => p.GetCustomAttributes<KeyAttribute>().Any());
@@ -74,10 +80,10 @@ namespace Extended.Dapper.Core.Mappers
 
             if (logicalDeleteProperty != null
                 && (logicalDeleteProperty.PropertyType == typeof(bool)))
-                {
-                    entityMap.LogicalDeleteProperty         = logicalDeleteProperty;
-                    entityMap.LogicalDeletePropertyMetadata = new SqlPropertyMetadata(logicalDeleteProperty);
-                }
+            {
+                entityMap.LogicalDeleteProperty         = logicalDeleteProperty;
+                entityMap.LogicalDeletePropertyMetadata = new SqlPropertyMetadata(logicalDeleteProperty);
+            }
 
             // Add to cache
             entityMapCache.TryAdd(entityType, entityMap);
@@ -88,22 +94,22 @@ namespace Extended.Dapper.Core.Mappers
         /// <summary>
         /// Maps properties with OneToMany or ManyToOne relations
         /// </summary>
-        /// <param name="relationProperties">Properties with a RelationAttribute</param>
-        private static ICollection<SqlRelationPropertyMetadata> GetRelationsMetadata(PropertyInfo[] relationProperties)
+        /// <param name="relationProperty">Propertiy with a RelationAttribute</param>
+        private static ICollection<SqlRelationPropertyMetadata> GetRelationsMetadata(PropertyInfo relationProperty)
         {
-            // Filter and get only non collection nested properties
-            var singleJoinTypes = relationProperties.Where(p => !p.PropertyType.IsConstructedGenericType).ToArray();
-
             var propertyMetadata = new List<SqlRelationPropertyMetadata>();
+            var entityType = relationProperty.PropertyType;
 
-            foreach (var propertyInfo in singleJoinTypes)
-            {
-                var relationInnerProperties = propertyInfo.PropertyType.GetProperties().Where(q => q.CanWrite)
-                    .Where(ExpressionHelper.GetPrimitivePropertiesPredicate()).ToArray();
+            // If it is a list or something that uses generics, grab
+            // the "real" type
+            if (entityType.IsConstructedGenericType)
+                entityType = relationProperty.PropertyType.GetGenericArguments().Single();
 
-                propertyMetadata.AddRange(relationInnerProperties.Where(p => !p.GetCustomAttributes<NotMappedAttribute>().Any())
-                    .Select(p => new SqlRelationPropertyMetadata(propertyInfo, p)).ToArray());
-            }
+            var relationInnerProperties = entityType.GetProperties().Where(q => q.CanWrite)
+                .Where(ExpressionHelper.GetPrimitivePropertiesPredicate()).ToArray();
+
+            propertyMetadata.AddRange(relationInnerProperties.Where(p => !p.GetCustomAttributes<NotMappedAttribute>().Any())
+                .Select(p => new SqlRelationPropertyMetadata(relationProperty, p)).ToArray());
 
             return propertyMetadata;
         }

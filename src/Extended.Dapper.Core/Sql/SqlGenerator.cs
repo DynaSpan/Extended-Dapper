@@ -81,25 +81,29 @@ namespace Extended.Dapper.Core.Sql
 
             sqlQuery.Select.Append(this.sqlProvider.GenerateSelectFields(entityMap));
 
-            if (entityMap.RelationPropertiesMetadata != null && entityMap.RelationPropertiesMetadata.Count > 0)
+            if (entityMap.RelationProperties != null && entityMap.RelationProperties.Count > 0)
             {
-                foreach (SqlRelationPropertyMetadata metadata in entityMap.RelationPropertiesMetadata)
+                foreach (KeyValuePair<PropertyInfo, ICollection<SqlRelationPropertyMetadata>> kvpProperty in entityMap.RelationProperties)
                 {
-                    var relationEntityMap = EntityMapper.GetEntityMap(metadata.PropertyInfo.GetType());
+                    var property = kvpProperty.Key;
+                    var metadata = kvpProperty.Value;
 
-                    sqlQuery.Select.AppendFormat(", {0}", this.sqlProvider.GenerateSelectFields(relationEntityMap));
+                    var relationAttr = System.Attribute.GetCustomAttributes(property, typeof(RelationAttributeBase), true).FirstOrDefault() as RelationAttributeBase;
+
+                    var selectFields = this.sqlProvider.GenerateSelectFields(relationAttr.TableName, metadata.Cast<SqlPropertyMetadata>().ToList());
+
+                    if (selectFields != null && selectFields != string.Empty)
+                        sqlQuery.Select.AppendFormat(", {0}", selectFields);
 
                     // Check the type of relation
-                    var relationAttr = metadata.PropertyInfo.GetCustomAttribute<RelationAttributeBase>();
-
                     string joinType = string.Empty;
 
                     if (relationAttr is ManyToOneAttribute)
-                        joinType = "INNER JOIN";
+                        joinType = " INNER JOIN";
                     else if (relationAttr is OneToManyAttribute)
-                        joinType = "LEFT JOIN";
+                        joinType = " LEFT JOIN";
 
-                    joinBuilder.AppendFormat("{0} {1} ON {2}.{3} = {4}.{5}",
+                    joinBuilder.AppendFormat(" {0} {1} ON {2}.{3} = {4}.{5}",
                         joinType,
                         this.sqlProvider.EscapeTable(relationAttr.TableName),
                         this.sqlProvider.EscapeTable(entityMap.TableName),

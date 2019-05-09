@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Text;
 using Extended.Dapper.Core.Database;
 using Extended.Dapper.Core.Helpers;
@@ -39,21 +40,34 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// <returns>Fields for in a SELECT query</returns>
         public virtual string GenerateSelectFields(EntityMap entityMap)
         {
+            return this.GenerateSelectFields(entityMap.TableName, entityMap.MappedPropertiesMetadata);
+        }
+
+        /// <summary>
+        /// Generates the SQL select fields for a given entity
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <param name="properties"></param>
+        /// <returns>Fields for in a SELECT query</returns>
+        public virtual string GenerateSelectFields(string tableName, ICollection<SqlPropertyMetadata> properties)
+        {
             // Projection function
             string MapAliasColumn(SqlPropertyMetadata p)
             {
                 if (!string.IsNullOrEmpty(p.ColumnAlias))
                     return string.Format("{0}.{1} AS {2}", 
-                        this.EscapeTable(entityMap.TableName), 
+                        this.EscapeTable(tableName), 
                         this.EscapeColumn(p.ColumnName), 
                         this.EscapeColumn(p.PropertyName));
                 else 
                     return string.Format("{0}.{1}", 
-                        this.EscapeTable(entityMap.TableName), 
+                        this.EscapeTable(tableName), 
                         this.EscapeColumn(p.ColumnName));
             }
 
-            return string.Join(", ", entityMap.MappedPropertiesMetadata.Select(MapAliasColumn));
+            return properties == null
+                    ? string.Empty
+                    : string.Join(", ", properties.Select(MapAliasColumn));
         }
 
         /// <summary>
@@ -270,7 +284,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
                                 this.EscapeColumn(columnName), 
                                 qpExpr.QueryOperator, 
                                 vKey);
-                                
+
                             conditions.Add(new KeyValuePair<string, object>(vKey, qpExpr.PropertyValue));
                         }
 

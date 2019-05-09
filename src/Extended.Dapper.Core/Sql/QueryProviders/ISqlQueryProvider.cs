@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Linq.Expressions;
 using Extended.Dapper.Core.Database;
 using Extended.Dapper.Core.Mappers;
+using Extended.Dapper.Core.Sql.Metadata;
 using Extended.Dapper.Core.Sql.Query;
 
 namespace Extended.Dapper.Core.Sql.QueryProviders
@@ -32,6 +34,14 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// <param name="entityMap"></param>
         /// <returns></returns>
         string GenerateSelectFields(EntityMap entityMap);
+
+        /// <summary>
+        /// Generates the SQL select fields for a given entity
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <param name="properties"></param>
+        /// <returns>Fields for in a SELECT query</returns>
+        string GenerateSelectFields(string tableName, ICollection<SqlPropertyMetadata> properties);
 
         /// <summary>
         /// Converts an ExpressionType to a SQL operator

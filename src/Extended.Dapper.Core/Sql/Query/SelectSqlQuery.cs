@@ -23,7 +23,7 @@ namespace Extended.Dapper.Core.Sql.Query
         public override string ToString()
         {
             var query = new StringBuilder();
-            query.AppendFormat("SELECT {0} FROM {1} ", this.Select, this.From);
+            query.AppendFormat("SELECT {0} FROM {1}", this.Select, this.From);
 
             if (this.Joins != null && !string.IsNullOrEmpty(this.Joins.ToString()))
             {

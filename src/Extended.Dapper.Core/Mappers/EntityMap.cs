@@ -50,7 +50,7 @@ namespace Extended.Dapper.Core.Mappers
         /// <summary>
         /// Contains all properties with relations
         /// </summary>
-        public PropertyInfo[] RelationProperties { get; set; }
+        public Dictionary<PropertyInfo, ICollection<SqlRelationPropertyMetadata>> RelationProperties { get; set; }
 
         /// <summary>
         /// Contains all properties with relations
