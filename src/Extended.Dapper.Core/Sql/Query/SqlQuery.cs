@@ -10,11 +10,6 @@ namespace Extended.Dapper.Core.Sql.Query
     public class SqlQuery
     {
         /// <summary>
-        /// From which table the fields should be selected
-        /// </summary>
-        public string From { get; set; }
-
-        /// <summary>
         /// Any joins that have to take place on the query
         /// </summary>
         public StringBuilder Joins { get; set; }

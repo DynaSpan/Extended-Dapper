@@ -13,6 +13,7 @@ using Extended.Dapper.Core.Extensions;
 using Extended.Dapper.Core.Helpers;
 using Extended.Dapper.Core.Mappers;
 using Extended.Dapper.Core.Sql.Metadata;
+using Extended.Dapper.Core.Sql.Query;
 using Extended.Dapper.Core.Sql.QueryProviders;
 
 namespace Extended.Dapper.Core.Sql
@@ -74,10 +75,11 @@ namespace Extended.Dapper.Core.Sql
         public string Select<T>(Expression<Func<T, bool>> predicate)
         {
             var entityMap = EntityMapper.GetEntityMap(typeof(T));
-            var sqlBuilder = new StringBuilder();
+            var sqlQuery  = new SelectSqlQuery();
+
             var joinBuilder = new StringBuilder();
 
-            sqlBuilder.AppendFormat("SELECT {0}", this.sqlProvider.GenerateSelectFields(entityMap));
+            sqlQuery.Select.Append(this.sqlProvider.GenerateSelectFields(entityMap));
 
             if (entityMap.RelationPropertiesMetadata != null && entityMap.RelationPropertiesMetadata.Count > 0)
             {
@@ -85,7 +87,7 @@ namespace Extended.Dapper.Core.Sql
                 {
                     var relationEntityMap = EntityMapper.GetEntityMap(metadata.PropertyInfo.GetType());
 
-                    sqlBuilder.AppendFormat(", {0}", this.sqlProvider.GenerateSelectFields(relationEntityMap));
+                    sqlQuery.Select.AppendFormat(", {0}", this.sqlProvider.GenerateSelectFields(relationEntityMap));
 
                     // Check the type of relation
                     var relationAttr = metadata.PropertyInfo.GetCustomAttribute<RelationAttributeBase>();
@@ -105,12 +107,16 @@ namespace Extended.Dapper.Core.Sql
                         this.sqlProvider.EscapeTable(relationAttr.TableName),
                         this.sqlProvider.EscapeColumn(relationAttr.ExternalKey));
                 }
+
+                sqlQuery.Joins.Append(joinBuilder.ToString());
             }
 
-            sqlBuilder.AppendFormat("FROM {0} ", this.sqlProvider.EscapeTable(entityMap.TableName));
-            sqlBuilder.Append(joinBuilder.ToString());
+            // Append where
+            this.sqlProvider.AppendWherePredicateQuery(sqlQuery, predicate, QueryType.Select, entityMap);
 
-            return sqlBuilder.ToString();
+            sqlQuery.From = this.sqlProvider.EscapeTable(entityMap.TableName);
+
+            return sqlQuery.ToString();
         }
 
         #endregion
