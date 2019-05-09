@@ -8,7 +8,7 @@ namespace Extended.Dapper.Tests.Models
     {
         public string Name { get; set; }
 
-        [ManyToOne("Books", "AuthorId", "Id")]
+        [ManyToOne("Author", "AuthorId", "Id")]
         public Author Author { get; set; }
     }
 }

@@ -13,7 +13,7 @@ namespace Extended.Dapper.Tests.Models
 
         public string Country { get; set; }
 
-        [OneToMany("Books", "Id", "AuthorId")]
+        [OneToMany("Book", "Id", "AuthorId")]
         public ICollection<Book> Books { get; set; }
     }
 }
