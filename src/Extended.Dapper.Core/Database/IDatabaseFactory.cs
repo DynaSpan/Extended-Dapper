@@ -9,5 +9,10 @@ namespace Extended.Dapper.Core.Database
         /// </summary>
         /// <returns></returns>
         IDbConnection GetDatabaseConnection();
+
+        /// <summary>
+        /// The type of database
+        /// </summary>
+        DatabaseProvider DatabaseProvider { get; }
     }
 }

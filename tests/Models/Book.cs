@@ -8,7 +8,14 @@ namespace Extended.Dapper.Tests.Models
     {
         public string Name { get; set; }
 
+        public int ReleaseYear { get; set; }
+
         [ManyToOne("Author", "AuthorId", "Id")]
         public Author Author { get; set; }
+
+        public override string ToString()
+        {
+            return string.Format("{0} ({1}) -  Author: {2}", Name, ReleaseYear, Author?.Name);
+        }
     }
 }

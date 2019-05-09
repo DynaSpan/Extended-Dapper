@@ -12,7 +12,7 @@ namespace Extended.Dapper.Core.Database
     public class DatabaseFactory : IDatabaseFactory
     {
         private readonly string connectionString;
-        private readonly DatabaseProvider databaseProvider;
+        public DatabaseProvider DatabaseProvider { get; }
 
         /// <summary>
         /// Constructor for the factory
@@ -23,7 +23,7 @@ namespace Extended.Dapper.Core.Database
             SqlQueryProviderHelper.SetProvider(databaseSettings.DatabaseProvider);
 
             this.connectionString = this.ConstructConnectionString(databaseSettings);
-            this.databaseProvider = databaseSettings.DatabaseProvider;
+            this.DatabaseProvider = databaseSettings.DatabaseProvider;
         }
 
         /// <summary>
@@ -36,7 +36,7 @@ namespace Extended.Dapper.Core.Database
             SqlQueryProviderHelper.SetProvider(databaseProvider);
 
             this.connectionString = connectionString;
-            this.databaseProvider = databaseProvider;            
+            this.DatabaseProvider = databaseProvider;            
         }
 
         /// <summary>
@@ -45,7 +45,7 @@ namespace Extended.Dapper.Core.Database
         /// <returns></returns>
         public IDbConnection GetDatabaseConnection()
         {
-            switch (this.databaseProvider)
+            switch (this.DatabaseProvider)
             {
                 case DatabaseProvider.MSSQL:
                     return new SqlConnection(this.connectionString);

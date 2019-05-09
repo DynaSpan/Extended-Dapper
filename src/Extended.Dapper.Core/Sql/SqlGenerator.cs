@@ -83,7 +83,7 @@ namespace Extended.Dapper.Core.Sql
         /// <param name="predicate"></param>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public SelectSqlQuery Select<T>(Expression<Func<T, bool>> predicate)
+        public SelectSqlQuery Select<T>(Expression<Func<T, bool>> predicate = null)
         {
             var entityMap = EntityMapper.GetEntityMap(typeof(T));
             var sqlQuery  = new SelectSqlQuery();

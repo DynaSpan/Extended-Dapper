@@ -5,8 +5,6 @@ VisualStudioVersion = 15.0.26124.0
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Extended.Dapper.Core", "src\Extended.Dapper.Core\Extended.Dapper.Core.csproj", "{EAAC7808-4992-4336-AEE9-683206C73DD9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Extended.Dapper.Repositories", "src\Extended.Dapper.Repositories\Extended.Dapper.Repositories.csproj", "{97358A5A-111E-4BE7-AAB4-28574D01117D}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Extended.Dapper.Attributes", "src\Extended.Dapper.Attributes\Extended.Dapper.Attributes.csproj", "{3923AFE4-FEAB-4A59-AAFB-CDDE9A7447F7}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{C8FC0361-B9FC-41CC-BC53-A9CD3328EAA8}"
@@ -40,18 +38,6 @@ Global
 		{EAAC7808-4992-4336-AEE9-683206C73DD9}.Release|x64.Build.0 = Release|Any CPU
 		{EAAC7808-4992-4336-AEE9-683206C73DD9}.Release|x86.ActiveCfg = Release|Any CPU
 		{EAAC7808-4992-4336-AEE9-683206C73DD9}.Release|x86.Build.0 = Release|Any CPU
-		{97358A5A-111E-4BE7-AAB4-28574D01117D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{97358A5A-111E-4BE7-AAB4-28574D01117D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{97358A5A-111E-4BE7-AAB4-28574D01117D}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{97358A5A-111E-4BE7-AAB4-28574D01117D}.Debug|x64.Build.0 = Debug|Any CPU
-		{97358A5A-111E-4BE7-AAB4-28574D01117D}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{97358A5A-111E-4BE7-AAB4-28574D01117D}.Debug|x86.Build.0 = Debug|Any CPU
-		{97358A5A-111E-4BE7-AAB4-28574D01117D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{97358A5A-111E-4BE7-AAB4-28574D01117D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{97358A5A-111E-4BE7-AAB4-28574D01117D}.Release|x64.ActiveCfg = Release|Any CPU
-		{97358A5A-111E-4BE7-AAB4-28574D01117D}.Release|x64.Build.0 = Release|Any CPU
-		{97358A5A-111E-4BE7-AAB4-28574D01117D}.Release|x86.ActiveCfg = Release|Any CPU
-		{97358A5A-111E-4BE7-AAB4-28574D01117D}.Release|x86.Build.0 = Release|Any CPU
 		{3923AFE4-FEAB-4A59-AAFB-CDDE9A7447F7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{3923AFE4-FEAB-4A59-AAFB-CDDE9A7447F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3923AFE4-FEAB-4A59-AAFB-CDDE9A7447F7}.Debug|x64.ActiveCfg = Debug|Any CPU
