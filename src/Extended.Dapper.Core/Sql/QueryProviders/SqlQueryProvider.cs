@@ -51,23 +51,28 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// <returns>Fields for in a SELECT query</returns>
         public virtual string GenerateSelectFields(string tableName, ICollection<SqlPropertyMetadata> properties)
         {
-            // Projection function
-            string MapAliasColumn(SqlPropertyMetadata p)
-            {
-                if (!string.IsNullOrEmpty(p.ColumnAlias))
-                    return string.Format("{0}.{1} AS {2}", 
-                        this.EscapeTable(tableName), 
-                        this.EscapeColumn(p.ColumnName), 
-                        this.EscapeColumn(p.PropertyName));
-                else 
-                    return string.Format("{0}.{1}", 
-                        this.EscapeTable(tableName), 
-                        this.EscapeColumn(p.ColumnName));
-            }
-
             return properties == null
                     ? string.Empty
-                    : string.Join(", ", properties.Select(MapAliasColumn));
+                    : string.Join(", ", properties.Select(x => this.MapAliasColumn(tableName, x)));
+        }
+
+        /// <summary>
+        /// Projection function for mapping property
+        /// to SQL field
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <param name="p"></param>
+        public virtual string MapAliasColumn(string tableName, SqlPropertyMetadata p)
+        {
+            if (!string.IsNullOrEmpty(p.ColumnAlias))
+                return string.Format("{0}.{1} AS {2}", 
+                    this.EscapeTable(tableName), 
+                    this.EscapeColumn(p.ColumnName), 
+                    this.EscapeColumn(p.PropertyName));
+            else 
+                return string.Format("{0}.{1}", 
+                    this.EscapeTable(tableName), 
+                    this.EscapeColumn(p.ColumnName));
         }
 
         /// <summary>

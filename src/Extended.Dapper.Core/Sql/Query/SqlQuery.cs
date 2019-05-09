@@ -24,6 +24,11 @@ namespace Extended.Dapper.Core.Sql.Query
         /// </summary>
         public Dictionary<string, object> Params { get; set; }
 
+        /// <summary>
+        /// Limit on the results returned
+        /// </summary>
+        public int? Limit { get; set; }
+
         public SqlQuery()
         {
             this.Params = new Dictionary<string, object>();

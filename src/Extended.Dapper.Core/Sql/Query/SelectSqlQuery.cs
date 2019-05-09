@@ -35,6 +35,11 @@ namespace Extended.Dapper.Core.Sql.Query
                 query.AppendFormat(" WHERE {0}", this.Where);
             }
 
+            if (this.Limit != null)
+            {
+                query.AppendFormat(" LIMIT {0}", this.Limit);
+            }
+
             return query.ToString();
         }
     }
