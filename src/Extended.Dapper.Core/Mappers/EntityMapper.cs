@@ -70,7 +70,14 @@ namespace Extended.Dapper.Core.Mappers
                 entityMap.UpdatedAtPropertyMetadata = new SqlPropertyMetadata(updatedAtProperty);
             }
 
-            // TODO implement logical delete
+            var logicalDeleteProperty = props.FirstOrDefault(p => p.GetCustomAttributes<DeletedAttribute>().Count() == 1);
+
+            if (logicalDeleteProperty != null
+                && (logicalDeleteProperty.PropertyType == typeof(bool)))
+                {
+                    entityMap.LogicalDeleteProperty         = logicalDeleteProperty;
+                    entityMap.LogicalDeletePropertyMetadata = new SqlPropertyMetadata(logicalDeleteProperty);
+                }
 
             // Add to cache
             entityMapCache.TryAdd(entityType, entityMap);

@@ -183,21 +183,19 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
                     queryParams.Add(condition.Key, condition.Value);
                 }
 
-                // TODO implement logical deleted
-
-                // if (entityMap.LogicalDelete && queryType == QueryType.Select)
-                //     sqlQuery.Where.AppendFormat("({3}) AND {0}.{1} != {2} ", entityMap.TableName, StatusPropertyName, LogicalDeleteValue, sqlBuilder);
-                // else
+                if (entityMap.LogicalDelete && queryType == QueryType.Select)
+                    sqlQuery.Where.AppendFormat("({3}) AND {0}.{1} != {2} ", entityMap.TableName, entityMap.LogicalDeletePropertyMetadata.ColumnName, 1, sqlBuilder);
+                else
                     sqlQuery.Where.AppendFormat("{0} ", sqlBuilder);
             }
             else
             {
-                // if (LogicalDelete && queryType == QueryType.Select)
-                //     sqlQuery.SqlBuilder.AppendFormat("WHERE {0}.{1} != {2} ", TableName, StatusPropertyName, LogicalDeleteValue);
+                if (entityMap.LogicalDelete && queryType == QueryType.Select)
+                    sqlQuery.Where.AppendFormat("{0}.{1} != {2} ", entityMap.TableName, entityMap.LogicalDeletePropertyMetadata.ColumnName, 1);
             }
 
-            // if (LogicalDelete && HasUpdatedAt && queryType == QueryType.Delete)
-            //     queryParams.Add(UpdatedAtPropertyMetadata.ColumnName, DateTime.UtcNow);
+            if (entityMap.LogicalDelete && entityMap.UpdatedAtProperty != null && queryType == QueryType.Delete)
+                queryParams.Add(entityMap.UpdatedAtPropertyMetadata.ColumnName, DateTime.UtcNow);
 
             sqlQuery.Params = queryParams;
         }

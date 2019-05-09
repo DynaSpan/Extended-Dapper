@@ -73,6 +73,17 @@ namespace Extended.Dapper.Core.Mappers
         /// </summary>
         /// <value>true when logical delete is implemented;
         /// false otherwise</value>
-        public bool LogicalDelete { get; set; }
+        public bool LogicalDelete => this.LogicalDeleteProperty != null;
+
+        /// <summary>
+        /// Contains the [Deleted] property (or null if none)
+        /// </summary>        
+        public PropertyInfo LogicalDeleteProperty { get; set; }
+
+        /// <summary>
+        /// Metadata of the [Deleted] property (or null if none)
+        /// </summary>
+        /// <value></value>
+        public SqlPropertyMetadata LogicalDeletePropertyMetadata { get; set; }
     }
 }
