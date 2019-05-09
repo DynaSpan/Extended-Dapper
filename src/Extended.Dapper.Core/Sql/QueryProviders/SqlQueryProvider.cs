@@ -184,14 +184,21 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
                 }
 
                 if (entityMap.LogicalDelete && queryType == QueryType.Select)
-                    sqlQuery.Where.AppendFormat("({3}) AND {0}.{1} != {2} ", entityMap.TableName, entityMap.LogicalDeletePropertyMetadata.ColumnName, 1, sqlBuilder);
+                    sqlQuery.Where.AppendFormat("({3}) AND {0}.{1} != {2} ", 
+                        this.EscapeTable(entityMap.TableName), 
+                        this.EscapeColumn(entityMap.LogicalDeletePropertyMetadata.ColumnName), 
+                        1, 
+                        sqlBuilder);
                 else
                     sqlQuery.Where.AppendFormat("{0} ", sqlBuilder);
             }
             else
             {
                 if (entityMap.LogicalDelete && queryType == QueryType.Select)
-                    sqlQuery.Where.AppendFormat("{0}.{1} != {2} ", entityMap.TableName, entityMap.LogicalDeletePropertyMetadata.ColumnName, 1);
+                    sqlQuery.Where.AppendFormat("{0}.{1} != {2} ", 
+                        this.EscapeTable(entityMap.TableName), 
+                        this.EscapeColumn(entityMap.LogicalDeletePropertyMetadata.ColumnName), 
+                        1);
             }
 
             if (entityMap.LogicalDelete && entityMap.UpdatedAtProperty != null && queryType == QueryType.Delete)
@@ -249,13 +256,21 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
 
                         if (qpExpr.PropertyValue == null)
                         {
-                            sqlBuilder.AppendFormat("{0}.{1} {2} NULL", tableName, columnName, qpExpr.QueryOperator == "=" ? "IS" : "IS NOT");
+                            sqlBuilder.AppendFormat("{0}.{1} {2} NULL", 
+                                this.EscapeTable(tableName), 
+                                this.EscapeColumn(columnName), 
+                                qpExpr.QueryOperator == "=" ? "IS" : "IS NOT");
                         }
                         else
                         {
                             var vKey = string.Format("{0}_p{1}", qpExpr.PropertyName, qLevel); //Handle multiple uses of a field
                             
-                            sqlBuilder.AppendFormat("{0}.{1} {2} @{3}", tableName, columnName, qpExpr.QueryOperator, vKey);
+                            sqlBuilder.AppendFormat("{0}.{1} {2} @{3}", 
+                                this.EscapeTable(tableName), 
+                                this.EscapeColumn(columnName), 
+                                qpExpr.QueryOperator, 
+                                vKey);
+                                
                             conditions.Add(new KeyValuePair<string, object>(vKey, qpExpr.PropertyValue));
                         }
 

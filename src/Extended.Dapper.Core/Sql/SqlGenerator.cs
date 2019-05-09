@@ -112,7 +112,8 @@ namespace Extended.Dapper.Core.Sql
             }
 
             // Append where
-            this.sqlProvider.AppendWherePredicateQuery(sqlQuery, predicate, QueryType.Select, entityMap);
+            if (predicate != null)
+                this.sqlProvider.AppendWherePredicateQuery(sqlQuery, predicate, QueryType.Select, entityMap);
 
             sqlQuery.From = this.sqlProvider.EscapeTable(entityMap.TableName);
 
