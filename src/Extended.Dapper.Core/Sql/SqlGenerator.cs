@@ -48,18 +48,29 @@ namespace Extended.Dapper.Core.Sql
         /// </summary>
         /// <param name="entity"></param>
         /// <typeparam name="T"></typeparam>
-        /// <returns></returns>
-        public static string Insert<T>(T entity)
+        public InsertSqlQuery Insert<T>(T entity)
         {
             var entityMap = EntityMapper.GetEntityMap(typeof(T));
 
             if (entityMap.UpdatedAtProperty != null)
                 entityMap.UpdatedAtProperty.SetValue(entity, DateTime.UtcNow);
 
-            return string.Format("INSERT INTO {0} ({1}) VALUES ({2})", 
-                entityMap.TableName,
-                string.Join(", ", entityMap.MappedPropertiesMetadata.Select(p => p.ColumnName),
-                string.Join(", ", entityMap.MappedPropertiesMetadata.Select(p => p.ColumnName))));
+            var insertQuery = new InsertSqlQuery();
+            insertQuery.Table = this.sqlProvider.EscapeTable(entityMap.TableName);
+
+            insertQuery.Insert.Append(string.Join(", ", 
+                entityMap.MappedPropertiesMetadata.Select(p => this.sqlProvider.EscapeColumn(p.ColumnName))));
+
+            insertQuery.InsertParams.Append(string.Join(", ", 
+                entityMap.MappedPropertiesMetadata.Select(x => "@p_" + x.ColumnName)));
+
+            // Get the params & values
+            foreach (var metadata in entityMap.MappedPropertiesMetadata)
+            {
+                insertQuery.Params.Add("@p_" + metadata.ColumnName, metadata.PropertyInfo.GetValue(entity, null));
+            }
+
+            return insertQuery;
         }
 
         #endregion
@@ -72,7 +83,7 @@ namespace Extended.Dapper.Core.Sql
         /// <param name="predicate"></param>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public string Select<T>(Expression<Func<T, bool>> predicate)
+        public SelectSqlQuery Select<T>(Expression<Func<T, bool>> predicate)
         {
             var entityMap = EntityMapper.GetEntityMap(typeof(T));
             var sqlQuery  = new SelectSqlQuery();
@@ -121,7 +132,7 @@ namespace Extended.Dapper.Core.Sql
 
             sqlQuery.From = this.sqlProvider.EscapeTable(entityMap.TableName);
 
-            return sqlQuery.ToString();
+            return sqlQuery;
         }
 
         #endregion
