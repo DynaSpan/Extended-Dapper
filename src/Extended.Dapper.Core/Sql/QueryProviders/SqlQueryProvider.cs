@@ -42,7 +42,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         {
             var query = new StringBuilder();
             var selectFields = string.Join(", ", selectQuery.Select.Select(s => this.MapAliasColumn(s)));
-            query.AppendFormat("SELECT {0} FROM {1}", selectFields, selectQuery.From);
+            query.AppendFormat("SELECT {0} FROM {1}", selectFields, this.EscapeTable(selectQuery.From));
 
             if (selectQuery.Joins != null && !string.IsNullOrEmpty(selectQuery.Joins.ToString()))
             {
@@ -70,7 +70,10 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// <param name="p"></param>
         public virtual string MapAliasColumn(SelectField selectField)
         {
-            if (!string.IsNullOrEmpty(selectField.FieldAlias))
+            if (selectField.IsMainKey)
+                return string.Format("1 AS {0}", 
+                    this.EscapeColumn(selectField.Field));
+            else if (!string.IsNullOrEmpty(selectField.FieldAlias))
                 return string.Format("{0}.{1} AS {2}", 
                     this.EscapeTable(selectField.Table), 
                     this.EscapeColumn(selectField.Field), 

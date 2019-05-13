@@ -16,8 +16,6 @@ namespace Extended.Dapper.Core.Reflection
             var typeList = new List<Type>();
             typeList.Add(typeof(T));
 
-            
-
             Array.ForEach(includes, incl => {
                 var type = incl.Body.Type.GetTypeInfo();
 

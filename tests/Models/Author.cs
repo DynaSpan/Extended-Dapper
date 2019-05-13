@@ -14,7 +14,7 @@ namespace Extended.Dapper.Tests.Models
         public string Country { get; set; }
 
         [OneToMany("Book", "Id", "AuthorId")]
-        public ICollection<Book> Books { get; set; }
+        public IEnumerable<Book> Books { get; set; }
 
         public override string ToString()
         {
@@ -24,7 +24,7 @@ namespace Extended.Dapper.Tests.Models
             {
                 foreach (var book in Books)
                 {
-                    returnString = returnString + Environment.NewLine + book.Name;
+                    returnString = returnString + Environment.NewLine + book.Name + " (" + book.ReleaseYear + ")";
                 }
             }
 

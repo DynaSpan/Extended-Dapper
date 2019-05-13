@@ -84,7 +84,7 @@ namespace Extended.Dapper.Core.Sql
         /// <param name="predicate"></param>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public SelectSqlQuery Select<T>(Expression<Func<T, bool>> predicate = null)
+        public SelectSqlQuery Select<T>(Expression<Func<T, bool>> predicate = null, params Expression<Func<T, object>>[] includes)
         {
             var entityMap = EntityMapper.GetEntityMap(typeof(T));
             var sqlQuery  = new SelectSqlQuery();
@@ -93,9 +93,14 @@ namespace Extended.Dapper.Core.Sql
 
             sqlQuery.Select.AddRange(this.GenerateSelectFields(entityMap.TableName, entityMap.MappedPropertiesMetadata));
 
+            var includePropertyList = includes.Select(x => ((MemberExpression)x.Body).Member.Name.ToLower());
+
             if (entityMap.RelationProperties != null && entityMap.RelationProperties.Count > 0)
             {
-                foreach (KeyValuePair<PropertyInfo, ICollection<SqlRelationPropertyMetadata>> kvpProperty in entityMap.RelationProperties)
+                var relationProperties = entityMap.RelationProperties
+                    .Where(x => includePropertyList.Contains(x.Key.Name.ToLower()));
+
+                foreach (KeyValuePair<PropertyInfo, ICollection<SqlRelationPropertyMetadata>> kvpProperty in relationProperties)
                 {
                     var property = kvpProperty.Key;
                     var metadata = kvpProperty.Value;
@@ -110,7 +115,7 @@ namespace Extended.Dapper.Core.Sql
                     if (relationAttr is ManyToOneAttribute)
                         joinType = " INNER JOIN";
                     else if (relationAttr is OneToManyAttribute)
-                        joinType = " LEFT JOIN";
+                        joinType = " LEFT OUTER JOIN";
 
                     joinBuilder.AppendFormat(" {0} {1} ON {2}.{3} = {4}.{5}",
                         joinType,
@@ -147,10 +152,16 @@ namespace Extended.Dapper.Core.Sql
                 mainKeySet = true;
                 return true;
             };
+            
+            selectList.Add(new SelectField(){
+                IsMainKey = true,
+                Table = tableName,
+                Field = "Split_" + tableName
+            });
 
             selectList.AddRange(keyProperties.Select(k => 
                 new SelectField(){
-                    IsMainKey = mainKey(),
+                    IsMainKey = false,
                     Table = tableName,
                     Field = k.ColumnName,
                     FieldAlias = k.ColumnAlias

@@ -19,16 +19,16 @@ namespace Extended.Dapper.Tests.Query
         [Test]
         public void TestModelMapping()
         {
-            SqlQueryProviderHelper.SetProvider(DatabaseProvider.MySQL);
-            var sqlGenerator = new SqlGenerator(DatabaseProvider.MySQL);
+            SqlQueryProviderHelper.SetProvider(DatabaseProvider.MSSQL);
+            var sqlGenerator = new SqlGenerator(DatabaseProvider.MSSQL);
 
             var databaseSettings = new DatabaseSettings()
             {
-                Host = "172.18.0.5",
+                Host = "172.20.0.10",
                 User = "dapper",
                 Password = "extended-dapper-sql-password",
                 Database = "dapper",
-                DatabaseProvider = DatabaseProvider.MySQL
+                DatabaseProvider = DatabaseProvider.MSSQL
             };
             var databaseFactory = new DatabaseFactory(databaseSettings);
             
@@ -37,12 +37,12 @@ namespace Extended.Dapper.Tests.Query
 
             //ReflectionHelper.GetTypeListFromIncludes<Book>((book, user) => { book.Author = user; return book; });
 
-            // var books = (bookEntityRepository.Get(null, b => b.Author).Result);
+            var books = (bookEntityRepository.Get(null, b => b.Author).Result);
 
-            // foreach (var book in books)
-            // {
-            //     Console.WriteLine(book);
-            // }
+            foreach (var book in books)
+            {
+                Console.WriteLine(book);
+            }
 
             var authors = (authorEntityRepository.Get(null, a => a.Books).Result);
 
