@@ -51,9 +51,6 @@ namespace Extended.Dapper.Core.Mappers
                 entityMap.RelationProperties.Add(pi, GetRelationsMetadata(pi));
             }
 
-            // entityMap.RelationProperties         = relationProperties;
-            // entityMap.RelationPropertiesMetadata = GetRelationsMetadata(relationProperties);
-
             // Grab all primary key properties
             var primaryKeyProperties = props.Where(p => p.GetCustomAttributes<KeyAttribute>().Any());
 

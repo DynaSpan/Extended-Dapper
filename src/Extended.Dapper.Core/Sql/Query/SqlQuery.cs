@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Extended.Dapper.Core.Sql.Query.Models;
 using Extended.Dapper.Core.Sql.QueryProviders;
 
 namespace Extended.Dapper.Core.Sql.Query
@@ -14,7 +15,7 @@ namespace Extended.Dapper.Core.Sql.Query
         /// <summary>
         /// Any joins that have to take place on the query
         /// </summary>
-        public StringBuilder Joins { get; set; }
+        public List<Join> Joins { get; set; }
 
         /// <summary>
         /// Where clauses
@@ -35,7 +36,7 @@ namespace Extended.Dapper.Core.Sql.Query
         {
             this.Params = new Dictionary<string, object>();
 
-            this.Joins = new StringBuilder();
+            this.Joins = new List<Join>();
             this.Where = new StringBuilder();
         }
 

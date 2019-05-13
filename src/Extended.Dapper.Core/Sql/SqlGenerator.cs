@@ -81,10 +81,10 @@ namespace Extended.Dapper.Core.Sql
         /// <summary>
         /// Generates a select query for an entity
         /// </summary>
-        /// <param name="predicate"></param>
+        /// <param name="search"></param>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public SelectSqlQuery Select<T>(Expression<Func<T, bool>> predicate = null, params Expression<Func<T, object>>[] includes)
+        public SelectSqlQuery Select<T>(Expression<Func<T, bool>> search = null, params Expression<Func<T, object>>[] includes)
         {
             var entityMap = EntityMapper.GetEntityMap(typeof(T));
             var sqlQuery  = new SelectSqlQuery();
@@ -109,29 +109,29 @@ namespace Extended.Dapper.Core.Sql
 
                     sqlQuery.Select.AddRange(this.GenerateSelectFields(relationAttr.TableName, metadata.Cast<SqlPropertyMetadata>().ToList()));
 
+                    var join = new Join();
+
                     // Check the type of relation
                     string joinType = string.Empty;
 
                     if (relationAttr is ManyToOneAttribute)
-                        joinType = " INNER JOIN";
+                        join.Type = JoinType.INNER;
                     else if (relationAttr is OneToManyAttribute)
-                        joinType = " LEFT OUTER JOIN";
+                        join.Type = JoinType.LEFT;
 
-                    joinBuilder.AppendFormat(" {0} {1} ON {2}.{3} = {4}.{5}",
-                        joinType,
-                        this.sqlProvider.EscapeTable(relationAttr.TableName),
-                        this.sqlProvider.EscapeTable(entityMap.TableName),
-                        this.sqlProvider.EscapeColumn(relationAttr.LocalKey),
-                        this.sqlProvider.EscapeTable(relationAttr.TableName),
-                        this.sqlProvider.EscapeColumn(relationAttr.ExternalKey));
+                    join.ExternalKey = relationAttr.ExternalKey;
+                    join.ExternalTable = relationAttr.TableName;
+
+                    join.LocalKey = relationAttr.LocalKey;
+                    join.LocalTable = entityMap.TableName;
+
+                    sqlQuery.Joins.Add(join);
                 }
-
-                sqlQuery.Joins.Append(joinBuilder.ToString());
             }
 
             // Append where
-            if (predicate != null)
-                this.sqlProvider.AppendWherePredicateQuery(sqlQuery, predicate, QueryType.Select, entityMap);
+            if (search != null)
+                this.sqlProvider.AppendWherePredicateQuery(sqlQuery, search, QueryType.Select, entityMap);
 
             sqlQuery.From = entityMap.TableName;
 

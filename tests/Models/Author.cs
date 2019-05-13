@@ -24,7 +24,7 @@ namespace Extended.Dapper.Tests.Models
             {
                 foreach (var book in Books)
                 {
-                    returnString = returnString + Environment.NewLine + book.Name + " (" + book.ReleaseYear + ")";
+                    returnString = returnString + Environment.NewLine + " - " + book.Name + " (" + book.ReleaseYear + ")";
                 }
             }
 

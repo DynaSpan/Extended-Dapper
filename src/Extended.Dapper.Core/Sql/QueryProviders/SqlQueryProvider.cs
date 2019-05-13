@@ -41,12 +41,13 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         public virtual string BuildSelectQuery(SelectSqlQuery selectQuery)
         {
             var query = new StringBuilder();
-            var selectFields = string.Join(", ", selectQuery.Select.Select(s => this.MapAliasColumn(s)));
+
+            var selectFields = string.Join(", ", selectQuery.Select.Select(this.MapAliasColumn));
             query.AppendFormat("SELECT {0} FROM {1}", selectFields, this.EscapeTable(selectQuery.From));
 
-            if (selectQuery.Joins != null && !string.IsNullOrEmpty(selectQuery.Joins.ToString()))
+            if (selectQuery.Joins != null && selectQuery.Joins.Count > 0)
             {
-                query.Append(selectQuery.Joins);
+                query.Append(" " + string.Join(" ", selectQuery.Joins.Select(MapJoin)));
             }
 
             if (selectQuery.Where != null && !string.IsNullOrEmpty(selectQuery.Where.ToString()))
@@ -58,6 +59,8 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
             {
                 query.AppendFormat(" LIMIT {0}", selectQuery.Limit);
             }
+
+            Console.WriteLine(query.ToString());
 
             return query.ToString();
         }
@@ -82,6 +85,30 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
                 return string.Format("{0}.{1}", 
                     this.EscapeTable(selectField.Table), 
                     this.EscapeColumn(selectField.Field));
+        }
+
+        /// <summary>
+        /// Projecten function for mapping a join
+        /// </summary>
+        /// <param name="join"></param>
+        public virtual string MapJoin(Join join)
+        {
+            var joinType = string.Empty;
+
+            switch (join.Type)
+            {
+                case JoinType.INNER: joinType = "INNER"; break;
+                case JoinType.LEFT: joinType = "LEFT"; break;
+            }
+
+            joinType = joinType + " JOIN";
+
+            return string.Format("{0} {1} ON {2}.{3} = {1}.{4}",
+                joinType,
+                this.EscapeTable(join.ExternalTable),
+                this.EscapeTable(join.LocalTable),
+                this.EscapeColumn(join.LocalKey),
+                this.EscapeColumn(join.ExternalKey));
         }
 
         /// <summary>

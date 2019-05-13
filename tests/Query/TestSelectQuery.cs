@@ -13,11 +13,11 @@ namespace Extended.Dapper.Tests.Query
     [TestFixture]
     public class TestSelectQuery
     {
-        /// <summary>
-        /// Currently used for literal testing, not unittesting
-        /// </summary>
-        [Test]
-        public void TestModelMapping()
+        private EntityRepository<Book> BookRepository { get; set; }
+        private EntityRepository<Author> AuthorRepository { get; set; }
+
+        [SetUp]
+        public void Setup()
         {
             SqlQueryProviderHelper.SetProvider(DatabaseProvider.MSSQL);
             var sqlGenerator = new SqlGenerator(DatabaseProvider.MSSQL);
@@ -32,29 +32,55 @@ namespace Extended.Dapper.Tests.Query
             };
             var databaseFactory = new DatabaseFactory(databaseSettings);
             
-            var bookEntityRepository = new EntityRepository<Book>(databaseFactory);
-            var authorEntityRepository = new EntityRepository<Author>(databaseFactory);
+            BookRepository = new EntityRepository<Book>(databaseFactory);
+            AuthorRepository = new EntityRepository<Author>(databaseFactory);
+        }
 
-            //ReflectionHelper.GetTypeListFromIncludes<Book>((book, user) => { book.Author = user; return book; });
-
-            var books = (bookEntityRepository.Get(null, b => b.Author).Result);
+        /// <summary>
+        /// Currently used for literal testing, not unittesting
+        /// </summary>
+        [Test]
+        public void TestModelMapping()
+        {
+            var books = (BookRepository.Get(b => b.ReleaseYear == 1988, b => b.Author).Result);
 
             foreach (var book in books)
             {
                 Console.WriteLine(book);
             }
 
-            var authors = (authorEntityRepository.Get(null, a => a.Books).Result);
+            Console.WriteLine("==============");
+
+            var authors = (AuthorRepository.Get(a => a.Country == "United Kingdom", a => a.Books).Result);
 
             foreach (var author in authors)
             {
                 Console.WriteLine(author);
             }
 
-            // Console.WriteLine(sqlGenerator.Select<Book>());
-            // Console.WriteLine(sqlGenerator.Select<Book>(b => b.Name == "Test"));
-            // Console.WriteLine(sqlGenerator.Select<Author>());
-            // Console.WriteLine(sqlGenerator.Select<Author>(a => a.Country == "NL" || a.Country == "BE"));
+            Console.WriteLine("==============");
+
+            // Get other author by ID
+            var otherAuthor = AuthorRepository.GetById(new Guid("6ba27ef2-fb90-4f85-ba23-6934cf5a04ec"), a => a.Books).Result;
+
+            Console.WriteLine(otherAuthor);
+        }
+
+        [Test]
+        public void TestInsert()
+        {
+            var newAuthor = new Author(){
+                Name = "Spees Kees",
+                BirthYear = 2652,
+                Country = "Republic of Earth Citizens, Mars, Solar System, Milky Way Galaxy"
+            };
+            var newBook = new Book() {
+                Author = newAuthor,
+                Name = "The birth of Spees",
+                ReleaseYear = 2687
+            };
+
+            Console.WriteLine(BookRepository.Insert(newBook).Result);
         }
     }
 }
