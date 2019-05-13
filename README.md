@@ -2,18 +2,19 @@
 
 Based on `MicroOrm.Dapper.Repositories` by @phnx47.
 
-Extends Dapper functionality with a normal repository pattern, `OneToMany` and `ManyToOne` mappings.
+Extends Dapper functionality with a repository pattern, `OneToMany` and `ManyToOne` mappings and searching (on SQL level) using LINQ.
 
 **This is still a WIP and not ready for production use!**
 
 ## TODO
 
-- Make sure all queries generate properly (`SELECT`, `UPDATE`, `DELETE`, `INSERT`)
-- Mapping to & from POCOs
-- Make sure `OneToMany` and `ManyToOne` mappings properly apply to `INSERT`s, `UPDATE`s & `SELECT`s
+- Make sure all queries generate properly (~`SELECT`~, `UPDATE`, `DELETE`, `INSERT`)
+- ~Mapping to & from POCOs~ (WORKING: Mapper impl. + default Dapper)
+- Make sure `OneToMany` and `ManyToOne` mappings properly apply to `INSERT`s, `UPDATE`s & `SELECT`s (implemented for `SELECT`)
 - Repositories
 - Lazy loading of `OneToMany` and `ManyToOne`
 - Implement `ManyToMany` attribute
 - Write unittests
 - Implement more `SqlProviders`
 - Set up CI/CD for automated deployment to NuGet
+- Setup documentation
