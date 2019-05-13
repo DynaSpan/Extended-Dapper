@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.Text;
+using Extended.Dapper.Core.Sql.QueryProviders;
 
 namespace Extended.Dapper.Core.Sql.Query
 {
@@ -35,6 +37,16 @@ namespace Extended.Dapper.Core.Sql.Query
 
             this.Joins = new StringBuilder();
             this.Where = new StringBuilder();
+        }
+
+        public override string ToString()
+        {
+            if (this is SelectSqlQuery)
+            {
+                return SqlQueryProviderHelper.GetProvider().BuildSelectQuery(this as SelectSqlQuery);
+            }
+
+             throw new NotImplementedException();
         }
     }
 }

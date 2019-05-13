@@ -15,5 +15,20 @@ namespace Extended.Dapper.Tests.Models
 
         [OneToMany("Book", "Id", "AuthorId")]
         public ICollection<Book> Books { get; set; }
+
+        public override string ToString()
+        {
+            var returnString = string.Format("{0} ({1}), {2}", Name, BirthYear, Country);
+
+            if (Books != null)
+            {
+                foreach (var book in Books)
+                {
+                    returnString = returnString + Environment.NewLine + book.Name;
+                }
+            }
+
+            return returnString;
+        }
     }
 }

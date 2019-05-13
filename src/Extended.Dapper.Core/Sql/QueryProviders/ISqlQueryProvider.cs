@@ -27,21 +27,12 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// </summary>
         /// <param name="databaseSettings"></param>
         string BuildConnectionString(DatabaseSettings databaseSettings);
-
+        
         /// <summary>
-        /// Generates the SQL select fields for a given entity
+        /// Build a select query
         /// </summary>
-        /// <param name="entityMap"></param>
-        /// <returns></returns>
-        string GenerateSelectFields(EntityMap entityMap);
-
-        /// <summary>
-        /// Generates the SQL select fields for a given entity
-        /// </summary>
-        /// <param name="tableName"></param>
-        /// <param name="properties"></param>
-        /// <returns>Fields for in a SELECT query</returns>
-        string GenerateSelectFields(string tableName, ICollection<SqlPropertyMetadata> properties);
+        /// <param name="selectQuery"></param>
+        string BuildSelectQuery(SelectSqlQuery selectQuery);
 
         /// <summary>
         /// Converts an ExpressionType to a SQL operator

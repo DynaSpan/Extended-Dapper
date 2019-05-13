@@ -14,6 +14,7 @@ using Extended.Dapper.Core.Helpers;
 using Extended.Dapper.Core.Mappers;
 using Extended.Dapper.Core.Sql.Metadata;
 using Extended.Dapper.Core.Sql.Query;
+using Extended.Dapper.Core.Sql.Query.Models;
 using Extended.Dapper.Core.Sql.QueryProviders;
 
 namespace Extended.Dapper.Core.Sql
@@ -90,7 +91,7 @@ namespace Extended.Dapper.Core.Sql
 
             var joinBuilder = new StringBuilder();
 
-            sqlQuery.Select.Append(this.sqlProvider.GenerateSelectFields(entityMap));
+            sqlQuery.Select.AddRange(this.GenerateSelectFields(entityMap.TableName, entityMap.MappedPropertiesMetadata));
 
             if (entityMap.RelationProperties != null && entityMap.RelationProperties.Count > 0)
             {
@@ -101,10 +102,7 @@ namespace Extended.Dapper.Core.Sql
 
                     var relationAttr = System.Attribute.GetCustomAttributes(property, typeof(RelationAttributeBase), true).FirstOrDefault() as RelationAttributeBase;
 
-                    var selectFields = this.sqlProvider.GenerateSelectFields(relationAttr.TableName, metadata.Cast<SqlPropertyMetadata>().ToList());
-
-                    if (selectFields != null && selectFields != string.Empty)
-                        sqlQuery.Select.AppendFormat(", {0}", selectFields);
+                    sqlQuery.Select.AddRange(this.GenerateSelectFields(relationAttr.TableName, metadata.Cast<SqlPropertyMetadata>().ToList()));
 
                     // Check the type of relation
                     string joinType = string.Empty;
@@ -130,9 +128,47 @@ namespace Extended.Dapper.Core.Sql
             if (predicate != null)
                 this.sqlProvider.AppendWherePredicateQuery(sqlQuery, predicate, QueryType.Select, entityMap);
 
-            sqlQuery.From = this.sqlProvider.EscapeTable(entityMap.TableName);
+            sqlQuery.From = entityMap.TableName;
 
             return sqlQuery;
+        }
+
+        private ICollection<SelectField> GenerateSelectFields(string tableName, ICollection<SqlPropertyMetadata> properties)
+        {
+            var selectList = new List<SelectField>();
+
+            // Add key properties first
+            var keyProperties = properties.Where(x => x.PropertyInfo.GetCustomAttribute<KeyAttribute>() != null);
+            var mainKeySet = false;
+            Func<bool> mainKey = delegate 
+            {
+                if (mainKeySet) return false;
+
+                mainKeySet = true;
+                return true;
+            };
+
+            selectList.AddRange(keyProperties.Select(k => 
+                new SelectField(){
+                    IsMainKey = mainKey(),
+                    Table = tableName,
+                    Field = k.ColumnName,
+                    FieldAlias = k.ColumnAlias
+                }
+            ));
+
+            var otherProperties = properties.Where(x => x.PropertyInfo.GetCustomAttribute<KeyAttribute>() == null);
+
+            selectList.AddRange(otherProperties.Select(k =>
+                new SelectField(){
+                    IsMainKey = false,
+                    Table = tableName,
+                    Field = k.ColumnName,
+                    FieldAlias = k.ColumnAlias
+                }
+            ));
+
+            return selectList;
         }
 
         #endregion

@@ -10,6 +10,7 @@ using Extended.Dapper.Core.Mappers;
 using Extended.Dapper.Core.Sql.Metadata;
 using Extended.Dapper.Core.Sql.Query;
 using Extended.Dapper.Core.Sql.Query.Expression;
+using Extended.Dapper.Core.Sql.Query.Models;
 
 namespace Extended.Dapper.Core.Sql.QueryProviders
 {
@@ -34,26 +35,31 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         public abstract string BuildConnectionString(DatabaseSettings databaseSettings);
 
         /// <summary>
-        /// Generates the SQL select fields for a given entity
+        /// Build a select query
         /// </summary>
-        /// <param name="entityMap"></param>
-        /// <returns>Fields for in a SELECT query</returns>
-        public virtual string GenerateSelectFields(EntityMap entityMap)
+        /// <param name="selectQuery"></param>
+        public virtual string BuildSelectQuery(SelectSqlQuery selectQuery)
         {
-            return this.GenerateSelectFields(entityMap.TableName, entityMap.MappedPropertiesMetadata);
-        }
+            var query = new StringBuilder();
+            var selectFields = string.Join(", ", selectQuery.Select.Select(s => this.MapAliasColumn(s)));
+            query.AppendFormat("SELECT {0} FROM {1}", selectFields, selectQuery.From);
 
-        /// <summary>
-        /// Generates the SQL select fields for a given entity
-        /// </summary>
-        /// <param name="tableName"></param>
-        /// <param name="properties"></param>
-        /// <returns>Fields for in a SELECT query</returns>
-        public virtual string GenerateSelectFields(string tableName, ICollection<SqlPropertyMetadata> properties)
-        {
-            return properties == null
-                    ? string.Empty
-                    : string.Join(", ", properties.Select(x => this.MapAliasColumn(tableName, x)));
+            if (selectQuery.Joins != null && !string.IsNullOrEmpty(selectQuery.Joins.ToString()))
+            {
+                query.Append(selectQuery.Joins);
+            }
+
+            if (selectQuery.Where != null && !string.IsNullOrEmpty(selectQuery.Where.ToString()))
+            {
+                query.AppendFormat(" WHERE {0}", selectQuery.Where);
+            }
+
+            if (selectQuery.Limit != null)
+            {
+                query.AppendFormat(" LIMIT {0}", selectQuery.Limit);
+            }
+
+            return query.ToString();
         }
 
         /// <summary>
@@ -62,17 +68,17 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// </summary>
         /// <param name="tableName"></param>
         /// <param name="p"></param>
-        public virtual string MapAliasColumn(string tableName, SqlPropertyMetadata p)
+        public virtual string MapAliasColumn(SelectField selectField)
         {
-            if (!string.IsNullOrEmpty(p.ColumnAlias))
+            if (!string.IsNullOrEmpty(selectField.FieldAlias))
                 return string.Format("{0}.{1} AS {2}", 
-                    this.EscapeTable(tableName), 
-                    this.EscapeColumn(p.ColumnName), 
-                    this.EscapeColumn(p.PropertyName));
+                    this.EscapeTable(selectField.Table), 
+                    this.EscapeColumn(selectField.Field), 
+                    this.EscapeColumn(selectField.FieldAlias));
             else 
                 return string.Format("{0}.{1}", 
-                    this.EscapeTable(tableName), 
-                    this.EscapeColumn(p.ColumnName));
+                    this.EscapeTable(selectField.Table), 
+                    this.EscapeColumn(selectField.Field));
         }
 
         /// <summary>

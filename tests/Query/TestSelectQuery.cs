@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 using Extended.Dapper.Core.Database;
-using Extended.Dapper.Core.EntityRepository;
+using Extended.Dapper.Core.Repository;
 using Extended.Dapper.Core.Reflection;
 using Extended.Dapper.Core.Sql;
 using Extended.Dapper.Core.Sql.QueryProviders;
@@ -35,11 +35,21 @@ namespace Extended.Dapper.Tests.Query
             var bookEntityRepository = new EntityRepository<Book>(databaseFactory);
             var authorEntityRepository = new EntityRepository<Author>(databaseFactory);
 
-            ReflectionHelper.GetTypeListFromIncludes<Book>((book, user) => { book.Author = user; return book; });
+            //ReflectionHelper.GetTypeListFromIncludes<Book>((book, user) => { book.Author = user; return book; });
 
-            var book = (bookEntityRepository.Get(b => b.Name == "1984 - second edition", b => b.Author).Result);
+            // var books = (bookEntityRepository.Get(null, b => b.Author).Result);
 
-            //Console.WriteLine(book);
+            // foreach (var book in books)
+            // {
+            //     Console.WriteLine(book);
+            // }
+
+            var authors = (authorEntityRepository.Get(null, a => a.Books).Result);
+
+            foreach (var author in authors)
+            {
+                Console.WriteLine(author);
+            }
 
             // Console.WriteLine(sqlGenerator.Select<Book>());
             // Console.WriteLine(sqlGenerator.Select<Book>(b => b.Name == "Test"));
