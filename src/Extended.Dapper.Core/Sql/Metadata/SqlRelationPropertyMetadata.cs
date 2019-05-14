@@ -13,20 +13,22 @@ namespace Extended.Dapper.Core.Sql.Metadata
         /// <summary>
         /// Name of the internal primary key
         /// </summary>
-        /// <value></value>
         public string LocalKey { get; set; }
 
         /// <summary>
         /// Name of the external primary key
         /// </summary>
-        /// <value></value>
         public string ExternalKey { get; set; }
 
         /// <summary>
         /// Original relation PropertyInfo
         /// </summary>
-        /// <value></value>
         public PropertyInfo RelationPropertyInfo { get; set; }
+
+        /// <summary>
+        /// The type of the relation
+        /// </summary>
+        public RelationType RelationType { get; set; }
 
         public SqlRelationPropertyMetadata(
             PropertyInfo relationPropertyInfo, 
@@ -40,6 +42,16 @@ namespace Extended.Dapper.Core.Sql.Metadata
             this.TableName      = relationAttribute.TableName;
             this.ExternalKey    = relationAttribute.ExternalKey;
             this.LocalKey       = relationAttribute.LocalKey;
+
+            if (relationAttribute is OneToManyAttribute)
+                this.RelationType = RelationType.OneToMany;
+            else if (relationAttribute is ManyToOneAttribute)
+                this.RelationType = RelationType.ManyToOne;
         }
+    }
+
+    public enum RelationType {
+        OneToMany,
+        ManyToOne
     }
 }
