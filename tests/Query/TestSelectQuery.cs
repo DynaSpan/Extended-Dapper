@@ -70,7 +70,7 @@ namespace Extended.Dapper.Tests.Query
         [Test]
         public void TestById()
         {
-            var book = BookRepository.GetById(new Guid("3D285B02-A8CA-4468-9172-EB3A073C488C"), b => b.Author).Result;
+            var book = BookRepository.GetById("3D285B02-A8CA-4468-9172-EB3A073C488C", b => b.Author).Result;
 
             Console.WriteLine(book);
         }
@@ -79,6 +79,7 @@ namespace Extended.Dapper.Tests.Query
         public void TestInsert()
         {
             var newAuthor = new Author(){
+                Id = new Guid("9D89D8F2-AF2C-42E2-8077-7ED1A0809366"),
                 Name = "Spees Kees",
                 BirthYear = 2652,
                 Country = "Republic of Earth Citizens, Mars, Solar System, Milky Way Galaxy"

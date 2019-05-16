@@ -169,41 +169,28 @@ namespace Extended.Dapper.Core.Repository
 
                 if (oneObj != null)
                 {
-                    // TODO check if it exists already
+                    var oneObjKey = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", oneObj.GetType(), new[] { oneObj }) as string;
+                    
+                    if (oneObjKey == string.Empty || oneObjKey == null || oneObjKey == new Guid().ToString())
+                    {
+                        // Insert it
+                        var query = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "Insert", oneObj.GetType(), new[] { oneObj }, this.SqlGenerator) as InsertSqlQuery;
+                        var queryResult = await this.ExecuteInsertQuery(oneObj, query);
 
-                    // Insert it
-                    var query = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "Insert", oneObj.GetType(), new[] { oneObj }, this.SqlGenerator) as InsertSqlQuery;
-                    var queryResult = await this.ExecuteInsertQuery(oneObj, query);
+                        // Grab primary key
+                        oneObjKey = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", oneObj.GetType(), new[] { oneObj }) as string;
 
-                    // Grab primary key
-                    var primKey = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", oneObj.GetType(), new[] { oneObj }) as string;
-
-                    if (!queryResult)
-                        throw new ApplicationException("Could not insert a ManyToOne object: " + oneObj);
+                        if (!queryResult)
+                            throw new ApplicationException("Could not insert a ManyToOne object: " + oneObj);
+                    }
 
                     insertQuery.Insert.Add(new InsertField(entityMap.TableName, attr.LocalKey, "@p_m2o_" + attr.TableName + "_" + attr.LocalKey));
-                    insertQuery.Params.Add("@p_m2o_" + attr.TableName + "_" + attr.LocalKey, primKey);
+                    insertQuery.Params.Add("@p_m2o_" + attr.TableName + "_" + attr.LocalKey, oneObjKey);
                     // TODO add foreign key above
                 }
             }
 
             return insertQuery;
-        }
-
-        public virtual Expression<Func<T, bool>> CreateByIdExpression<T>(object id)
-        {
-            var entityMap = EntityMapper.GetEntityMap(typeof(T));
-
-            var keyProperty = entityMap.PrimaryKeyProperties.Where(x => x.GetCustomAttribute<AutoValueAttribute>() != null).FirstOrDefault();
-
-            if (keyProperty == null)
-                keyProperty = entityMap.PrimaryKeyProperties.FirstOrDefault();
-
-            ParameterExpression t = Expression.Parameter(typeof(T), "t");
-            Expression idProperty = Expression.Property(t, keyProperty.Name);
-            Expression comparison = Expression.Equal(idProperty, Expression.Constant(id));
-            
-            return Expression.Lambda<Func<T, bool>>(comparison, t);
         }
     }
 }

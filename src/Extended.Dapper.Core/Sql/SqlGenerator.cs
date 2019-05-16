@@ -95,7 +95,6 @@ namespace Extended.Dapper.Core.Sql
         /// </summary>
         /// <param name="search"></param>
         /// <typeparam name="T"></typeparam>
-        /// <returns></returns>
         public SelectSqlQuery Select<T>(Expression<Func<T, bool>> search = null, params Expression<Func<T, object>>[] includes)
         {
             var entityMap = EntityMapper.GetEntityMap(typeof(T));
@@ -173,6 +172,31 @@ namespace Extended.Dapper.Core.Sql
         }
 
         #endregion
+
+        /// <summary>
+        /// Creates an search expression for the ID
+        /// </summary>
+        /// <param name="id">The id that is wanted</param>
+        /// <typeparam name="T">Entity type</typeparam>
+        public virtual Expression<Func<T, bool>> CreateByIdExpression<T>(object id)
+        {
+            var entityMap = EntityMapper.GetEntityMap(typeof(T));
+
+            var keyProperty = entityMap.PrimaryKeyProperties.Where(x => x.GetCustomAttribute<AutoValueAttribute>() != null).FirstOrDefault();
+
+            if (keyProperty == null)
+                keyProperty = entityMap.PrimaryKeyProperties.FirstOrDefault();
+
+            // Check if we need to convert the id
+            if (keyProperty.PropertyType == typeof(Guid) && id.GetType() == typeof(string))
+                id = new Guid(id.ToString());
+
+            ParameterExpression t = Expression.Parameter(typeof(T), "t");
+            Expression idProperty = Expression.Property(t, keyProperty.Name);
+            Expression comparison = Expression.Equal(idProperty, Expression.Constant(id));
+            
+            return Expression.Lambda<Func<T, bool>>(comparison, t);
+        }
     }
 
     public enum QueryType

@@ -54,8 +54,7 @@ namespace Extended.Dapper.Core.Repository
         /// <param name="includes">Which children to include</param>
         public virtual async Task<T> GetById(object id, params Expression<Func<T, object>>[] includes)
         {
-            var idExpression = this.QueryExecuter.CreateByIdExpression<T>(id);
-            var query = this.SqlGenerator.Select<T>(idExpression, includes);
+            var query = this.SqlGenerator.Select<T>(this.SqlGenerator.CreateByIdExpression<T>(id), includes);
 
             return (await this.QueryExecuter.ExecuteSelectQuery(query, null, includes)).FirstOrDefault();
         }

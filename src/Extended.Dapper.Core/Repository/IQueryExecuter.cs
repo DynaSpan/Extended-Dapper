@@ -26,7 +26,5 @@ namespace Extended.Dapper.Core.Repository
         /// <param name="connection"></param>
         /// <returns>true when succesful; false otherwise</returns>
        Task<bool> ExecuteInsertQuery(object entity, InsertSqlQuery query, IDbConnection connection = null);
-
-       Expression<Func<T, bool>> CreateByIdExpression<T>(object id);
     }
 }
