@@ -5,8 +5,10 @@ using System.Data;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Dapper;
+using Extended.Dapper.Attributes.Entities;
 using Extended.Dapper.Attributes.Entities.Relations;
 using Extended.Dapper.Core.Database;
 using Extended.Dapper.Core.Mappers;
@@ -186,6 +188,22 @@ namespace Extended.Dapper.Core.Repository
             }
 
             return insertQuery;
+        }
+
+        public virtual Expression<Func<T, bool>> CreateByIdExpression<T>(object id)
+        {
+            var entityMap = EntityMapper.GetEntityMap(typeof(T));
+
+            var keyProperty = entityMap.PrimaryKeyProperties.Where(x => x.GetCustomAttribute<AutoValueAttribute>() != null).FirstOrDefault();
+
+            if (keyProperty == null)
+                keyProperty = entityMap.PrimaryKeyProperties.FirstOrDefault();
+
+            ParameterExpression t = Expression.Parameter(typeof(T), "t");
+            Expression idProperty = Expression.Property(t, keyProperty.Name);
+            Expression comparison = Expression.Equal(idProperty, Expression.Constant(id));
+            
+            return Expression.Lambda<Func<T, bool>>(comparison, t);
         }
     }
 }

@@ -52,10 +52,12 @@ namespace Extended.Dapper.Core.Repository
         /// </summary>
         /// <param name="id">The ID of the entity</param>
         /// <param name="includes">Which children to include</param>
-        public virtual async Task<T> GetById(Guid id, params Expression<Func<T, object>>[] includes)
+        public virtual async Task<T> GetById(object id, params Expression<Func<T, object>>[] includes)
         {
-            // TODO implement
-            return null;
+            var idExpression = this.QueryExecuter.CreateByIdExpression<T>(id);
+            var query = this.SqlGenerator.Select<T>(idExpression, includes);
+
+            return (await this.QueryExecuter.ExecuteSelectQuery(query, null, includes)).FirstOrDefault();
         }
 
 

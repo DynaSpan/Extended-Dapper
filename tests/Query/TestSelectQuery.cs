@@ -68,6 +68,14 @@ namespace Extended.Dapper.Tests.Query
         }
 
         [Test]
+        public void TestById()
+        {
+            var book = BookRepository.GetById(new Guid("3D285B02-A8CA-4468-9172-EB3A073C488C"), b => b.Author).Result;
+
+            Console.WriteLine(book);
+        }
+
+        [Test]
         public void TestInsert()
         {
             var newAuthor = new Author(){

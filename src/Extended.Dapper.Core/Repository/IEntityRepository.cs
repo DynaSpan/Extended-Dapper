@@ -19,8 +19,6 @@ namespace Extended.Dapper.Core.Repository
         /// </summary>
         /// <param name="id">The ID of the entity</param>
         /// <param name="includes">Which children to include</param>
-        Task<T> GetById(Guid id, params Expression<Func<T, object>>[] includes);
-
-        
+        Task<T> GetById(object id, params Expression<Func<T, object>>[] includes);
     }
 }
