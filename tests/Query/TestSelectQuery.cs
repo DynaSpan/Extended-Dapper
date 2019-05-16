@@ -20,6 +20,7 @@ namespace Extended.Dapper.Tests.Query
         public void Setup()
         {
             SqlQueryProviderHelper.SetProvider(DatabaseProvider.MSSQL);
+            SqlQueryProviderHelper.Verbose = true;
             var sqlGenerator = new SqlGenerator(DatabaseProvider.MSSQL);
 
             var databaseSettings = new DatabaseSettings()
@@ -42,7 +43,7 @@ namespace Extended.Dapper.Tests.Query
         [Test]
         public void TestModelMapping()
         {
-            var books = (BookRepository.Get(b => b.ReleaseYear == 1988, b => b.Author).Result);
+            var books = (BookRepository.Get(b => b.ReleaseYear == 2687 || b.ReleaseYear == 2020, b => b.Author).Result);
 
             foreach (var book in books)
             {
@@ -51,7 +52,7 @@ namespace Extended.Dapper.Tests.Query
 
             Console.WriteLine("==============");
 
-            var authors = (AuthorRepository.Get(a => a.Country == "United Kingdom", a => a.Books).Result);
+            var authors = (AuthorRepository.Get(a => a.BirthYear == 2652, a => a.Books).Result);
 
             foreach (var author in authors)
             {
@@ -80,7 +81,10 @@ namespace Extended.Dapper.Tests.Query
                 ReleaseYear = 2687
             };
 
-            Console.WriteLine(BookRepository.Insert(newBook).Result);
+            var book = BookRepository.Insert(newBook).Result;
+
+            Console.WriteLine(book.Id);
+            Console.WriteLine(book);
         }
     }
 }

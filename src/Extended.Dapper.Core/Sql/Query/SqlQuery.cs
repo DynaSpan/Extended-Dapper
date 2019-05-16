@@ -45,9 +45,13 @@ namespace Extended.Dapper.Core.Sql.Query
             if (this is SelectSqlQuery)
             {
                 return SqlQueryProviderHelper.GetProvider().BuildSelectQuery(this as SelectSqlQuery);
+            } 
+            else if (this is InsertSqlQuery)
+            {
+                return SqlQueryProviderHelper.GetProvider().BuildInsertQuery(this as InsertSqlQuery);
             }
 
-             throw new NotImplementedException();
+            throw new NotImplementedException();
         }
     }
 }

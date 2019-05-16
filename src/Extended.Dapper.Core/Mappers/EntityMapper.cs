@@ -5,6 +5,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using Extended.Dapper.Attributes.Entities;
 using Extended.Dapper.Attributes.Entities.Relations;
 using Extended.Dapper.Core.Extensions;
@@ -55,7 +56,7 @@ namespace Extended.Dapper.Core.Mappers
             var primaryKeyProperties = props.Where(p => p.GetCustomAttributes<KeyAttribute>().Any());
 
             entityMap.PrimaryKeyProperties          = primaryKeyProperties.ToArray();
-            entityMap.PrimaryKeyPropertiesMetadata  = primaryKeyProperties.Select(p => new SqlPropertyMetadata(p)).ToArray();
+            entityMap.PrimaryKeyPropertiesMetadata  = primaryKeyProperties.Select(p => new SqlKeyPropertyMetadata(p)).ToArray();
 
             // Grab all properties
             var properties = props.Where(p => !p.GetCustomAttributes<NotMappedAttribute>().Any());
@@ -86,6 +87,34 @@ namespace Extended.Dapper.Core.Mappers
             entityMapCache.TryAdd(entityType, entityMap);
 
             return entityMap;
+        }
+
+        /// <summary>
+        /// Generates a unique identifier for this entity
+        /// </summary>
+        public static string GetCompositeUniqueKey<T>(T entity)
+        {
+            // Get the entity map
+            var entityMap = GetEntityMap(typeof(T));
+
+            if (entityMap.PrimaryKeyPropertiesMetadata.Count == 1)
+            {
+                var metadata = entityMap.PrimaryKeyPropertiesMetadata.FirstOrDefault();
+                var keyVal = metadata.PropertyInfo.GetValue(entity);
+
+                return keyVal.ToString();
+            }
+
+            var compositeKeyBuilder = new StringBuilder();
+
+            foreach (var keyProp in entityMap.PrimaryKeyPropertiesMetadata)
+            {
+                var keyVal = keyProp.PropertyInfo.GetValue(entity);
+
+                compositeKeyBuilder.AppendFormat("{0}={1};", keyProp.ColumnName, keyVal);
+            }
+
+            return compositeKeyBuilder.ToString();
         }
 
         /// <summary>

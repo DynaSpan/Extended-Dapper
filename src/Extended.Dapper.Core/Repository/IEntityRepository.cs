@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Extended.Dapper.Core.Repository
 {
-    public interface IEntityRepository<T>
+    public interface IEntityRepository<T> where T : class
     {
         /// <summary>
         /// Gets one or more entities that match the search

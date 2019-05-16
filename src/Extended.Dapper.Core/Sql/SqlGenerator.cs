@@ -57,19 +57,31 @@ namespace Extended.Dapper.Core.Sql
                 entityMap.UpdatedAtProperty.SetValue(entity, DateTime.UtcNow);
 
             var insertQuery = new InsertSqlQuery();
-            insertQuery.Table = this.sqlProvider.EscapeTable(entityMap.TableName);
+            insertQuery.Table = entityMap.TableName;
 
-            insertQuery.Insert.Append(string.Join(", ", 
-                entityMap.MappedPropertiesMetadata.Select(p => this.sqlProvider.EscapeColumn(p.ColumnName))));
+            // Grab all properties, except autovalue ones
+            var autoValueProperties = entityMap.PrimaryKeyPropertiesMetadata.Where(x => x.AutoValue);
 
-            insertQuery.InsertParams.Append(string.Join(", ", 
-                entityMap.MappedPropertiesMetadata.Select(x => "@p_" + x.ColumnName)));
-
-            // Get the params & values
-            foreach (var metadata in entityMap.MappedPropertiesMetadata)
+            foreach (var autoValueProperty in autoValueProperties)
             {
-                insertQuery.Params.Add("@p_" + metadata.ColumnName, metadata.PropertyInfo.GetValue(entity, null));
+                var autoValueType = autoValueProperty.PropertyInfo.PropertyType;
+
+                if (autoValueType == typeof(Guid))
+                    autoValueProperty.PropertyInfo.SetValue(entity, Guid.NewGuid());
+                else
+                    throw new NotImplementedException($"AutoValue for type {autoValueProperty.GetType()} is not supported");
             }
+
+            insertQuery.Insert
+                .AddRange(entityMap.MappedPropertiesMetadata
+                    .Where(x => !x.PropertyInfo.GetCustomAttributes<ManyToOneAttribute>().Any() 
+                                && !x.PropertyInfo.GetCustomAttributes<OneToManyAttribute>().Any())
+                    .Select(p => {
+                        insertQuery.Params.Add("@p_" + p.ColumnName, p.PropertyInfo.GetValue(entity));
+
+                        return new InsertField(entityMap.TableName, p.ColumnName, "@p_" + p.ColumnName, p.ColumnAlias);
+                    }
+            ));
 
             return insertQuery;
         }
@@ -141,17 +153,6 @@ namespace Extended.Dapper.Core.Sql
         private ICollection<SelectField> GenerateSelectFields(string tableName, ICollection<SqlPropertyMetadata> properties)
         {
             var selectList = new List<SelectField>();
-
-            // Add key properties first
-            var keyProperties = properties.Where(x => x.PropertyInfo.GetCustomAttribute<KeyAttribute>() != null);
-            var mainKeySet = false;
-            Func<bool> mainKey = delegate 
-            {
-                if (mainKeySet) return false;
-
-                mainKeySet = true;
-                return true;
-            };
             
             selectList.Add(new SelectField(){
                 IsMainKey = true,
@@ -159,18 +160,7 @@ namespace Extended.Dapper.Core.Sql
                 Field = "Split_" + tableName
             });
 
-            selectList.AddRange(keyProperties.Select(k => 
-                new SelectField(){
-                    IsMainKey = false,
-                    Table = tableName,
-                    Field = k.ColumnName,
-                    FieldAlias = k.ColumnAlias
-                }
-            ));
-
-            var otherProperties = properties.Where(x => x.PropertyInfo.GetCustomAttribute<KeyAttribute>() == null);
-
-            selectList.AddRange(otherProperties.Select(k =>
+            selectList.AddRange(properties.Select(k =>
                 new SelectField(){
                     IsMainKey = false,
                     Table = tableName,

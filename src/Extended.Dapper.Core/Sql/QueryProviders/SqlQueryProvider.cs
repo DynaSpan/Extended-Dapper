@@ -60,9 +60,25 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
                 query.AppendFormat(" LIMIT {0}", selectQuery.Limit);
             }
 
-            Console.WriteLine(query.ToString());
+            if (SqlQueryProviderHelper.Verbose)
+                Console.WriteLine(query.ToString());
 
             return query.ToString();
+        }
+
+        /// <summary>
+        /// Builds an insert query
+        /// </summary>
+        /// <param name="insertQuery"></param>
+        public virtual string BuildInsertQuery(InsertSqlQuery insertQuery)
+        {
+            var insertFields = string.Join(", ", insertQuery.Insert.Select(this.MapAliasColumn));
+            var insertParams = string.Join(", ", insertQuery.Insert.Select(i => i.ParameterName));
+
+            if (SqlQueryProviderHelper.Verbose)
+                Console.WriteLine(string.Format("INSERT INTO {0} ({1}) VALUES ({2})", this.EscapeTable(insertQuery.Table), insertFields, insertParams));
+
+            return string.Format("INSERT INTO {0} ({1}) VALUES ({2})", insertQuery.Table, insertFields, insertParams);
         }
 
         /// <summary>
@@ -85,6 +101,24 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
                 return string.Format("{0}.{1}", 
                     this.EscapeTable(selectField.Table), 
                     this.EscapeColumn(selectField.Field));
+        }
+
+        /// <summary>
+        /// Projection function for mapping property
+        /// to SQL field
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <param name="p"></param>
+        public virtual string MapAliasColumn(InsertField insertField)
+        {
+            if (!string.IsNullOrEmpty(insertField.FieldAlias))
+                return string.Format("{0}.{1}", 
+                    this.EscapeTable(insertField.Table), 
+                    this.EscapeColumn(insertField.FieldAlias));
+            else 
+                return string.Format("{0}.{1}", 
+                    this.EscapeTable(insertField.Table), 
+                    this.EscapeColumn(insertField.Field));
         }
 
         /// <summary>

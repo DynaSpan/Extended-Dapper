@@ -35,6 +35,12 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         string BuildSelectQuery(SelectSqlQuery selectQuery);
 
         /// <summary>
+        /// Builds an insert query
+        /// </summary>
+        /// <param name="insertQuery"></param>
+        string BuildInsertQuery(InsertSqlQuery insertQuery);
+
+        /// <summary>
         /// Converts an ExpressionType to a SQL operator
         /// </summary>
         /// <param name="type"></param>

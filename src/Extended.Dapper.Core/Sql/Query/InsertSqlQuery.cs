@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Text;
+using Extended.Dapper.Core.Sql.Query.Models;
 
 namespace Extended.Dapper.Core.Sql.Query
 {
@@ -8,7 +9,7 @@ namespace Extended.Dapper.Core.Sql.Query
         /// <summary>
         /// The field(s) that should be inserted
         /// </summary>
-        public StringBuilder Insert { get; set; }
+        public List<InsertField> Insert { get; set; }
 
         /// <summary>
         /// The param names for the insert
@@ -22,19 +23,8 @@ namespace Extended.Dapper.Core.Sql.Query
 
         public InsertSqlQuery() : base()
         {
-            this.Insert = new StringBuilder();
+            this.Insert = new List<InsertField>();
             this.InsertParams = new StringBuilder();
-        }
-
-        public override string ToString()
-        {
-            var query = new StringBuilder();
-            query.AppendFormat("INSERT INTO {0} ({1}) VALUES ({2})",
-                this.Table,
-                this.Insert,
-                this.InsertParams);
-
-            return query.ToString();
         }
     }
 }

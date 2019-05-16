@@ -5,6 +5,8 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
 {
     public static class SqlQueryProviderHelper
     {
+        public static bool Verbose { get; set; } = false;
+
         private static SqlQueryProvider sqlQueryProvider;
 
         /// <summary>

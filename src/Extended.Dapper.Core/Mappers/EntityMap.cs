@@ -45,7 +45,7 @@ namespace Extended.Dapper.Core.Mappers
         /// <summary>
         /// Contains all the primary key properties
         /// </summary>
-        public ICollection<SqlPropertyMetadata> PrimaryKeyPropertiesMetadata { get; set; }
+        public ICollection<SqlKeyPropertyMetadata> PrimaryKeyPropertiesMetadata { get; set; }
 
         /// <summary>
         /// Contains all properties with relations

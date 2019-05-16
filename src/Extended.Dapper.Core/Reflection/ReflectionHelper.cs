@@ -52,9 +52,18 @@ namespace Extended.Dapper.Core.Reflection
         /// <param name="methodName">The name of the method</param>
         /// <param name="genericType">The generic type this method should be called with</param>
         /// <param name="parameters">Any parameters</param>
+        /// <param name="target">In case the method is not static, the instance of the class</param>
         /// <returns>Result of method invocation</returns>
-        public static object CallGenericMethod(Type methodClassType, string methodName, Type genericType, object[] parameters = null)
+        public static object CallGenericMethod(
+            Type methodClassType, 
+            string methodName, 
+            Type genericType, 
+            object[] parameters = null,
+            object target = null)
         {
+            if (GenericMethods == null) 
+                GenericMethods = new ConcurrentDictionary<string, MethodInfo>();
+
             var idStr = methodClassType.ToString() + methodName;
             MethodInfo method;
 
@@ -63,7 +72,7 @@ namespace Extended.Dapper.Core.Reflection
                 GenericMethods.TryAdd(idStr, method = methodClassType.GetMethod(methodName));
             }
 
-            return method.MakeGenericMethod(genericType).Invoke(null, parameters);
+            return method.MakeGenericMethod(genericType).Invoke(target, parameters);
         }
 
         /// <summary>
@@ -74,15 +83,7 @@ namespace Extended.Dapper.Core.Reflection
         /// <param name="list">The list itself</param>
         public static IList CastListTo(Type listType, IList list)
         {
-            if (CastListAsMethod == null)
-            {
-                // cache
-                CastListAsMethod = typeof(ReflectionHelper).GetMethod("CastListAs");
-            }
-
-            MethodInfo genericMethod = CastListAsMethod.MakeGenericMethod(listType);
-
-            return genericMethod.Invoke(null, new[] { list }) as IList;
+            return CallGenericMethod(typeof(ReflectionHelper), "CastListAs", listType, new[] { list }) as IList;
         }
         
         /// <summary>
