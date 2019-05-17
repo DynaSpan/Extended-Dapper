@@ -10,7 +10,7 @@ namespace Extended.Dapper.Tests.Models
 
         public int ReleaseYear { get; set; }
 
-        [ManyToOne("Author", "AuthorId", "Id")]
+        [ManyToOne("Book", "AuthorId", "Id")]
         public Author Author { get; set; }
 
         public override string ToString()

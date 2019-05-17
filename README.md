@@ -8,11 +8,11 @@ Extends Dapper functionality with a repository pattern, `OneToMany` and `ManyToO
 
 ## TODO
 
-- Make sure all queries generate properly (~`SELECT`~, `UPDATE`, `DELETE`, `INSERT`)
+- Make sure all queries generate properly (~`SELECT`~, `UPDATE`, `DELETE`, ~`INSERT`~)
 - ~Mapping to & from POCOs~ (WORKING: Mapper impl. + default Dapper)
-- Make sure `OneToMany` and `ManyToOne` mappings properly apply to ~`INSERT`s~, `UPDATE`s & `SELECT`s (currently implemented for `SELECT`)
+- Make sure `OneToMany` and `ManyToOne` mappings properly apply to ~`INSERT`s~, `UPDATE`s, `DELETE`s & ~`SELECT`s~ (currently implemented for `SELECT` & `INSERT`)
 - (Proper) support for more than 1 primary key
-- Repositories
+- Repositories (Get and Insert implemented)
 - Write unittests
 - Implement more `SqlProviders`
 - Set up CI/CD for automated deployment to NuGet
