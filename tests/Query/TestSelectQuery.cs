@@ -79,7 +79,7 @@ namespace Extended.Dapper.Tests.Query
         public void TestInsert()
         {
             var newAuthor = new Author(){
-                Id = new Guid("9D89D8F2-AF2C-42E2-8077-7ED1A0809366"),
+                Id = new Guid("c4fc2160-b0fa-4d9f-b035-eb152f80f77f"),
                 Name = "Spees Kees",
                 BirthYear = 2652,
                 Country = "Republic of Earth Citizens, Mars, Solar System, Milky Way Galaxy"

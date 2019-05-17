@@ -171,7 +171,8 @@ namespace Extended.Dapper.Core.Repository
                 {
                     var oneObjKey = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", oneObj.GetType(), new[] { oneObj }) as string;
                     
-                    if (oneObjKey == string.Empty || oneObjKey == null || oneObjKey == new Guid().ToString())
+                    // If it has no key, we can assume it is a new entity
+                    if (oneObjKey == string.Empty || oneObjKey == null || new Guid(oneObjKey) == Guid.Empty)
                     {
                         // Insert it
                         var query = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "Insert", oneObj.GetType(), new[] { oneObj }, this.SqlGenerator) as InsertSqlQuery;
@@ -186,7 +187,6 @@ namespace Extended.Dapper.Core.Repository
 
                     insertQuery.Insert.Add(new InsertField(entityMap.TableName, attr.LocalKey, "@p_m2o_" + attr.TableName + "_" + attr.LocalKey));
                     insertQuery.Params.Add("@p_m2o_" + attr.TableName + "_" + attr.LocalKey, oneObjKey);
-                    // TODO add foreign key above
                 }
             }
 
