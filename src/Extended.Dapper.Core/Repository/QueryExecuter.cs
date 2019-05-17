@@ -82,6 +82,14 @@ namespace Extended.Dapper.Core.Repository
 
                 var insertResult = await connection.ExecuteAsync(query.ToString(), query.Params);
 
+                if (insertResult == 1)
+                {
+                    var entityKey = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", entity.GetType(), new[] { entity }) as string;
+
+                    // Grab the OneToManys
+                    await this.InsertOneToManys(entity, entityKey);
+                }
+
                 return insertResult == 1;
             }
         }
@@ -191,6 +199,38 @@ namespace Extended.Dapper.Core.Repository
             }
 
             return insertQuery;
+        }
+
+        protected virtual async Task<bool> InsertOneToManys(object entity, object foreignKey)
+        {
+            var entityMap = EntityMapper.GetEntityMap(entity.GetType());
+
+            var oneToManys = entityMap.RelationProperties.Where(x => x.Key.GetCustomAttribute<OneToManyAttribute>() != null);
+
+            foreach (var many in oneToManys)
+            {
+                var manyObj = many.Key.GetValue(entity) as IList;
+                var attr    = many.Key.GetCustomAttribute<OneToManyAttribute>();
+                var listEntityMap = EntityMapper.GetEntityMap(manyObj.GetType().GetGenericArguments()[0].GetTypeInfo());
+
+                foreach (var obj in manyObj)
+                {
+                    var objKey  = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", listEntityMap.Type, new[] { obj }) as string;
+
+                    // If it has no key, we can assume it is a new entity
+                    if (objKey == string.Empty || objKey == null || new Guid(objKey) == Guid.Empty)
+                    {
+                        var query = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "Insert", listEntityMap.Type, new[] { obj }, this.SqlGenerator) as InsertSqlQuery;
+
+                        query.Insert.Add(new InsertField(attr.TableName, attr.ExternalKey, "@p_fk_" + attr.ExternalKey));
+                        query.Params.Add("@p_fk_" + attr.ExternalKey, foreignKey);
+
+                        var queryResult = await this.ExecuteInsertQuery(obj, query);
+                    }
+                }
+            }
+
+            return true;
         }
     }
 }

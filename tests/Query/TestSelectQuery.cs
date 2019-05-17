@@ -7,6 +7,7 @@ using Extended.Dapper.Core.Sql;
 using Extended.Dapper.Core.Sql.QueryProviders;
 using Extended.Dapper.Tests.Models;
 using NUnit.Framework;
+using System.Collections.Generic;
 
 namespace Extended.Dapper.Tests.Query
 {
@@ -94,6 +95,34 @@ namespace Extended.Dapper.Tests.Query
 
             Console.WriteLine(book.Id);
             Console.WriteLine(book);
+        }
+
+        [Test]
+        public void TestInsert2()
+        {
+            var newBook1 = new Book() {
+                Name = "This is: my new book!",
+                ReleaseYear = 2020
+            };
+            var newBook2 = new Book() {
+                Name = "This was: my previous book!",
+                ReleaseYear = 2010
+            };
+
+            var bookList = new List<Book>();
+            bookList.Add(newBook1);
+            bookList.Add(newBook2);
+
+            var newAuthor = new Author() {
+                Name = "Puk van de petteflet",
+                BirthYear = 1980,
+                Country = "Petteflet",
+                Books = bookList
+            };
+
+            var author = AuthorRepository.Insert(newAuthor).Result;
+
+            Console.WriteLine(author);
         }
     }
 }
