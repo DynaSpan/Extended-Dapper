@@ -95,8 +95,7 @@ namespace Extended.Dapper.Core.Helpers
             {
                 MemberExpression memberExpr = expr as MemberExpression;
 
-                if (!(memberExpr?.Expression is ConstantExpression)
-                    && callExpr.Method.Name != "Contains")
+                if (!(memberExpr?.Expression is ConstantExpression))
                     throw new NotSupportedException(callExpr.Method.Name + " isn't supported");
 
                 var constExpr = (ConstantExpression)memberExpr.Expression;

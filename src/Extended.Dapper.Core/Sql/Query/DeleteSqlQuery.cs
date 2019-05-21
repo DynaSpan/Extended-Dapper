@@ -17,8 +17,14 @@ namespace Extended.Dapper.Core.Sql.Query
         /// </summary>
         public bool LogicalDelete { get; set; }
 
+        /// <summary>
+        /// Name of the logical delete field
+        /// </summary>
         public string LogicalDeleteField { get; set; }
 
+        /// <summary>
+        /// Name of the updated at field (if one exists)
+        /// </summary>
         public string UpdatedAtField { get; set; }
 
         /// <summary>

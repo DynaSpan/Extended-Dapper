@@ -73,7 +73,7 @@ namespace Extended.Dapper.Core.Repository
             if (connection == null) 
                 connection = this.DatabaseFactory.GetDatabaseConnection();
 
-            // First grab & insert all the ManyToOnes (foreign keys of entity)
+            // First grab & insert all the ManyToOnes (foreign keys of this entity)
             query = await this.InsertManyToOnes(entity, query);
 
             using (connection)
@@ -86,7 +86,7 @@ namespace Extended.Dapper.Core.Repository
                 {
                     var entityKey = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", entity.GetType(), new[] { entity }) as string;
 
-                    // Grab the OneToManys
+                    // Insert the OneToManys
                     await this.InsertOneToManys(entity, entityKey);
                 }
 
@@ -326,8 +326,6 @@ namespace Extended.Dapper.Core.Repository
                     }
                     else if (attr is OneToManyAttribute)
                     {
-                        // TODO get current children
-                        // TODO remove children not existing in collection anymore
                         var currentChildrenIds = new List<object>();
 
                         var listObj = oneObj as IList;
@@ -377,8 +375,6 @@ namespace Extended.Dapper.Core.Repository
 
                         // Delete children not in list anymore
                         var deleteQuery = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "DeleteChildren", listType, new object[] { attr.TableName, foreignKey, attr.ExternalKey, attr.LocalKey, currentChildrenIds }, this.SqlGenerator) as SqlQuery;
-
-                        Console.WriteLine(deleteQuery);
                         
                         if (connection == null)
                             connection = this.DatabaseFactory.GetDatabaseConnection();

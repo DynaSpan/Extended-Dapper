@@ -201,35 +201,6 @@ namespace Extended.Dapper.Core.Sql
                 updateQuery.Params.Add("@p_" + property.ColumnName, property.PropertyInfo.GetValue(entity));
             }
 
-            // Update references to external objects
-            // var includePropertyList = includes.Select(x => ((MemberExpression)x.Body).Member.Name.ToLower());
-
-            // if (entityMap.RelationProperties != null && entityMap.RelationProperties.Count > 0)
-            // {
-            //     var relationProperties = entityMap.RelationProperties
-            //         .Where(x => includePropertyList.Contains(x.Key.Name.ToLower())
-            //                     && x.Key.GetCustomAttribute<ManyToOneAttribute>() != null);
-
-            //     foreach (KeyValuePair<PropertyInfo, ICollection<SqlRelationPropertyMetadata>> kvpProperty in relationProperties)
-            //     {
-            //         var property = kvpProperty.Key;
-            //         var metadata = kvpProperty.Value;
-            //         var relationAttr = System.Attribute.GetCustomAttributes(property, typeof(RelationAttributeBase), true).FirstOrDefault() as RelationAttributeBase;
-            //         var propValue = kvpProperty.Key.GetValue(entity);
-
-            //         // Check if the value is not null
-            //         if (propValue != null)
-            //         {
-            //             // Get the id
-            //             var propType = propValue.GetType();
-            //             var propId = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", propType, new[] { propValue }) as string;
-
-            //             updateQuery.Updates.Add(new QueryField(entityMap.TableName, relationAttr.LocalKey, "@p_" + relationAttr.TableName + "_" + relationAttr.LocalKey));
-            //             updateQuery.Params.Add("@p_" + relationAttr.TableName + "_" + relationAttr.LocalKey, propId);
-            //         }
-            //     }
-            // }
-
             var idExpression = this.CreateByIdExpression<T>(EntityMapper.GetCompositeUniqueKey(entity));
             this.sqlProvider.AppendWherePredicateQuery<T>(updateQuery, idExpression, QueryType.Update, entityMap);
             
@@ -248,6 +219,8 @@ namespace Extended.Dapper.Core.Sql
         public SqlQuery Delete<T>(Expression<Func<T, bool>> search)
         {
             var entityMap = EntityMapper.GetEntityMap(typeof(T));
+
+            // TODO delete children
 
             // Check if it is a logical delete
             if (entityMap.LogicalDelete)
@@ -280,15 +253,15 @@ namespace Extended.Dapper.Core.Sql
         {
             var entityMap = EntityMapper.GetEntityMap(typeof(T));
 
-            var query = new DeleteSqlQuery();
-            query.Table = entityMap.TableName;
-            query.ParentTable = parentTable;
-            query.ParentKey = parentKey;
-            query.ParentKeyField = parentKeyField;
-            query.LocalKeyField = localKeyField;
-            query.DoNotErase = doNotErases;
+            var query               = new DeleteSqlQuery();
+            query.Table             = entityMap.TableName;
+            query.ParentTable       = parentTable;
+            query.ParentKey         = parentKey;
+            query.ParentKeyField    = parentKeyField;
+            query.LocalKeyField     = localKeyField;
+            query.DoNotErase        = doNotErases;
 
-            query.LogicalDelete = entityMap.LogicalDelete;
+            query.LogicalDelete      = entityMap.LogicalDelete;
             query.LogicalDeleteField = entityMap.LogicalDeletePropertyMetadata.ColumnName;
 
             query.UpdatedAtField = entityMap.UpdatedAtPropertyMetadata.ColumnName;
@@ -321,34 +294,6 @@ namespace Extended.Dapper.Core.Sql
             ParameterExpression t = Expression.Parameter(typeof(T), "t");
             Expression idProperty = Expression.Property(t, keyProperty.Name);
             Expression comparison = Expression.Equal(idProperty, Expression.Constant(id));
-            
-            return Expression.Lambda<Func<T, bool>>(comparison, t);
-        }
-
-        /// <summary>
-        /// Creates an search expression for the IDs
-        /// </summary>
-        /// <param name="id">The id that is wanted</param>
-        /// <typeparam name="T">Entity type</typeparam>
-        public virtual Expression<Func<T, bool>> CreateByForeignKeyExpression<T>(string foreignKey, IEnumerable<object> ids)
-        {
-            var entityMap = EntityMapper.GetEntityMap(typeof(T));
-
-            var keyProperty = entityMap.PrimaryKeyProperties.Where(x => x.GetCustomAttribute<AutoValueAttribute>() != null).FirstOrDefault();
-
-            if (keyProperty == null)
-                keyProperty = entityMap.PrimaryKeyProperties.FirstOrDefault();
-
-            ParameterExpression t = Expression.Parameter(typeof(T), "t");
-            Expression idProperty = Expression.Convert(Expression.Property(t, foreignKey), typeof(object));
-            MethodInfo method = typeof(Enumerable).
-                    GetMethods().
-                    Where(x => x.Name == "Contains").
-                    Single(x => x.GetParameters().Length == 2).
-                    MakeGenericMethod(typeof(object));
-            var idsConstant = Expression.Constant(ids, typeof(IEnumerable<object>));
-            
-            Expression comparison = Expression.Call(method, idsConstant, idProperty);
             
             return Expression.Lambda<Func<T, bool>>(comparison, t);
         }

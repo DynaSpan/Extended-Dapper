@@ -40,7 +40,5 @@ namespace Extended.Dapper.Core.Sql
         /// <param name="id">The id that is wanted</param>
         /// <typeparam name="T">Entity type</typeparam>
         Expression<Func<T, bool>> CreateByIdExpression<T>(object id);
-
-        Expression<Func<T, bool>> CreateByForeignKeyExpression<T>(string foreignKeyName, IEnumerable<object> ids);
     }
 }
