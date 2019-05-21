@@ -21,6 +21,19 @@ namespace Extended.Dapper.Core.Sql
         SelectSqlQuery Select<T>(Expression<Func<T, bool>> search = null, params Expression<Func<T, object>>[] includes);
 
         /// <summary>
+        /// Generates an update query for an entity
+        /// </summary>
+        /// <param name="entity"></param>
+        UpdateSqlQuery Update<T>(T entity);
+
+        /// <summary>
+        /// Creates a delete query for a given search and entity type
+        /// </summary>
+        /// <param name="search"></param>
+        /// <typeparam name="T"></typeparam>
+        SqlQuery Delete<T>(Expression<Func<T, bool>> search);
+
+        /// <summary>
         /// Creates an search expression for the ID
         /// </summary>
         /// <param name="id">The id that is wanted</param>

@@ -124,5 +124,38 @@ namespace Extended.Dapper.Tests.Query
 
             Console.WriteLine(author);
         }
+
+        [Test]
+        public void TestUpdate()
+        {
+            var book = BookRepository.Get(b => b.Name == "A Brief History of Time", b => b.Author).Result.SingleOrDefault();
+            var otherAuthor = AuthorRepository.Get(a => a.Name == "Stephen Hawking").Result.SingleOrDefault();
+
+            Console.WriteLine(book);
+
+            book.ReleaseYear = 1988;
+            book.Author = otherAuthor;
+
+            var res = BookRepository.Update(book, b => b.Author).Result;
+        }
+
+        [Test]
+        public void TestUpdate2()
+        {
+            var author = AuthorRepository.Get(a => a.Name == "Mili Drosje", a => a.Books).Result.SingleOrDefault();
+
+            var newBook = new Book() {
+                Name = "This is: tester",
+                ReleaseYear = 2019
+            };
+
+            author.Books.Add(newBook);
+
+            Console.WriteLine(author);
+
+            var res = AuthorRepository.Update(author, a => a.Books).Result;
+
+            Console.WriteLine(res);
+        }
     }
 }

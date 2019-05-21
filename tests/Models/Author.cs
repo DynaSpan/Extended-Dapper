@@ -14,7 +14,7 @@ namespace Extended.Dapper.Tests.Models
         public string Country { get; set; }
 
         [OneToMany("Book", "Id", "AuthorId")]
-        public IEnumerable<Book> Books { get; set; }
+        public ICollection<Book> Books { get; set; }
 
         public override string ToString()
         {

@@ -12,6 +12,7 @@ using Extended.Dapper.Core.Database;
 using Extended.Dapper.Core.Extensions;
 using Extended.Dapper.Core.Helpers;
 using Extended.Dapper.Core.Mappers;
+using Extended.Dapper.Core.Reflection;
 using Extended.Dapper.Core.Sql.Metadata;
 using Extended.Dapper.Core.Sql.Query;
 using Extended.Dapper.Core.Sql.Query.Models;
@@ -79,7 +80,7 @@ namespace Extended.Dapper.Core.Sql
                     .Select(p => {
                         insertQuery.Params.Add("@p_" + p.ColumnName, p.PropertyInfo.GetValue(entity));
 
-                        return new InsertField(entityMap.TableName, p.ColumnName, "@p_" + p.ColumnName, p.ColumnAlias);
+                        return new QueryField(entityMap.TableName, p.ColumnName, "@p_" + p.ColumnName, p.ColumnAlias);
                     }
             ));
 
@@ -173,6 +174,112 @@ namespace Extended.Dapper.Core.Sql
 
         #endregion
 
+        #region Update implementation
+
+        /// <summary>
+        /// Generates an update query for an entity
+        /// </summary>
+        /// <param name="entity"></param>
+        public UpdateSqlQuery Update<T>(T entity)
+        {
+            var entityMap = EntityMapper.GetEntityMap(typeof(T));
+
+            var updateQuery = new UpdateSqlQuery();
+            updateQuery.Table = entityMap.TableName;
+
+            // Grab all mapped properties
+            var mappedProperties = entityMap.MappedPropertiesMetadata.Where(
+                x => x.PropertyInfo.GetCustomAttribute<IgnoreOnUpdateAttribute>() == null
+                     && x.PropertyInfo.GetCustomAttribute<AutoValueAttribute>() == null);
+
+            if (entityMap.UpdatedAtProperty != null)
+                entityMap.UpdatedAtProperty.SetValue(entity, DateTime.UtcNow);
+
+            foreach (var property in mappedProperties)
+            {
+                updateQuery.Updates.Add(new QueryField(entityMap.TableName, property.ColumnName, "@p_" + property.ColumnName, property.ColumnAlias));
+                updateQuery.Params.Add("@p_" + property.ColumnName, property.PropertyInfo.GetValue(entity));
+            }
+
+            // Update references to external objects
+            // var includePropertyList = includes.Select(x => ((MemberExpression)x.Body).Member.Name.ToLower());
+
+            // if (entityMap.RelationProperties != null && entityMap.RelationProperties.Count > 0)
+            // {
+            //     var relationProperties = entityMap.RelationProperties
+            //         .Where(x => includePropertyList.Contains(x.Key.Name.ToLower())
+            //                     && x.Key.GetCustomAttribute<ManyToOneAttribute>() != null);
+
+            //     foreach (KeyValuePair<PropertyInfo, ICollection<SqlRelationPropertyMetadata>> kvpProperty in relationProperties)
+            //     {
+            //         var property = kvpProperty.Key;
+            //         var metadata = kvpProperty.Value;
+            //         var relationAttr = System.Attribute.GetCustomAttributes(property, typeof(RelationAttributeBase), true).FirstOrDefault() as RelationAttributeBase;
+            //         var propValue = kvpProperty.Key.GetValue(entity);
+
+            //         // Check if the value is not null
+            //         if (propValue != null)
+            //         {
+            //             // Get the id
+            //             var propType = propValue.GetType();
+            //             var propId = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", propType, new[] { propValue }) as string;
+
+            //             updateQuery.Updates.Add(new QueryField(entityMap.TableName, relationAttr.LocalKey, "@p_" + relationAttr.TableName + "_" + relationAttr.LocalKey));
+            //             updateQuery.Params.Add("@p_" + relationAttr.TableName + "_" + relationAttr.LocalKey, propId);
+            //         }
+            //     }
+            // }
+
+            var idExpression = this.CreateByIdExpression<T>(EntityMapper.GetCompositeUniqueKey(entity));
+            this.sqlProvider.AppendWherePredicateQuery<T>(updateQuery, idExpression, QueryType.Update, entityMap);
+            
+            return updateQuery;
+        }
+
+        #endregion
+
+        #region Delete implementation
+
+        /// <summary>
+        /// Creates a delete query for a given search and entity type
+        /// </summary>
+        /// <param name="search"></param>
+        /// <typeparam name="T"></typeparam>
+        public SqlQuery Delete<T>(Expression<Func<T, bool>> search)
+        {
+            var entityMap = EntityMapper.GetEntityMap(typeof(T));
+
+            // Check if it is a logical delete
+            if (entityMap.LogicalDelete)
+            {
+                var logicalDeleteProp = entityMap.LogicalDeletePropertyMetadata;
+
+                // Update the entity
+                var query = new UpdateSqlQuery();
+                query.Table = entityMap.TableName;
+                query.Updates.Add(new QueryField(entityMap.TableName, logicalDeleteProp.ColumnName, "@p_log_delete"));
+                query.Params.Add("@p_log_delete", true);
+
+                this.sqlProvider.AppendWherePredicateQuery(query, search, QueryType.Update, entityMap);
+
+                return query;
+            }
+            else 
+            {
+                // Delete the entity
+                var query = new DeleteSqlQuery();
+                query.Table = entityMap.TableName;
+
+                this.sqlProvider.AppendWherePredicateQuery(query, search, QueryType.Delete, entityMap);
+
+                return query;
+            }
+        }
+
+        #endregion
+
+        #region Helpers
+
         /// <summary>
         /// Creates an search expression for the ID
         /// </summary>
@@ -197,6 +304,8 @@ namespace Extended.Dapper.Core.Sql
             
             return Expression.Lambda<Func<T, bool>>(comparison, t);
         }
+
+        #endregion
     }
 
     public enum QueryType

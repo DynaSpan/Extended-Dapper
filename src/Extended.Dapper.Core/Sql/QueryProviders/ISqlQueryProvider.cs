@@ -41,6 +41,18 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         string BuildInsertQuery(InsertSqlQuery insertQuery);
 
         /// <summary>
+        /// Builds an update query
+        /// </summary>
+        /// <param name="updateQuery"></param>
+        string BuildUpdateQuery(UpdateSqlQuery updateQuery);
+
+        /// <summary>
+        /// Builds a delete query
+        /// </summary>
+        /// <param name="deleteQuery"></param>
+        string BuildDeleteQuery(DeleteSqlQuery deleteQuery);
+
+        /// <summary>
         /// Converts an ExpressionType to a SQL operator
         /// </summary>
         /// <param name="type"></param>
@@ -71,6 +83,6 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// <param name="predicate"></param>
         /// <param name="queryType"></param>
         /// <param name="entityMap"></param>
-        void AppendWherePredicateQuery<T>(SelectSqlQuery sqlQuery, Expression<Func<T, bool>> predicate, QueryType queryType, EntityMap entityMap);
+        void AppendWherePredicateQuery<T>(SqlQuery sqlQuery, Expression<Func<T, bool>> predicate, QueryType queryType, EntityMap entityMap);
     }
 }

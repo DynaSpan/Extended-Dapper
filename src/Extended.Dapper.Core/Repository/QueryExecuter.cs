@@ -95,6 +95,34 @@ namespace Extended.Dapper.Core.Repository
         }
 
         /// <summary>
+        /// Executes an update query
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <param name="query"></param>
+        /// <param name="connection"></param>
+        /// <param name="includes"></param>
+        /// <returns>True when succesfull; false otherwise</returns>
+        public virtual async Task<bool> ExecuteUpdateQuery<T>(T entity, UpdateSqlQuery query, IDbConnection connection = null, params Expression<Func<T, object>>[] includes)
+            where T : class, new()
+        {
+            if (connection == null)
+                connection = this.DatabaseFactory.GetDatabaseConnection();
+
+            // Update all children
+            if (includes != null)
+                query = await this.UpdateChildren<T>(entity, query, includes);
+
+            using (connection)
+            {
+                this.OpenConnection(connection);
+
+                var updateResult = await connection.ExecuteAsync(query.ToString(), query.Params);
+
+                return updateResult == 1;
+            }
+        }
+
+        /// <summary>
         /// Maps a query result set to an entity
         /// </summary>
         /// <param name="typeArr">Array with all sub-types</param>
@@ -114,7 +142,8 @@ namespace Extended.Dapper.Core.Repository
                     lookup.Add(entityCompositeKey, entity = entityLookup);
                 }
 
-                Array.ForEach(includes, incl => {
+                foreach (var incl in includes)
+                {
                     var type = incl.Body.Type.GetTypeInfo();
 
                     var exp = (MemberExpression)incl.Body;
@@ -146,7 +175,7 @@ namespace Extended.Dapper.Core.Repository
                         if (property.Key != null && value != null)
                             property.Key.SetValue(entity, value);
                     }
-                });
+                }
 
                 return entity;
             };
@@ -182,18 +211,14 @@ namespace Extended.Dapper.Core.Repository
                     // If it has no key, we can assume it is a new entity
                     if (oneObjKey == string.Empty || oneObjKey == null || new Guid(oneObjKey) == Guid.Empty)
                     {
-                        // Insert it
-                        var query = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "Insert", oneObj.GetType(), new[] { oneObj }, this.SqlGenerator) as InsertSqlQuery;
-                        var queryResult = await this.ExecuteInsertQuery(oneObj, query);
+                        // Insert
+                        oneObjKey = await this.InsertEntityAndReturnId(oneObj) as string;
 
-                        // Grab primary key
-                        oneObjKey = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", oneObj.GetType(), new[] { oneObj }) as string;
-
-                        if (!queryResult)
+                        if (oneObjKey == null)
                             throw new ApplicationException("Could not insert a ManyToOne object: " + oneObj);
                     }
 
-                    insertQuery.Insert.Add(new InsertField(entityMap.TableName, attr.LocalKey, "@p_m2o_" + attr.TableName + "_" + attr.LocalKey));
+                    insertQuery.Insert.Add(new QueryField(entityMap.TableName, attr.LocalKey, "@p_m2o_" + attr.TableName + "_" + attr.LocalKey));
                     insertQuery.Params.Add("@p_m2o_" + attr.TableName + "_" + attr.LocalKey, oneObjKey);
                 }
             }
@@ -210,6 +235,9 @@ namespace Extended.Dapper.Core.Repository
             foreach (var many in oneToManys)
             {
                 var manyObj = many.Key.GetValue(entity) as IList;
+
+                if (manyObj == null) continue;
+
                 var attr    = many.Key.GetCustomAttribute<OneToManyAttribute>();
                 var listEntityMap = EntityMapper.GetEntityMap(manyObj.GetType().GetGenericArguments()[0].GetTypeInfo());
 
@@ -222,7 +250,7 @@ namespace Extended.Dapper.Core.Repository
                     {
                         var query = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "Insert", listEntityMap.Type, new[] { obj }, this.SqlGenerator) as InsertSqlQuery;
 
-                        query.Insert.Add(new InsertField(attr.TableName, attr.ExternalKey, "@p_fk_" + attr.ExternalKey));
+                        query.Insert.Add(new QueryField(attr.TableName, attr.ExternalKey, "@p_fk_" + attr.ExternalKey));
                         query.Params.Add("@p_fk_" + attr.ExternalKey, foreignKey);
 
                         var queryResult = await this.ExecuteInsertQuery(obj, query);
@@ -231,6 +259,115 @@ namespace Extended.Dapper.Core.Repository
             }
 
             return true;
+        }
+
+        protected virtual async Task<UpdateSqlQuery> UpdateChildren<T>(T entity, UpdateSqlQuery updateQuery, params Expression<Func<T, object>>[] includes)
+            where T : class, new()
+        {
+            var entityMap = EntityMapper.GetEntityMap(typeof(T));
+            var foreignKey = EntityMapper.GetCompositeUniqueKey<T>(entity);
+
+            // TODO get current children
+            // TODO remove children not existing in collection anymore
+
+            foreach (var incl in includes)
+            {
+                var type = incl.Body.Type.GetTypeInfo();
+
+                var exp = (MemberExpression)incl.Body;
+                var property = entityMap.RelationProperties.Where(x => x.Key.Name == exp.Member.Name).SingleOrDefault();
+
+                var oneObj   = property.Key.GetValue(entity);
+                var attr     = property.Key.GetCustomAttribute<RelationAttributeBase>();
+
+                if (oneObj != null)
+                {
+                    if (attr is ManyToOneAttribute)
+                    {
+                        var oneObjKey = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", oneObj.GetType(), new[] { oneObj }) as string;
+                        
+                        // If it has no key, we can assume it is a new entity
+                        if (oneObjKey == string.Empty || oneObjKey == null || new Guid(oneObjKey) == Guid.Empty)
+                        {
+                            // Insert
+                            oneObjKey = await this.InsertEntityAndReturnId(oneObj) as string;
+
+                            if (oneObjKey == null)
+                                throw new ApplicationException("Could not insert a ManyToOne object: " + oneObj);
+                        }
+                        else
+                        {
+                            // Update the entity
+                            var query = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "Update", oneObj.GetType(), new[] { oneObj }, this.SqlGenerator) as UpdateSqlQuery;
+                            var queryResult = await (ReflectionHelper.CallGenericMethod(typeof(QueryExecuter), "ExecuteUpdateQuery", oneObj.GetType(), new[] { oneObj, query, null, null }, this) as Task<bool>);
+
+                            if (!queryResult)
+                                throw new ApplicationException("Could not update a ManyToOne object: " + oneObj);
+                        }
+
+                        updateQuery.Updates.Add(new QueryField(entityMap.TableName, attr.LocalKey, "@p_m2o_" + attr.TableName + "_" + attr.LocalKey));
+                        updateQuery.Params.Add("@p_m2o_" + attr.TableName + "_" + attr.LocalKey, oneObjKey);
+                    }
+                    else if (attr is OneToManyAttribute)
+                    {
+                        var listObj = oneObj as IList;
+                        var listType = listObj.GetType().GetGenericArguments()[0];
+                        var listEntityMap = EntityMapper.GetEntityMap(listType);
+
+                        foreach (var listItem in listObj)
+                        {
+                            var objKey  = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", listEntityMap.Type, new[] { listItem }) as string;
+
+                            // If it has no key, we can assume it is a new entity
+                            if (objKey == string.Empty || objKey == null || new Guid(objKey) == Guid.Empty)
+                            {
+                                var query = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "Insert", listEntityMap.Type, new[] { listItem }, this.SqlGenerator) as InsertSqlQuery;
+
+                                query.Insert.Add(new QueryField(attr.TableName, attr.ExternalKey, "@p_fk_" + attr.ExternalKey));
+                                query.Params.Add("@p_fk_" + attr.ExternalKey, foreignKey);
+
+                                var queryResult = await this.ExecuteInsertQuery(listItem, query);
+
+                                if (!queryResult)
+                                    throw new ApplicationException("Could not create a OneToMany object: " + listItem);
+                            }
+                            else
+                            {
+                                // Update the entity
+                                var query = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "Update", listType, new[] { listItem }, this.SqlGenerator) as UpdateSqlQuery;
+
+                                query.Updates.Add(new QueryField(attr.TableName, attr.ExternalKey, "@p_fk_" + attr.ExternalKey));
+                                query.Params.Add("@p_fk_" + attr.ExternalKey, foreignKey);
+
+                                var queryResult = await (ReflectionHelper.CallGenericMethod(typeof(QueryExecuter), "ExecuteUpdateQuery", listType, new[] { listItem, query, null, null }, this) as Task<bool>);
+
+                                if (!queryResult)
+                                    throw new ApplicationException("Could not update a OneToMany object: " + listItem);
+                            }
+                        }
+                    }
+                }
+            }
+
+            return updateQuery;
+        }
+
+        /// <summary>
+        /// Inserts an entity and returns it composite ID
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns>null when failed; id otherwise</returns>
+        protected virtual async Task<object> InsertEntityAndReturnId(object entity)
+        {
+            // Insert it
+            var query = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "Insert", entity.GetType(), new[] { entity }, this.SqlGenerator) as InsertSqlQuery;
+            var queryResult = await this.ExecuteInsertQuery(entity, query);
+
+            if (!queryResult)
+                return null;
+
+            // Grab primary key
+            return ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", entity.GetType(), new[] { entity }) as string;
         }
     }
 }

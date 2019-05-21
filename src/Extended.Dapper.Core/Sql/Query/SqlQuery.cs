@@ -43,13 +43,13 @@ namespace Extended.Dapper.Core.Sql.Query
         public override string ToString()
         {
             if (this is SelectSqlQuery)
-            {
                 return SqlQueryProviderHelper.GetProvider().BuildSelectQuery(this as SelectSqlQuery);
-            } 
             else if (this is InsertSqlQuery)
-            {
                 return SqlQueryProviderHelper.GetProvider().BuildInsertQuery(this as InsertSqlQuery);
-            }
+            else if (this is UpdateSqlQuery)
+                return SqlQueryProviderHelper.GetProvider().BuildUpdateQuery(this as UpdateSqlQuery);
+            else if (this is DeleteSqlQuery)
+                return SqlQueryProviderHelper.GetProvider().BuildDeleteQuery(this as DeleteSqlQuery);
 
             throw new NotImplementedException();
         }

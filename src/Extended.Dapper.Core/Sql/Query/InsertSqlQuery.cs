@@ -9,7 +9,7 @@ namespace Extended.Dapper.Core.Sql.Query
         /// <summary>
         /// The field(s) that should be inserted
         /// </summary>
-        public List<InsertField> Insert { get; set; }
+        public List<QueryField> Insert { get; set; }
 
         /// <summary>
         /// The param names for the insert
@@ -23,7 +23,7 @@ namespace Extended.Dapper.Core.Sql.Query
 
         public InsertSqlQuery() : base()
         {
-            this.Insert = new List<InsertField>();
+            this.Insert = new List<QueryField>();
             this.InsertParams = new StringBuilder();
         }
     }

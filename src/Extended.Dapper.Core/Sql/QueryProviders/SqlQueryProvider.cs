@@ -82,6 +82,37 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         }
 
         /// <summary>
+        /// Builds an update query
+        /// </summary>
+        /// <param name="updateQuery"></param>
+        public virtual string BuildUpdateQuery(UpdateSqlQuery updateQuery)
+        {
+            var updateFields = string.Join(", ", updateQuery.Updates.Select(x => {
+                return string.Format("{0}.{1} = {2}",
+                this.EscapeTable(x.Table),
+                this.EscapeColumn(x.Field),
+                x.ParameterName);
+            }));
+
+            if (SqlQueryProviderHelper.Verbose)
+                Console.WriteLine(string.Format("UPDATE {0} SET {1} WHERE {2}", this.EscapeTable(updateQuery.Table), updateFields, updateQuery.Where));
+
+            return string.Format("UPDATE {0} SET {1} WHERE {2}", this.EscapeTable(updateQuery.Table), updateFields, updateQuery.Where);
+        }
+
+        /// <summary>
+        /// Builds a delete query
+        /// </summary>
+        /// <param name="deleteQuery"></param>
+        public virtual string BuildDeleteQuery(DeleteSqlQuery deleteQuery)
+        {
+            if (SqlQueryProviderHelper.Verbose)
+                Console.WriteLine(string.Format("DELETE FROM {0} WHERE {1}", this.EscapeTable(deleteQuery.Table), deleteQuery.Where));
+
+            return string.Format("DELETE FROM {0} WHERE {1}", this.EscapeTable(deleteQuery.Table), deleteQuery.Where);
+        }
+
+        /// <summary>
         /// Projection function for mapping property
         /// to SQL field
         /// </summary>
@@ -107,18 +138,17 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// Projection function for mapping property
         /// to SQL field
         /// </summary>
-        /// <param name="tableName"></param>
-        /// <param name="p"></param>
-        public virtual string MapAliasColumn(InsertField insertField)
+        /// <param name="queryField"></param>
+        public virtual string MapAliasColumn(QueryField queryField)
         {
-            if (!string.IsNullOrEmpty(insertField.FieldAlias))
+            if (!string.IsNullOrEmpty(queryField.FieldAlias))
                 return string.Format("{0}.{1}", 
-                    this.EscapeTable(insertField.Table), 
-                    this.EscapeColumn(insertField.FieldAlias));
+                    this.EscapeTable(queryField.Table), 
+                    this.EscapeColumn(queryField.FieldAlias));
             else 
                 return string.Format("{0}.{1}", 
-                    this.EscapeTable(insertField.Table), 
-                    this.EscapeColumn(insertField.Field));
+                    this.EscapeTable(queryField.Table), 
+                    this.EscapeColumn(queryField.Field));
         }
 
         /// <summary>
@@ -253,9 +283,9 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// <param name="queryType"></param>
         /// <param name="entityMap"></param>
         /// TODO: refactor
-        public virtual void AppendWherePredicateQuery<T>(SelectSqlQuery sqlQuery, Expression<Func<T, bool>> predicate, QueryType queryType, EntityMap entityMap)
+        public virtual void AppendWherePredicateQuery<T>(SqlQuery sqlQuery, Expression<Func<T, bool>> predicate, QueryType queryType, EntityMap entityMap)
         {
-            var queryParams = new Dictionary<string, object>();
+            //var queryParams = new Dictionary<string, object>();
 
             if (predicate != null)
             {
@@ -269,7 +299,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
 
                 foreach (KeyValuePair<string, object> condition in conditions)
                 {
-                    queryParams.Add(condition.Key, condition.Value);
+                    sqlQuery.Params.Add(condition.Key, condition.Value);
                 }
 
                 if (entityMap.LogicalDelete && queryType == QueryType.Select)
@@ -291,9 +321,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
             }
 
             if (entityMap.LogicalDelete && entityMap.UpdatedAtProperty != null && queryType == QueryType.Delete)
-                queryParams.Add(entityMap.UpdatedAtPropertyMetadata.ColumnName, DateTime.UtcNow);
-
-            sqlQuery.Params = queryParams;
+                sqlQuery.Params.Add(entityMap.UpdatedAtPropertyMetadata.ColumnName, DateTime.UtcNow);
         }
 
         /// <summary>

@@ -26,5 +26,16 @@ namespace Extended.Dapper.Core.Repository
         /// <param name="connection"></param>
         /// <returns>true when succesful; false otherwise</returns>
        Task<bool> ExecuteInsertQuery(object entity, InsertSqlQuery query, IDbConnection connection = null);
+
+        /// <summary>
+        /// Executes an update query
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <param name="query"></param>
+        /// <param name="connection"></param>
+        /// <param name="includes"></param>
+        /// <returns>True when succesfull; false otherwise</returns>
+        Task<bool> ExecuteUpdateQuery<T>(T entity, UpdateSqlQuery query, IDbConnection connection = null, params Expression<Func<T, object>>[] includes)
+            where T : class, new();
     }
 }

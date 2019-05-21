@@ -54,12 +54,17 @@ namespace Extended.Dapper.Core.Repository
         /// <param name="includes">Which children to include</param>
         public virtual async Task<T> GetById(object id, params Expression<Func<T, object>>[] includes)
         {
-            var query = this.SqlGenerator.Select<T>(this.SqlGenerator.CreateByIdExpression<T>(id), includes);
+            var search = this.SqlGenerator.CreateByIdExpression<T>(id);
 
-            return (await this.QueryExecuter.ExecuteSelectQuery(query, null, includes)).FirstOrDefault();
+            return (await this.Get(search, includes)).SingleOrDefault();
         }
 
-
+        /// <summary>
+        /// Inserts an entity into the database
+        /// Also inserts the children if no ID is set
+        /// on them
+        /// </summary>
+        /// <param name="entity"></param>
         public virtual async Task<T> Insert(T entity)
         {
             var query = this.SqlGenerator.Insert<T>(entity);
@@ -68,6 +73,43 @@ namespace Extended.Dapper.Core.Repository
                 return entity;
 
             return null;
+        }
+
+        /// <summary>
+        /// Updates a given entity (but won't update any children info)
+        /// </summary>
+        /// <param name="entity"></param>
+        public virtual Task<bool> Update(T entity) => this.Update(entity, null);
+
+        /// <summary>
+        /// Updates a given entity
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <param name="includes">Which children should also be updated
+        /// (erases them if they don't exist in the list anymore)</param>
+        public virtual Task<bool> Update(T entity, params Expression<Func<T, object>>[] includes)
+        {
+            var query = this.SqlGenerator.Update<T>(entity);
+
+            return this.QueryExecuter.ExecuteUpdateQuery<T>(entity, query, null, includes);
+        }
+
+        /// <summary>
+        /// Deletes the given entity
+        /// </summary>
+        /// <param name="entity"></param>
+        public virtual async Task<bool> Delete(T entity)
+        {
+            return false;
+        }
+
+        /// <summary>
+        /// Deletes the entities matching the search
+        /// </summary>
+        /// <param name="search"></param>
+        public virtual async Task<bool> Delete(Expression<Func<T, bool>> search)
+        {
+            return false;
         }
     }
 }

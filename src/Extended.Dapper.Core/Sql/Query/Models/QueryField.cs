@@ -1,6 +1,6 @@
 namespace Extended.Dapper.Core.Sql.Query.Models
 {
-    public class InsertField
+    public class QueryField
     {
         public string Table { get; set; }
 
@@ -10,7 +10,7 @@ namespace Extended.Dapper.Core.Sql.Query.Models
 
         public string ParameterName { get; set; }
 
-        public InsertField(string table, string field, string parameterName = null, string fieldAlias = null)
+        public QueryField(string table, string field, string parameterName = null, string fieldAlias = null)
         {
             this.Table = table;
             this.Field = field;
