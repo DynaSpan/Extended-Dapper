@@ -106,10 +106,57 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// <param name="deleteQuery"></param>
         public virtual string BuildDeleteQuery(DeleteSqlQuery deleteQuery)
         {
-            if (SqlQueryProviderHelper.Verbose)
-                Console.WriteLine(string.Format("DELETE FROM {0} WHERE {1}", this.EscapeTable(deleteQuery.Table), deleteQuery.Where));
+            // TODO clean up DeleteSqlQuery and move
+            // addition of params to someplace else
+            var queryBuilder = new StringBuilder();
 
-            return string.Format("DELETE FROM {0} WHERE {1}", this.EscapeTable(deleteQuery.Table), deleteQuery.Where);
+            foreach (var param in deleteQuery.Params)
+            {
+                Console.WriteLine($"{param.Key} - {param.Value}");
+            }
+
+            if (deleteQuery.LogicalDelete)
+            {
+                queryBuilder.AppendFormat("UPDATE {0} SET {0}.{1} = 1",
+                    this.EscapeTable(deleteQuery.Table),
+                    this.EscapeColumn(deleteQuery.LogicalDeleteField));
+
+                if (deleteQuery.UpdatedAtField != null && deleteQuery.UpdatedAtField != string.Empty)
+                {
+                    queryBuilder.AppendFormat(", {0}.{1} = @p_updatedat",
+                        this.EscapeTable(deleteQuery.Table),
+                        this.EscapeColumn(deleteQuery.UpdatedAtField));
+
+                    if (!deleteQuery.Params.ContainsKey("@p_updatedat"))
+                        deleteQuery.Params.Add("@p_updatedat", DateTime.UtcNow);
+                }
+            }
+            else
+            {
+                queryBuilder.AppendFormat("DELETE FROM {0} ", this.EscapeTable(deleteQuery.Table));
+            }
+
+            queryBuilder.AppendFormat(" WHERE {0}.{1} NOT IN @p_id_list AND {2}.{3} = @p_parent_key",
+                this.EscapeTable(deleteQuery.Table), 
+                this.EscapeColumn(deleteQuery.LocalKeyField),
+                this.EscapeTable(deleteQuery.ParentTable),
+                this.EscapeColumn(deleteQuery.ParentKeyField));
+
+            if (deleteQuery.LogicalDelete)
+                queryBuilder.AppendFormat(" AND {0}.{1} != 1",
+                    this.EscapeTable(deleteQuery.Table),
+                    this.EscapeColumn(deleteQuery.LogicalDeleteField));
+
+            if (!deleteQuery.Params.ContainsKey("@p_id_list"))
+            {
+                deleteQuery.Params.Add("@p_id_list", deleteQuery.DoNotErase);
+                deleteQuery.Params.Add("@p_parent_key", deleteQuery.ParentKey);
+            }
+
+            if (SqlQueryProviderHelper.Verbose)
+                Console.WriteLine(queryBuilder.ToString());
+
+            return queryBuilder.ToString();
         }
 
         /// <summary>

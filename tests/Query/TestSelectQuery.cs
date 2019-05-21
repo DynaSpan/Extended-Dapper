@@ -101,11 +101,11 @@ namespace Extended.Dapper.Tests.Query
         public void TestInsert2()
         {
             var newBook1 = new Book() {
-                Name = "This is: my new book!",
+                Name = "Moi Book #1",
                 ReleaseYear = 2020
             };
             var newBook2 = new Book() {
-                Name = "This was: my previous book!",
+                Name = "Moi Book #2",
                 ReleaseYear = 2010
             };
 
@@ -114,9 +114,9 @@ namespace Extended.Dapper.Tests.Query
             bookList.Add(newBook2);
 
             var newAuthor = new Author() {
-                Name = "Puk van de petteflet",
-                BirthYear = 1980,
-                Country = "Petteflet",
+                Name = "Pietje Piet",
+                BirthYear = 1990,
+                Country = "Ergens & nergens",
                 Books = bookList
             };
 
@@ -142,14 +142,9 @@ namespace Extended.Dapper.Tests.Query
         [Test]
         public void TestUpdate2()
         {
-            var author = AuthorRepository.Get(a => a.Name == "Mili Drosje", a => a.Books).Result.SingleOrDefault();
+            var author = AuthorRepository.Get(a => a.Name == "Pietje Piet", a => a.Books).Result.SingleOrDefault();
 
-            var newBook = new Book() {
-                Name = "This is: tester",
-                ReleaseYear = 2019
-            };
-
-            author.Books.Add(newBook);
+            author.Books.Remove(author.Books.First());
 
             Console.WriteLine(author);
 

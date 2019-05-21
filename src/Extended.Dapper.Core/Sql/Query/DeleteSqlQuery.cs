@@ -11,6 +11,41 @@ namespace Extended.Dapper.Core.Sql.Query
         /// </summary>
         public string Table { get; set; }
 
+        /// <summary>
+        /// Indicates if this delete is a logical delete
+        /// or a hard one
+        /// </summary>
+        public bool LogicalDelete { get; set; }
+
+        public string LogicalDeleteField { get; set; }
+
+        public string UpdatedAtField { get; set; }
+
+        /// <summary>
+        /// Used for deletion of children
+        /// </summary>
+        public string ParentKeyField { get; set; }
+
+        /// <summary>
+        /// Used for deletion of children
+        /// </summary>
+        public string ParentTable { get; set; }
+
+        /// <summary>
+        /// Used for the deletion of children
+        /// </summary>
+        public string ParentKey { get; set; }
+
+        /// <summary>
+        /// Used for deletion of children
+        /// </summary>
+        public string LocalKeyField { get; set; }
+
+        /// <summary>
+        /// Used for the deletion of children
+        /// </summary>
+        public List<object> DoNotErase { get; set; }
+
         public DeleteSqlQuery() : base()
         {
             

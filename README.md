@@ -17,6 +17,8 @@ Extends Dapper functionality with a repository pattern, `OneToMany` and `ManyToO
 - Implement more `SqlProviders`
 - Set up CI/CD for automated deployment to NuGet
 - Setup documentation
+- Optimize reflection calls
 - Transaction support
 - Lazy loading of `OneToMany` and `ManyToOne`
 - Implement `ManyToMany` attribute
+- Better error-handling implementation

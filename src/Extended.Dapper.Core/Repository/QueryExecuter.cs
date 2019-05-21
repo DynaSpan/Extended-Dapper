@@ -110,7 +110,7 @@ namespace Extended.Dapper.Core.Repository
 
             // Update all children
             if (includes != null)
-                query = await this.UpdateChildren<T>(entity, query, includes);
+                query = await this.UpdateChildren<T>(entity, query, null, includes);
 
             using (connection)
             {
@@ -119,6 +119,25 @@ namespace Extended.Dapper.Core.Repository
                 var updateResult = await connection.ExecuteAsync(query.ToString(), query.Params);
 
                 return updateResult == 1;
+            }
+        }
+
+        /// <summary>
+        /// Executes a delete query
+        /// </summary>
+        /// <param name="query"></param>
+        /// <param name="connection"></param>
+        /// <returns>Number of deleted records</returns>
+        public virtual Task<int> ExecuteDeleteQuery<T>(SqlQuery query, IDbConnection connection = null)
+        {
+            if (connection == null)
+                connection = this.DatabaseFactory.GetDatabaseConnection();
+
+            using (connection)
+            {
+                this.OpenConnection(connection);
+
+                return connection.ExecuteAsync(query.ToString(), query.Params);
             }
         }
 
@@ -261,14 +280,11 @@ namespace Extended.Dapper.Core.Repository
             return true;
         }
 
-        protected virtual async Task<UpdateSqlQuery> UpdateChildren<T>(T entity, UpdateSqlQuery updateQuery, params Expression<Func<T, object>>[] includes)
+        protected virtual async Task<UpdateSqlQuery> UpdateChildren<T>(T entity, UpdateSqlQuery updateQuery, IDbConnection connection = null, params Expression<Func<T, object>>[] includes)
             where T : class, new()
         {
             var entityMap = EntityMapper.GetEntityMap(typeof(T));
             var foreignKey = EntityMapper.GetCompositeUniqueKey<T>(entity);
-
-            // TODO get current children
-            // TODO remove children not existing in collection anymore
 
             foreach (var incl in includes)
             {
@@ -310,6 +326,10 @@ namespace Extended.Dapper.Core.Repository
                     }
                     else if (attr is OneToManyAttribute)
                     {
+                        // TODO get current children
+                        // TODO remove children not existing in collection anymore
+                        var currentChildrenIds = new List<object>();
+
                         var listObj = oneObj as IList;
                         var listType = listObj.GetType().GetGenericArguments()[0];
                         var listEntityMap = EntityMapper.GetEntityMap(listType);
@@ -325,6 +345,8 @@ namespace Extended.Dapper.Core.Repository
 
                                 query.Insert.Add(new QueryField(attr.TableName, attr.ExternalKey, "@p_fk_" + attr.ExternalKey));
                                 query.Params.Add("@p_fk_" + attr.ExternalKey, foreignKey);
+
+                                objKey = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", listEntityMap.Type, new[] { listItem }) as string;
 
                                 var queryResult = await this.ExecuteInsertQuery(listItem, query);
 
@@ -344,6 +366,28 @@ namespace Extended.Dapper.Core.Repository
                                 if (!queryResult)
                                     throw new ApplicationException("Could not update a OneToMany object: " + listItem);
                             }
+
+                            Guid guidId;
+
+                            if (Guid.TryParse(objKey, out guidId))
+                                currentChildrenIds.Add(guidId);
+                            else
+                                currentChildrenIds.Add(objKey);
+                        }
+
+                        // Delete children not in list anymore
+                        var deleteQuery = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "DeleteChildren", listType, new object[] { attr.TableName, foreignKey, attr.ExternalKey, attr.LocalKey, currentChildrenIds }, this.SqlGenerator) as SqlQuery;
+
+                        Console.WriteLine(deleteQuery);
+                        
+                        if (connection == null)
+                            connection = this.DatabaseFactory.GetDatabaseConnection();
+
+                        using (connection)
+                        {
+                            this.OpenConnection(connection);
+
+                            await connection.QueryAsync(deleteQuery.ToString(), deleteQuery.Params);
                         }
                     }
                 }

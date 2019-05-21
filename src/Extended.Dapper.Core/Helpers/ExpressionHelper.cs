@@ -89,16 +89,29 @@ namespace Extended.Dapper.Core.Helpers
 
         public static object GetValuesFromCollection(MethodCallExpression callExpr)
         {
-            var expr = (callExpr.Method.IsStatic ? callExpr.Arguments.First() : callExpr.Object)
-                            as MemberExpression;
+            var expr = (callExpr.Method.IsStatic ? callExpr.Arguments.First() : callExpr.Object);
 
-            if (!(expr?.Expression is ConstantExpression))
-                throw new NotSupportedException(callExpr.Method.Name + " isn't supported");
+            if (expr.NodeType is ExpressionType.MemberAccess)
+            {
+                MemberExpression memberExpr = expr as MemberExpression;
 
-            var constExpr = (ConstantExpression)expr.Expression;
+                if (!(memberExpr?.Expression is ConstantExpression)
+                    && callExpr.Method.Name != "Contains")
+                    throw new NotSupportedException(callExpr.Method.Name + " isn't supported");
 
-            var constExprType = constExpr.Value.GetType();
-            return constExprType.GetField(expr.Member.Name).GetValue(constExpr.Value);
+                var constExpr = (ConstantExpression)memberExpr.Expression;
+
+                var constExprType = constExpr.Value.GetType();
+                return constExprType.GetField(memberExpr.Member.Name).GetValue(constExpr.Value);
+            }
+            else if (expr.NodeType == ExpressionType.Constant)
+            {
+                ConstantExpression constantExpr = expr as ConstantExpression;
+
+                return constantExpr.Value;
+            }
+
+            return null;
         }
 
         public static MemberExpression GetMemberExpression(Expression expression)
@@ -107,7 +120,17 @@ namespace Extended.Dapper.Core.Helpers
             {
                 case MethodCallExpression expr:
                     if (expr.Method.IsStatic)
-                        return (MemberExpression)expr.Arguments.Last(x => x.NodeType == ExpressionType.MemberAccess);
+                    {
+                        Expression memExpr = expr.Arguments.LastOrDefault(x => x.NodeType == ExpressionType.MemberAccess);
+
+                        if (memExpr == null)
+                        {
+                            UnaryExpression arg = expr.Arguments[1] as UnaryExpression;
+                            memExpr = arg.Operand;
+                        }
+
+                        return (MemberExpression)memExpr;
+                    }
                     else
                         return (MemberExpression)expr.Arguments[0];
 

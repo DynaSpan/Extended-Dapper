@@ -276,6 +276,26 @@ namespace Extended.Dapper.Core.Sql
             }
         }
 
+        public DeleteSqlQuery DeleteChildren<T>(string parentTable, string parentKey, string parentKeyField, string localKeyField, List<object> doNotErases)
+        {
+            var entityMap = EntityMapper.GetEntityMap(typeof(T));
+
+            var query = new DeleteSqlQuery();
+            query.Table = entityMap.TableName;
+            query.ParentTable = parentTable;
+            query.ParentKey = parentKey;
+            query.ParentKeyField = parentKeyField;
+            query.LocalKeyField = localKeyField;
+            query.DoNotErase = doNotErases;
+
+            query.LogicalDelete = entityMap.LogicalDelete;
+            query.LogicalDeleteField = entityMap.LogicalDeletePropertyMetadata.ColumnName;
+
+            query.UpdatedAtField = entityMap.UpdatedAtPropertyMetadata.ColumnName;
+
+            return query;
+        }
+
         #endregion
 
         #region Helpers
@@ -301,6 +321,34 @@ namespace Extended.Dapper.Core.Sql
             ParameterExpression t = Expression.Parameter(typeof(T), "t");
             Expression idProperty = Expression.Property(t, keyProperty.Name);
             Expression comparison = Expression.Equal(idProperty, Expression.Constant(id));
+            
+            return Expression.Lambda<Func<T, bool>>(comparison, t);
+        }
+
+        /// <summary>
+        /// Creates an search expression for the IDs
+        /// </summary>
+        /// <param name="id">The id that is wanted</param>
+        /// <typeparam name="T">Entity type</typeparam>
+        public virtual Expression<Func<T, bool>> CreateByForeignKeyExpression<T>(string foreignKey, IEnumerable<object> ids)
+        {
+            var entityMap = EntityMapper.GetEntityMap(typeof(T));
+
+            var keyProperty = entityMap.PrimaryKeyProperties.Where(x => x.GetCustomAttribute<AutoValueAttribute>() != null).FirstOrDefault();
+
+            if (keyProperty == null)
+                keyProperty = entityMap.PrimaryKeyProperties.FirstOrDefault();
+
+            ParameterExpression t = Expression.Parameter(typeof(T), "t");
+            Expression idProperty = Expression.Convert(Expression.Property(t, foreignKey), typeof(object));
+            MethodInfo method = typeof(Enumerable).
+                    GetMethods().
+                    Where(x => x.Name == "Contains").
+                    Single(x => x.GetParameters().Length == 2).
+                    MakeGenericMethod(typeof(object));
+            var idsConstant = Expression.Constant(ids, typeof(IEnumerable<object>));
+            
+            Expression comparison = Expression.Call(method, idsConstant, idProperty);
             
             return Expression.Lambda<Func<T, bool>>(comparison, t);
         }
