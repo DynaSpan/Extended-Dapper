@@ -1,0 +1,9 @@
+language: csharp
+solution: Extended.Dapper.sln
+install:
+  - dotnet restore
+script:
+  - xbuild /p:Configuration=Release Extended.Dapper.sln
+  - nuget pack ./[NuspecName].nuspec
+  - nuget setApiKey $NUGET_API_KEY -Source $NUGET_SOURCE -Verbosity quiet
+  - nuget push Extended.Dapper.*.nupkg -Source $NUGET_SOURCE
