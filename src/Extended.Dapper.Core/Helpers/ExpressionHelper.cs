@@ -282,7 +282,7 @@ namespace Extended.Dapper.Core.Helpers
                     var propertyName = ExpressionHelper.GetPropertyNamePath(methodCallExpression, out var isNested);
 
                     if (!entityMap.MappedPropertiesMetadata.Select(x => x.PropertyName).Contains(propertyName) 
-                        && !entityMap.RelationPropertiesMetadata.Select(x => x.PropertyName).Contains(propertyName))
+                        && !entityMap.RelationProperties.Select(x => x.Key.Name).Contains(propertyName))
                         throw new NotSupportedException("Can't parse the predicate");
 
                     var propertyValue   = ExpressionHelper.GetValuesFromCollection(methodCallExpression);
@@ -305,7 +305,7 @@ namespace Extended.Dapper.Core.Helpers
                     var propertyName = ExpressionHelper.GetPropertyNamePath(exprObj, out bool isNested);
 
                     if (!entityMap.MappedPropertiesMetadata.Select(x => x.PropertyName).Contains(propertyName) 
-                        && !entityMap.RelationPropertiesMetadata.Select(x => x.PropertyName).Contains(propertyName))
+                        && !entityMap.RelationProperties.Select(x => x.Key.Name).Contains(propertyName))
                         throw new NotSupportedException("Can't parse the predicate");
 
                     var propertyValue   = ExpressionHelper.GetValuesFromStringMethod(methodCallExpression);
@@ -338,7 +338,7 @@ namespace Extended.Dapper.Core.Helpers
                 var propertyName = ExpressionHelper.GetPropertyNamePath(binaryExpression, out var isNested);
 
                 if (!entityMap.MappedPropertiesMetadata.Select(x => x.PropertyName).Contains(propertyName) 
-                    && !entityMap.RelationPropertiesMetadata.Select(x => x.PropertyName).Contains(propertyName))
+                    && !entityMap.RelationProperties.Select(x => x.Key.Name).Contains(propertyName))
                     throw new NotSupportedException("Can't parse the predicate");
 
                 var propertyValue   = ExpressionHelper.GetValue(binaryExpression.Right);

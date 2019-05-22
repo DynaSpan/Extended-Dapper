@@ -53,11 +53,6 @@ namespace Extended.Dapper.Core.Mappers
         public Dictionary<PropertyInfo, ICollection<SqlRelationPropertyMetadata>> RelationProperties { get; set; }
 
         /// <summary>
-        /// Contains all properties with relations
-        /// </summary>
-        public ICollection<SqlRelationPropertyMetadata> RelationPropertiesMetadata { get; set; }
-
-        /// <summary>
         /// Contains the UpdatedAt property (if set; null otherwise)
         /// </summary>
         public PropertyInfo UpdatedAtProperty { get; set; }
