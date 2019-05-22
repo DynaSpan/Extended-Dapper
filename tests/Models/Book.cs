@@ -1,5 +1,6 @@
 ﻿using System;
-using Extended.Dapper.Attributes.Entities.Relations;
+using System.Text;
+using Extended.Dapper.Core.Attributes.Entities.Relations;
 using Extended.Dapper.Core.Database.Entities;
 
 namespace Extended.Dapper.Tests.Models
@@ -10,12 +11,19 @@ namespace Extended.Dapper.Tests.Models
 
         public int ReleaseYear { get; set; }
 
-        [ManyToOne("Author", "AuthorId", "Id")]
+        [ManyToOne(typeof(Author), "AuthorId")]
         public Author Author { get; set; }
+
+        [ManyToOne(typeof(Category), "CategoryId")]
+        public Category Category { get; set; }
 
         public override string ToString()
         {
-            return string.Format("{0} ({1}) - Author: {2}", Name, ReleaseYear, Author?.Name);
+            var sb = new StringBuilder();
+            sb.AppendFormat("{0} ({1})", Name, ReleaseYear);
+            sb.AppendLine("");
+            sb.AppendFormat("Category: {0} - Author: {1}", Category?.Name, Author?.Name);
+            return sb.ToString();
         }
     }
 }

@@ -1,6 +1,6 @@
 using System;
 
-namespace Extended.Dapper.Attributes.Entities
+namespace Extended.Dapper.Core.Attributes.Entities
 {
     /// <summary>
     /// Implements a logical delete instead of a hard-delete

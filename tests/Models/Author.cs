@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Extended.Dapper.Attributes.Entities.Relations;
+using Extended.Dapper.Core.Attributes.Entities.Relations;
 using Extended.Dapper.Core.Database.Entities;
 
 namespace Extended.Dapper.Tests.Models
@@ -13,7 +13,7 @@ namespace Extended.Dapper.Tests.Models
 
         public string Country { get; set; }
 
-        [OneToMany("Book", "Id", "AuthorId")]
+        [OneToMany(typeof(Book), "AuthorId")]
         public ICollection<Book> Books { get; set; }
 
         public override string ToString()

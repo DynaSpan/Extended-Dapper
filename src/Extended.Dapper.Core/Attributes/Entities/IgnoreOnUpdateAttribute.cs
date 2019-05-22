@@ -1,6 +1,6 @@
 using System;
 
-namespace Extended.Dapper.Attributes.Entities
+namespace Extended.Dapper.Core.Attributes.Entities
 {
     /// <summary>
     /// Will not update this field when executing an update query

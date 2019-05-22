@@ -1,6 +1,6 @@
 using System;
 
-namespace Extended.Dapper.Attributes.Entities
+namespace Extended.Dapper.Core.Attributes.Entities
 {
     /// <summary>
     /// Must be used on a [Key] attribute, implements

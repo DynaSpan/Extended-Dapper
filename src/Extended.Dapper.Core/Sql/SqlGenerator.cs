@@ -6,8 +6,8 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
-using Extended.Dapper.Attributes.Entities;
-using Extended.Dapper.Attributes.Entities.Relations;
+using Extended.Dapper.Core.Attributes.Entities;
+using Extended.Dapper.Core.Attributes.Entities.Relations;
 using Extended.Dapper.Core.Database;
 using Extended.Dapper.Core.Extensions;
 using Extended.Dapper.Core.Helpers;
@@ -124,18 +124,24 @@ namespace Extended.Dapper.Core.Sql
                     var join = new Join();
 
                     // Check the type of relation
-                    string joinType = string.Empty;
-
                     if (relationAttr is ManyToOneAttribute)
+                    {
                         join.Type = JoinType.INNER;
+
+                        
+                        join.ExternalTable = entityMap.TableName;
+                        join.LocalTable = relationAttr.TableName;
+                    }
                     else if (relationAttr is OneToManyAttribute)
+                    {
                         join.Type = JoinType.LEFT;
 
-                    join.ExternalKey = relationAttr.ExternalKey;
-                    join.ExternalTable = relationAttr.TableName;
+                        join.ExternalTable = relationAttr.TableName;
+                        join.LocalTable = entityMap.TableName;
+                    }
 
-                    join.LocalKey = relationAttr.LocalKey;
-                    join.LocalTable = entityMap.TableName;
+                    join.ExternalKey = relationAttr.ForeignKey;
+                    join.LocalKey    = relationAttr.LocalKey;
 
                     sqlQuery.Joins.Add(join);
                 }

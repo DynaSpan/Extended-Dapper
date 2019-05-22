@@ -8,8 +8,8 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Dapper;
-using Extended.Dapper.Attributes.Entities;
-using Extended.Dapper.Attributes.Entities.Relations;
+using Extended.Dapper.Core.Attributes.Entities;
+using Extended.Dapper.Core.Attributes.Entities.Relations;
 using Extended.Dapper.Core.Database;
 using Extended.Dapper.Core.Mappers;
 using Extended.Dapper.Core.Reflection;
@@ -237,8 +237,8 @@ namespace Extended.Dapper.Core.Repository
                             throw new ApplicationException("Could not insert a ManyToOne object: " + oneObj);
                     }
 
-                    insertQuery.Insert.Add(new QueryField(entityMap.TableName, attr.LocalKey, "@p_m2o_" + attr.TableName + "_" + attr.LocalKey));
-                    insertQuery.Params.Add("@p_m2o_" + attr.TableName + "_" + attr.LocalKey, oneObjKey);
+                    insertQuery.Insert.Add(new QueryField(entityMap.TableName, attr.ForeignKey, "@p_m2o_" + attr.TableName + "_" + attr.ForeignKey));
+                    insertQuery.Params.Add("@p_m2o_" + attr.TableName + "_" + attr.ForeignKey, oneObjKey);
                 }
             }
 
@@ -269,8 +269,8 @@ namespace Extended.Dapper.Core.Repository
                     {
                         var query = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "Insert", listEntityMap.Type, new[] { obj }, this.SqlGenerator) as InsertSqlQuery;
 
-                        query.Insert.Add(new QueryField(attr.TableName, attr.ExternalKey, "@p_fk_" + attr.ExternalKey));
-                        query.Params.Add("@p_fk_" + attr.ExternalKey, foreignKey);
+                        query.Insert.Add(new QueryField(attr.TableName, attr.ForeignKey, "@p_fk_" + attr.ForeignKey));
+                        query.Params.Add("@p_fk_" + attr.ForeignKey, foreignKey);
 
                         var queryResult = await this.ExecuteInsertQuery(obj, query);
                     }
@@ -341,8 +341,8 @@ namespace Extended.Dapper.Core.Repository
                             {
                                 var query = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "Insert", listEntityMap.Type, new[] { listItem }, this.SqlGenerator) as InsertSqlQuery;
 
-                                query.Insert.Add(new QueryField(attr.TableName, attr.ExternalKey, "@p_fk_" + attr.ExternalKey));
-                                query.Params.Add("@p_fk_" + attr.ExternalKey, foreignKey);
+                                query.Insert.Add(new QueryField(attr.TableName, attr.ForeignKey, "@p_fk_" + attr.ForeignKey));
+                                query.Params.Add("@p_fk_" + attr.ForeignKey, foreignKey);
 
                                 objKey = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", listEntityMap.Type, new[] { listItem }) as string;
 
@@ -356,8 +356,8 @@ namespace Extended.Dapper.Core.Repository
                                 // Update the entity
                                 var query = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "Update", listType, new[] { listItem }, this.SqlGenerator) as UpdateSqlQuery;
 
-                                query.Updates.Add(new QueryField(attr.TableName, attr.ExternalKey, "@p_fk_" + attr.ExternalKey));
-                                query.Params.Add("@p_fk_" + attr.ExternalKey, foreignKey);
+                                query.Updates.Add(new QueryField(attr.TableName, attr.ForeignKey, "@p_fk_" + attr.ForeignKey));
+                                query.Params.Add("@p_fk_" + attr.ForeignKey, foreignKey);
 
                                 var queryResult = await (ReflectionHelper.CallGenericMethod(typeof(QueryExecuter), "ExecuteUpdateQuery", listType, new[] { listItem, query, null, null }, this) as Task<bool>);
 
@@ -374,7 +374,7 @@ namespace Extended.Dapper.Core.Repository
                         }
 
                         // Delete children not in list anymore
-                        var deleteQuery = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "DeleteChildren", listType, new object[] { attr.TableName, foreignKey, attr.ExternalKey, attr.LocalKey, currentChildrenIds }, this.SqlGenerator) as SqlQuery;
+                        var deleteQuery = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "DeleteChildren", listType, new object[] { attr.TableName, foreignKey, attr.ForeignKey, attr.LocalKey, currentChildrenIds }, this.SqlGenerator) as SqlQuery;
                         
                         if (connection == null)
                             connection = this.DatabaseFactory.GetDatabaseConnection();

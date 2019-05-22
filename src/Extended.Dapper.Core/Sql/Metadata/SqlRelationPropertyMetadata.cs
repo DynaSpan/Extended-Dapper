@@ -1,5 +1,5 @@
 using System.Reflection;
-using Extended.Dapper.Attributes.Entities.Relations;
+using Extended.Dapper.Core.Attributes.Entities.Relations;
 
 namespace Extended.Dapper.Core.Sql.Metadata
 {
@@ -40,7 +40,7 @@ namespace Extended.Dapper.Core.Sql.Metadata
             this.RelationPropertyInfo = relationPropertyInfo;
             
             this.TableName      = relationAttribute.TableName;
-            this.ExternalKey    = relationAttribute.ExternalKey;
+            this.ExternalKey    = relationAttribute.ForeignKey;
             this.LocalKey       = relationAttribute.LocalKey;
 
             if (relationAttribute is OneToManyAttribute)

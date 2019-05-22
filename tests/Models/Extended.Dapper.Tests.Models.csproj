@@ -2,7 +2,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Extended.Dapper.Core\Extended.Dapper.Core.csproj" />
-    <ProjectReference Include="..\..\src\Extended.Dapper.Attributes\Extended.Dapper.Attributes.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

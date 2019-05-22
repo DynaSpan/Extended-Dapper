@@ -1,5 +1,5 @@
 using System;
-using Extended.Dapper.Attributes.Entities;
+using Extended.Dapper.Core.Attributes.Entities;
 
 namespace Extended.Dapper.Core.Database.Entities
 {

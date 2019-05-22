@@ -233,20 +233,26 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         public virtual string MapJoin(Join join)
         {
             var joinType = string.Empty;
+            var joinTable = string.Empty;
 
             switch (join.Type)
             {
-                case JoinType.INNER: joinType = "INNER"; break;
-                case JoinType.LEFT: joinType = "LEFT"; break;
+                case JoinType.INNER:
+                    joinType = "INNER"; 
+                    joinTable = join.LocalTable;
+                    break;
+                case JoinType.LEFT: 
+                    joinType = "LEFT"; 
+                    joinTable = join.ExternalTable;
+                    break;
             }
 
-            joinType = joinType + " JOIN";
-
-            return string.Format("{0} {1} ON {2}.{3} = {1}.{4}",
+            return string.Format("{0} JOIN {1} ON {2}.{3} = {4}.{5}",
                 joinType,
-                this.EscapeTable(join.ExternalTable),
+                this.EscapeTable(joinTable),
                 this.EscapeTable(join.LocalTable),
                 this.EscapeColumn(join.LocalKey),
+                this.EscapeColumn(join.ExternalTable),
                 this.EscapeColumn(join.ExternalKey));
         }
 

@@ -1,6 +1,6 @@
 using System;
 
-namespace Extended.Dapper.Attributes.Entities
+namespace Extended.Dapper.Core.Attributes.Entities
 {
     /// <summary>
     /// When applied to a datetime field, will automatically
