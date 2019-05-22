@@ -8,13 +8,13 @@ Extends Dapper functionality with a repository pattern, `OneToMany` and `ManyToO
 
 ## TODO
 
-- ~Make sure all queries generate properly (`SELECT`, `UPDATE`, `DELETE`, `INSERT`)`
+- ~Make sure all queries generate properly (`SELECT`, `UPDATE`, `DELETE`, `INSERT`)~
 - ~Mapping to & from POCOs~ 
 - ~Make sure `OneToMany` and `ManyToOne` mappings properly apply to `INSERT`s, `UPDATE`s, `DELETE`s & `SELECT`s~
 - ~Repositories~
 - Setup local DB for unittests
 - Write unittests
-- Set up CI/CD for automated deployment to NuGet
+- Setup CI/CD for automated deployment to NuGet
 - Transaction support
 - Setup documentation
 - (Proper) support for more than 1 primary key
