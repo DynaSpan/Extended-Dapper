@@ -153,5 +153,19 @@ namespace Extended.Dapper.Tests.Query
 
             Console.WriteLine(res);
         }
+
+        [Test]
+        public void TestDelete()
+        {
+            var authorInsert = new Author() {
+                Name = "test123"
+            };
+            var res = AuthorRepository.Insert(authorInsert).Result;
+
+            // Delete same author
+            var res2 = AuthorRepository.Delete(x => x.Name == "test123").Result;
+
+            Console.WriteLine(res2);
+        }
     }
 }

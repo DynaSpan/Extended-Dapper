@@ -136,11 +136,6 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
             // addition of params to someplace else
             var queryBuilder = new StringBuilder();
 
-            foreach (var param in deleteQuery.Params)
-            {
-                Console.WriteLine($"{param.Key} - {param.Value}");
-            }
-
             if (deleteQuery.LogicalDelete)
             {
                 queryBuilder.AppendFormat("UPDATE {0} SET {0}.{1} = 1",
@@ -162,22 +157,29 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
                 queryBuilder.AppendFormat("DELETE FROM {0} ", this.EscapeTable(deleteQuery.Table));
             }
 
-            queryBuilder.AppendFormat(" WHERE {0}.{1} NOT IN @p_id_list AND {2}.{3} = @p_parent_key",
-                this.EscapeTable(deleteQuery.Table), 
-                this.EscapeColumn(deleteQuery.LocalKeyField),
-                this.EscapeTable(deleteQuery.ParentTable),
-                this.EscapeColumn(deleteQuery.ParentKeyField));
+            if (deleteQuery.DoNotErase != null && deleteQuery.ParentKey != string.Empty && deleteQuery.ParentKey != null)
+            {
+                queryBuilder.AppendFormat(" WHERE {0}.{1} NOT IN @p_id_list AND {2}.{3} = @p_parent_key",
+                    this.EscapeTable(deleteQuery.Table), 
+                    this.EscapeColumn(deleteQuery.LocalKeyField),
+                    this.EscapeTable(deleteQuery.ParentTable),
+                    this.EscapeColumn(deleteQuery.ParentKeyField));
+
+                if (!deleteQuery.Params.ContainsKey("@p_id_list"))
+                {
+                    deleteQuery.Params.Add("@p_id_list", deleteQuery.DoNotErase);
+                    deleteQuery.Params.Add("@p_parent_key", deleteQuery.ParentKey);
+                }
+            }
+            else
+            {
+                queryBuilder.AppendFormat(" WHERE ({0})", deleteQuery.Where);
+            }
 
             if (deleteQuery.LogicalDelete)
                 queryBuilder.AppendFormat(" AND {0}.{1} != 1",
                     this.EscapeTable(deleteQuery.Table),
                     this.EscapeColumn(deleteQuery.LogicalDeleteField));
-
-            if (!deleteQuery.Params.ContainsKey("@p_id_list"))
-            {
-                deleteQuery.Params.Add("@p_id_list", deleteQuery.DoNotErase);
-                deleteQuery.Params.Add("@p_parent_key", deleteQuery.ParentKey);
-            }
 
             if (SqlQueryProviderHelper.Verbose)
                 Console.WriteLine(queryBuilder.ToString());
