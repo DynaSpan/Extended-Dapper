@@ -128,7 +128,7 @@ namespace Extended.Dapper.Core.Repository
         /// <param name="query"></param>
         /// <param name="connection"></param>
         /// <returns>Number of deleted records</returns>
-        public virtual Task<int> ExecuteDeleteQuery<T>(SqlQuery query, IDbConnection connection = null)
+        public virtual async Task<int> ExecuteDeleteQuery<T>(SqlQuery query, IDbConnection connection = null)
         {
             if (connection == null)
                 connection = this.DatabaseFactory.GetDatabaseConnection();
@@ -137,7 +137,7 @@ namespace Extended.Dapper.Core.Repository
             {
                 this.OpenConnection(connection);
 
-                return connection.ExecuteAsync(query.ToString(), query.Params);
+                return await connection.ExecuteAsync(query.ToString(), query.Params);
             }
         }
 
