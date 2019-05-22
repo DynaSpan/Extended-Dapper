@@ -1,10 +1,32 @@
+using System.Data;
 using System.Text;
 using Extended.Dapper.Core.Database;
+using MySql.Data.MySqlClient;
 
 namespace Extended.Dapper.Core.Sql.QueryProviders
 {
     public class MySqlQueryProvider : SqlQueryProvider
     {
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="databaseSettings"></param>
+        /// <returns></returns>
+        public MySqlQueryProvider(DatabaseSettings databaseSettings) : base(databaseSettings)
+        {
+
+        }
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="connectionString"></param>
+        public MySqlQueryProvider(string connectionString) : base(connectionString)
+        {
+
+        }
+
+
         /// <summary>
         /// Escapes a table name in the correct format
         /// </summary>
@@ -21,6 +43,14 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         public override string EscapeColumn(string columnName)
         {
             return "`" + columnName + "`";
+        }
+
+        /// <summary>
+        /// Returns a new IDbConnection
+        /// </summary>
+        public override IDbConnection GetConnection()
+        {
+            return new MySqlConnection(this.ConnectionString);
         }
 
         /// <summary>

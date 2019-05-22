@@ -11,8 +11,8 @@ namespace Extended.Dapper.Core.Database
 {
     public class DatabaseFactory : IDatabaseFactory
     {
-        private readonly string connectionString;
         public DatabaseProvider DatabaseProvider { get; }
+        public ISqlQueryProvider SqlProvider { get; set; }
 
         /// <summary>
         /// Constructor for the factory
@@ -20,10 +20,10 @@ namespace Extended.Dapper.Core.Database
         /// <param name="databaseSettings"></param>
         public DatabaseFactory(DatabaseSettings databaseSettings)
         {
-            SqlQueryProviderHelper.SetProvider(databaseSettings.DatabaseProvider);
+            SqlQueryProviderHelper.SetProvider(databaseSettings.DatabaseProvider, databaseSettings);
 
-            this.connectionString = this.ConstructConnectionString(databaseSettings);
             this.DatabaseProvider = databaseSettings.DatabaseProvider;
+            this.SqlProvider      = SqlQueryProviderHelper.GetProvider();
         }
 
         /// <summary>
@@ -35,8 +35,8 @@ namespace Extended.Dapper.Core.Database
         {
             SqlQueryProviderHelper.SetProvider(databaseProvider);
 
-            this.connectionString = connectionString;
-            this.DatabaseProvider = databaseProvider;            
+            this.DatabaseProvider = databaseProvider;
+            this.SqlProvider      = SqlQueryProviderHelper.GetProvider();      
         }
 
         /// <summary>
@@ -45,6 +45,7 @@ namespace Extended.Dapper.Core.Database
         /// <returns></returns>
         public IDbConnection GetDatabaseConnection()
         {
+            return this.SqlProvider.GetConnection();
             switch (this.DatabaseProvider)
             {
                 case DatabaseProvider.MSSQL:
@@ -54,22 +55,6 @@ namespace Extended.Dapper.Core.Database
                 default:
                     throw new NotImplementedException();
             }
-        }
-
-        /// <summary>
-        /// Constructs the connection string based on the
-        /// DatabaseSettings
-        /// </summary>
-        /// <param name="databaseSettings"></param>
-        /// <returns></returns>
-        private string ConstructConnectionString(DatabaseSettings databaseSettings)
-        {
-            var provider = SqlQueryProviderHelper.GetProvider();
-
-            if (provider == null)
-                throw new NotImplementedException();
-
-            return provider.BuildConnectionString(databaseSettings);
         }
     }
 }

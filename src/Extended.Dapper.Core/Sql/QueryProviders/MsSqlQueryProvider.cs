@@ -1,3 +1,5 @@
+using System.Data;
+using System.Data.SqlClient;
 using System.Text;
 using Extended.Dapper.Core.Database;
 
@@ -5,6 +7,24 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
 {
     public class MsSqlQueryProvider : SqlQueryProvider
     {
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="databaseSettings"></param>
+        public MsSqlQueryProvider(DatabaseSettings databaseSettings) : base(databaseSettings)
+        {
+
+        }
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="connectionString"></param>
+        public MsSqlQueryProvider(string connectionString) : base(connectionString)
+        {
+
+        }
+
         /// <summary>
         /// Escapes a table name in the correct format
         /// </summary>
@@ -21,6 +41,14 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         public override string EscapeColumn(string columnName)
         {
             return "[" + columnName + "]";
+        }
+
+        /// <summary>
+        /// Returns a new IDbConnection
+        /// </summary>
+        public override IDbConnection GetConnection()
+        {
+            return new SqlConnection(this.ConnectionString);
         }
 
         /// <summary>

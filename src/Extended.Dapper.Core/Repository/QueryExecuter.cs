@@ -37,7 +37,7 @@ namespace Extended.Dapper.Core.Repository
         /// <param name="connection"></param>
         /// <param name="includes"></param>
         public virtual async Task<IEnumerable<T>> ExecuteSelectQuery<T>(SelectSqlQuery query, IDbConnection connection = null, params Expression<Func<T, object>>[] includes)
-            where T : class, new()
+            where T : class
         {
             var typeArr = ReflectionHelper.GetTypeListFromIncludes(includes).ToArray();
             
@@ -103,7 +103,7 @@ namespace Extended.Dapper.Core.Repository
         /// <param name="includes"></param>
         /// <returns>True when succesfull; false otherwise</returns>
         public virtual async Task<bool> ExecuteUpdateQuery<T>(T entity, UpdateSqlQuery query, IDbConnection connection = null, params Expression<Func<T, object>>[] includes)
-            where T : class, new()
+            where T : class
         {
             if (connection == null)
                 connection = this.DatabaseFactory.GetDatabaseConnection();
@@ -148,7 +148,7 @@ namespace Extended.Dapper.Core.Repository
         /// <param name="lookup">Dictionary to lookup entities</param>
         /// <param name="includes">Which children should be included</param>
         protected virtual Func<object[], T> MapDapperEntity<T>(Type[] typeArr, Dictionary<string, T> lookup, params Expression<Func<T, object>>[] includes)
-            where T : class, new()
+            where T : class
         {
             return (objectArr) => {
                 var entityLookup        = objectArr[0] as T;
@@ -281,7 +281,7 @@ namespace Extended.Dapper.Core.Repository
         }
 
         protected virtual async Task<UpdateSqlQuery> UpdateChildren<T>(T entity, UpdateSqlQuery updateQuery, IDbConnection connection = null, params Expression<Func<T, object>>[] includes)
-            where T : class, new()
+            where T : class
         {
             var entityMap = EntityMapper.GetEntityMap(typeof(T));
             var foreignKey = EntityMapper.GetCompositeUniqueKey<T>(entity);

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq.Expressions;
 using Extended.Dapper.Core.Database;
 using Extended.Dapper.Core.Mappers;
@@ -84,5 +85,10 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// <param name="queryType"></param>
         /// <param name="entityMap"></param>
         void AppendWherePredicateQuery<T>(SqlQuery sqlQuery, Expression<Func<T, bool>> predicate, QueryType queryType, EntityMap entityMap);
+
+        /// <summary>
+        /// Returns a new IDbConnection
+        /// </summary>
+        IDbConnection GetConnection();
     }
 }

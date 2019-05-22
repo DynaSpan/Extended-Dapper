@@ -18,7 +18,7 @@ using Extended.Dapper.Core.Sql.Query;
 
 namespace Extended.Dapper.Core.Repository
 {
-    public class EntityRepository<T> : IEntityRepository<T> where T : class, new()
+    public class EntityRepository<T> : IEntityRepository<T> where T : class
     {
         protected IDatabaseFactory DatabaseFactory { get; set; }
         protected SqlGenerator SqlGenerator { get; set; }
@@ -40,7 +40,7 @@ namespace Extended.Dapper.Core.Repository
         /// </summary>
         /// <param name="search">The search criteria</param>
         /// <param name="includes">Which children to include</param>
-        public virtual Task<IEnumerable<T>> Get(Expression<Func<T, bool>> search = null, params Expression<Func<T, object>>[] includes)
+        public virtual Task<IEnumerable<T>> GetAll(Expression<Func<T, bool>> search = null, params Expression<Func<T, object>>[] includes)
         {
             var query = this.SqlGenerator.Select<T>(search, includes);
 
@@ -48,15 +48,27 @@ namespace Extended.Dapper.Core.Repository
         }
 
         /// <summary>
+        /// Gets one entity that matches the search
+        /// </summary>
+        /// <param name="search">The search criteria</param>
+        /// <param name="includes">Which children to include</param>
+        public virtual async Task<T> Get(Expression<Func<T, bool>> search = null, params Expression<Func<T, object>>[] includes)
+        {
+            var query = this.SqlGenerator.Select<T>(search, includes);
+
+            return (await this.QueryExecuter.ExecuteSelectQuery(query, null, includes)).FirstOrDefault();
+        }
+
+        /// <summary>
         /// Gets an entity by its ID
         /// </summary>
         /// <param name="id">The ID of the entity</param>
         /// <param name="includes">Which children to include</param>
-        public virtual async Task<T> GetById(object id, params Expression<Func<T, object>>[] includes)
+        public virtual Task<T> GetById(object id, params Expression<Func<T, object>>[] includes)
         {
             var search = this.SqlGenerator.CreateByIdExpression<T>(id);
 
-            return (await this.Get(search, includes)).SingleOrDefault();
+            return this.Get(search, includes);
         }
 
         /// <summary>
@@ -98,18 +110,23 @@ namespace Extended.Dapper.Core.Repository
         /// Deletes the given entity
         /// </summary>
         /// <param name="entity"></param>
-        public virtual async Task<bool> Delete(T entity)
+        public virtual Task<int> Delete(T entity)
         {
-            return false;
+            var entityId = EntityMapper.GetCompositeUniqueKey<T>(entity);
+            var search = this.SqlGenerator.CreateByIdExpression<T>(entityId);
+
+            return this.Delete(search);
         }
 
         /// <summary>
         /// Deletes the entities matching the search
         /// </summary>
         /// <param name="search"></param>
-        public virtual async Task<bool> Delete(Expression<Func<T, bool>> search)
+        public virtual Task<int> Delete(Expression<Func<T, bool>> search)
         {
-            return false;
+            var query = this.SqlGenerator.Delete<T>(search);
+
+            return this.QueryExecuter.ExecuteDeleteQuery<T>(query);
         }
     }
 }

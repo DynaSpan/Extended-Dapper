@@ -12,7 +12,14 @@ namespace Extended.Dapper.Core.Repository
         /// </summary>
         /// <param name="search">The search criteria</param>
         /// <param name="includes">Which children to include</param>
-        Task<IEnumerable<T>> Get(Expression<Func<T, bool>> search = null, params Expression<Func<T, object>>[] includes);
+        Task<IEnumerable<T>> GetAll(Expression<Func<T, bool>> search = null, params Expression<Func<T, object>>[] includes);
+
+        /// <summary>
+        /// Gets one entity that matches the search
+        /// </summary>
+        /// <param name="search">The search criteria</param>
+        /// <param name="includes">Which children to include</param>
+        Task<T> Get(Expression<Func<T, bool>> search = null, params Expression<Func<T, object>>[] includes);
 
         /// <summary>
         /// Gets an entity by its ID
@@ -41,12 +48,12 @@ namespace Extended.Dapper.Core.Repository
         /// Deletes the given entity
         /// </summary>
         /// <param name="entity"></param>
-        Task<bool> Delete(T entity);
+        Task<int> Delete(T entity);
 
         /// <summary>
         /// Deletes the entities matching the search
         /// </summary>
         /// <param name="search"></param>
-        Task<bool> Delete(Expression<Func<T, bool>> search);
+        Task<int> Delete(Expression<Func<T, bool>> search);
     }
 }

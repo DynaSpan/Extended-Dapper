@@ -14,15 +14,37 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// returned when GetProvider() is called
         /// </summary>
         /// <param name="databaseProvider"></param>
-        public static void SetProvider(DatabaseProvider databaseProvider)
+        /// <param name="databaseSettings"></param>
+        public static void SetProvider(DatabaseProvider databaseProvider, DatabaseSettings databaseSettings)
         {
             switch (databaseProvider)
             {
                 case DatabaseProvider.MSSQL:
-                    sqlQueryProvider = new MsSqlQueryProvider();
+                    sqlQueryProvider = new MsSqlQueryProvider(databaseSettings);
                     break;
                 case DatabaseProvider.MySQL:
-                    sqlQueryProvider = new MySqlQueryProvider();
+                    sqlQueryProvider = new MySqlQueryProvider(databaseSettings);
+                    break;
+                default:
+                    throw new NotImplementedException();
+            }
+        }
+
+        /// <summary>
+        /// Sets the database provider, so the correct SqlQueryProvider is
+        /// returned when GetProvider() is called
+        /// </summary>
+        /// <param name="databaseProvider"></param>
+        /// <param name="connectionString"></param>
+        public static void SetProvider(DatabaseProvider databaseProvider, string connectionString)
+        {
+            switch (databaseProvider)
+            {
+                case DatabaseProvider.MSSQL:
+                    sqlQueryProvider = new MsSqlQueryProvider(connectionString);
+                    break;
+                case DatabaseProvider.MySQL:
+                    sqlQueryProvider = new MySqlQueryProvider(connectionString);
                     break;
                 default:
                     throw new NotImplementedException();

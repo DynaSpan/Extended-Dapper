@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -16,6 +17,26 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
 {
     public abstract class SqlQueryProvider : ISqlQueryProvider
     {
+        protected string ConnectionString { get; set; }
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="databaseSettings"></param>
+        public SqlQueryProvider(DatabaseSettings databaseSettings)
+        {
+            this.ConnectionString = this.BuildConnectionString(databaseSettings);
+        }
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="connectionString"></param>
+        public SqlQueryProvider(string connectionString)
+        {
+            this.ConnectionString = connectionString;
+        }
+
         /// <summary>
         /// Escapes a table name in the correct format
         /// </summary>
@@ -33,6 +54,11 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// </summary>
         /// <param name="databaseSettings"></param>
         public abstract string BuildConnectionString(DatabaseSettings databaseSettings);
+
+        /// <summary>
+        /// Returns a new IDbConnection
+        /// </summary>
+        public abstract IDbConnection GetConnection();
 
         /// <summary>
         /// Build a select query

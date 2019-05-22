@@ -249,6 +249,14 @@ namespace Extended.Dapper.Core.Sql
             }
         }
 
+        /// <summary>
+        /// Generates a query for deleting the children of an entity
+        /// </summary>
+        /// <param name="parentTable"></param>
+        /// <param name="parentKey"></param>
+        /// <param name="parentKeyField"></param>
+        /// <param name="localKeyField"></param>
+        /// <param name="doNotErases"></param>
         public DeleteSqlQuery DeleteChildren<T>(string parentTable, string parentKey, string parentKeyField, string localKeyField, List<object> doNotErases)
         {
             var entityMap = EntityMapper.GetEntityMap(typeof(T));

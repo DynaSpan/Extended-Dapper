@@ -44,7 +44,7 @@ namespace Extended.Dapper.Tests.Query
         [Test]
         public void TestModelMapping()
         {
-            var books = (BookRepository.Get(b => b.ReleaseYear == 2687 || b.ReleaseYear == 2020, b => b.Author).Result);
+            var books = (BookRepository.GetAll(b => b.ReleaseYear == 2687 || b.ReleaseYear == 2020, b => b.Author).Result);
 
             foreach (var book in books)
             {
@@ -53,7 +53,7 @@ namespace Extended.Dapper.Tests.Query
 
             Console.WriteLine("==============");
 
-            var authors = (AuthorRepository.Get(a => a.BirthYear == 2652, a => a.Books).Result);
+            var authors = (AuthorRepository.GetAll(a => a.BirthYear == 2652, a => a.Books).Result);
 
             foreach (var author in authors)
             {
@@ -128,8 +128,8 @@ namespace Extended.Dapper.Tests.Query
         [Test]
         public void TestUpdate()
         {
-            var book = BookRepository.Get(b => b.Name == "A Brief History of Time", b => b.Author).Result.SingleOrDefault();
-            var otherAuthor = AuthorRepository.Get(a => a.Name == "Stephen Hawking").Result.SingleOrDefault();
+            var book = BookRepository.Get(b => b.Name == "A Brief History of Time", b => b.Author).Result;
+            var otherAuthor = AuthorRepository.Get(a => a.Name == "Stephen Hawking").Result;
 
             Console.WriteLine(book);
 
@@ -142,7 +142,7 @@ namespace Extended.Dapper.Tests.Query
         [Test]
         public void TestUpdate2()
         {
-            var author = AuthorRepository.Get(a => a.Name == "Pietje Piet", a => a.Books).Result.SingleOrDefault();
+            var author = AuthorRepository.Get(a => a.Name == "Pietje Piet", a => a.Books).Result;
 
             author.Books.Remove(author.Books.First());
 

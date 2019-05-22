@@ -16,7 +16,7 @@ namespace Extended.Dapper.Core.Repository
         /// <param name="connection"></param>
         /// <param name="includes"></param>
         Task<IEnumerable<T>> ExecuteSelectQuery<T>(SelectSqlQuery query, IDbConnection connection = null, params Expression<Func<T, object>>[] includes)
-            where T : class, new();
+            where T : class;
 
         /// <summary>
         /// Executes an insert query
@@ -36,6 +36,14 @@ namespace Extended.Dapper.Core.Repository
         /// <param name="includes"></param>
         /// <returns>True when succesfull; false otherwise</returns>
         Task<bool> ExecuteUpdateQuery<T>(T entity, UpdateSqlQuery query, IDbConnection connection = null, params Expression<Func<T, object>>[] includes)
-            where T : class, new();
+            where T : class;
+
+        /// <summary>
+        /// Executes a delete query
+        /// </summary>
+        /// <param name="query"></param>
+        /// <param name="connection"></param>
+        /// <returns>Number of deleted records</returns>
+        Task<int> ExecuteDeleteQuery<T>(SqlQuery query, IDbConnection connection = null);
     }
 }
