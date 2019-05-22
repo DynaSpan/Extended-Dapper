@@ -20,10 +20,6 @@ namespace Extended.Dapper.Tests.Query
         [SetUp]
         public void Setup()
         {
-            SqlQueryProviderHelper.SetProvider(DatabaseProvider.MSSQL);
-            SqlQueryProviderHelper.Verbose = true;
-            var sqlGenerator = new SqlGenerator(DatabaseProvider.MSSQL);
-
             var databaseSettings = new DatabaseSettings()
             {
                 Host = "172.20.0.10",
@@ -32,6 +28,11 @@ namespace Extended.Dapper.Tests.Query
                 Database = "dapper",
                 DatabaseProvider = DatabaseProvider.MSSQL
             };
+
+            SqlQueryProviderHelper.SetProvider(DatabaseProvider.MSSQL, databaseSettings);
+            SqlQueryProviderHelper.Verbose = true;
+            var sqlGenerator = new SqlGenerator(DatabaseProvider.MSSQL);
+            
             var databaseFactory = new DatabaseFactory(databaseSettings);
             
             BookRepository = new EntityRepository<Book>(databaseFactory);
