@@ -33,7 +33,7 @@ namespace Extended.Dapper.Core.Database
         /// <param name="databaseProvider"></param>
         public DatabaseFactory(string connectionString, DatabaseProvider databaseProvider)
         {
-            SqlQueryProviderHelper.SetProvider(databaseProvider);
+            SqlQueryProviderHelper.SetProvider(databaseProvider, connectionString);
 
             this.DatabaseProvider = databaseProvider;
             this.SqlProvider      = SqlQueryProviderHelper.GetProvider();      
@@ -42,19 +42,9 @@ namespace Extended.Dapper.Core.Database
         /// <summary>
         /// Creates a new database connection
         /// </summary>
-        /// <returns></returns>
         public IDbConnection GetDatabaseConnection()
         {
             return this.SqlProvider.GetConnection();
-            switch (this.DatabaseProvider)
-            {
-                case DatabaseProvider.MSSQL:
-                    return new SqlConnection(this.connectionString);
-                case DatabaseProvider.MySQL:
-                    return new MySqlConnection(this.connectionString);
-                default:
-                    throw new NotImplementedException();
-            }
         }
     }
 }

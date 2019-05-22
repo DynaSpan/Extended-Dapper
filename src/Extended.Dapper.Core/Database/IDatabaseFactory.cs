@@ -7,7 +7,6 @@ namespace Extended.Dapper.Core.Database
         /// <summary>
         /// Creates a new database connection
         /// </summary>
-        /// <returns></returns>
         IDbConnection GetDatabaseConnection();
 
         /// <summary>
