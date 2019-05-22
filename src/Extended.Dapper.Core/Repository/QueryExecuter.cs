@@ -321,8 +321,8 @@ namespace Extended.Dapper.Core.Repository
                                 throw new ApplicationException("Could not update a ManyToOne object: " + oneObj);
                         }
 
-                        updateQuery.Updates.Add(new QueryField(entityMap.TableName, attr.LocalKey, "@p_m2o_" + attr.TableName + "_" + attr.LocalKey));
-                        updateQuery.Params.Add("@p_m2o_" + attr.TableName + "_" + attr.LocalKey, oneObjKey);
+                        updateQuery.Updates.Add(new QueryField(entityMap.TableName, attr.ForeignKey, "@p_m2o_" + attr.TableName + "_" + attr.ForeignKey));
+                        updateQuery.Params.Add("@p_m2o_" + attr.TableName + "_" + attr.ForeignKey, oneObjKey);
                     }
                     else if (attr is OneToManyAttribute)
                     {

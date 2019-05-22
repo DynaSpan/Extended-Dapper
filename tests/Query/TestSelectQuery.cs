@@ -138,8 +138,8 @@ namespace Extended.Dapper.Tests.Query
         [Test]
         public void TestUpdate()
         {
-            var book = BookRepository.Get(b => b.Name == "A Brief History of Time", b => b.Author).Result;
-            var otherAuthor = AuthorRepository.Get(a => a.Name == "Stephen Hawking").Result;
+            var book = BookRepository.Get(b => b.Name == "Brief History of Space", b => b.Author).Result;
+            var otherAuthor = AuthorRepository.Get(a => a.Name == "Mili Drosje").Result;
 
             Console.WriteLine(book);
 
@@ -166,13 +166,34 @@ namespace Extended.Dapper.Tests.Query
         [Test]
         public void TestDelete()
         {
-            var authorInsert = new Author() {
-                Name = "test123"
+            var category = CategoryRepository.Get(c => c.Name == "Romance").Result;
+
+            var newBook1 = new Book() {
+                Name = "trotse boernlevn",
+                ReleaseYear = 2020,
+                Category = category
             };
-            var res = AuthorRepository.Insert(authorInsert).Result;
+            var newBook2 = new Book() {
+                Name = "mien merk; jon dier",
+                ReleaseYear = 2010,
+                Category = category
+            };
+
+            var bookList = new List<Book>();
+            bookList.Add(newBook1);
+            bookList.Add(newBook2);
+
+            var newAuthor = new Author() {
+                Name = "Harry Barry",
+                BirthYear = 1940,
+                Country = "Hutje op de hei",
+                Books = bookList
+            };
+
+            var res = AuthorRepository.Insert(newAuthor).Result;
 
             // Delete same author
-            var res2 = AuthorRepository.Delete(x => x.Name == "test123").Result;
+            var res2 = AuthorRepository.Delete(res).Result;
 
             Console.WriteLine(res2);
         }
