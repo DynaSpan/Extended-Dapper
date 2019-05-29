@@ -1,3 +1,4 @@
+using System;
 using Extended.Dapper.Core.Repository;
 using Extended.Dapper.Core.Sql.QueryProviders;
 using Extended.Dapper.Tests.Helpers;
@@ -34,6 +35,7 @@ namespace Extended.Dapper.Tests.Repository
             var stephenHawking = AuthorRepository.Get(a => a.Name == "Stephen Hawking").Result;
 
             Assert.AreNotEqual(null, stephenHawking);
+            Assert.AreNotEqual(Guid.Empty, stephenHawking.Id);
             Assert.AreEqual("Stephen Hawking", stephenHawking.Name);
             Assert.AreEqual(1942, stephenHawking.BirthYear);
             Assert.AreEqual("United Kingdom", stephenHawking.Country);

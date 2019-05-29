@@ -78,9 +78,9 @@ namespace Extended.Dapper.Core.Sql
                     .Where(x => !x.PropertyInfo.GetCustomAttributes<ManyToOneAttribute>().Any() 
                                 && !x.PropertyInfo.GetCustomAttributes<OneToManyAttribute>().Any())
                     .Select(p => {
-                        insertQuery.Params.Add("@p_" + p.ColumnName, p.PropertyInfo.GetValue(entity));
+                        insertQuery.Params.Add("p_" + p.ColumnName, p.PropertyInfo.GetValue(entity));
 
-                        return new QueryField(entityMap.TableName, p.ColumnName, "@p_" + p.ColumnName, p.ColumnAlias);
+                        return new QueryField(entityMap.TableName, p.ColumnName, "p_" + p.ColumnName, p.ColumnAlias);
                     }
             ));
 
@@ -203,8 +203,8 @@ namespace Extended.Dapper.Core.Sql
 
             foreach (var property in mappedProperties)
             {
-                updateQuery.Updates.Add(new QueryField(entityMap.TableName, property.ColumnName, "@p_" + property.ColumnName, property.ColumnAlias));
-                updateQuery.Params.Add("@p_" + property.ColumnName, property.PropertyInfo.GetValue(entity));
+                updateQuery.Updates.Add(new QueryField(entityMap.TableName, property.ColumnName, "p_" + property.ColumnName, property.ColumnAlias));
+                updateQuery.Params.Add("p_" + property.ColumnName, property.PropertyInfo.GetValue(entity));
             }
 
             var idExpression = this.CreateByIdExpression<T>(EntityMapper.GetCompositeUniqueKey(entity));
@@ -236,8 +236,8 @@ namespace Extended.Dapper.Core.Sql
                 // Update the entity
                 var query = new UpdateSqlQuery();
                 query.Table = entityMap.TableName;
-                query.Updates.Add(new QueryField(entityMap.TableName, logicalDeleteProp.ColumnName, "@p_log_delete"));
-                query.Params.Add("@p_log_delete", true);
+                query.Updates.Add(new QueryField(entityMap.TableName, logicalDeleteProp.ColumnName, "p_log_delete"));
+                query.Params.Add("p_log_delete", true);
 
                 this.sqlProvider.AppendWherePredicateQuery(query, search, QueryType.Update, entityMap);
 

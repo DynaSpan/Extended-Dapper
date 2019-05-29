@@ -5,10 +5,8 @@ using System.Data;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Dapper;
-using Extended.Dapper.Core.Attributes.Entities;
 using Extended.Dapper.Core.Attributes.Entities.Relations;
 using Extended.Dapper.Core.Database;
 using Extended.Dapper.Core.Mappers;
@@ -237,8 +235,8 @@ namespace Extended.Dapper.Core.Repository
                             throw new ApplicationException("Could not insert a ManyToOne object: " + oneObj);
                     }
 
-                    insertQuery.Insert.Add(new QueryField(entityMap.TableName, attr.ForeignKey, "@p_m2o_" + attr.TableName + "_" + attr.ForeignKey));
-                    insertQuery.Params.Add("@p_m2o_" + attr.TableName + "_" + attr.ForeignKey, oneObjKey);
+                    insertQuery.Insert.Add(new QueryField(entityMap.TableName, attr.ForeignKey, "p_m2o_" + attr.TableName + "_" + attr.ForeignKey));
+                    insertQuery.Params.Add("p_m2o_" + attr.TableName + "_" + attr.ForeignKey, oneObjKey);
                 }
             }
 
@@ -269,8 +267,8 @@ namespace Extended.Dapper.Core.Repository
                     {
                         var query = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "Insert", listEntityMap.Type, new[] { obj }, this.SqlGenerator) as InsertSqlQuery;
 
-                        query.Insert.Add(new QueryField(attr.TableName, attr.ForeignKey, "@p_fk_" + attr.ForeignKey));
-                        query.Params.Add("@p_fk_" + attr.ForeignKey, foreignKey);
+                        query.Insert.Add(new QueryField(attr.TableName, attr.ForeignKey, "p_fk_" + attr.ForeignKey));
+                        query.Params.Add("p_fk_" + attr.ForeignKey, foreignKey);
 
                         var queryResult = await this.ExecuteInsertQuery(obj, query);
                     }
@@ -321,8 +319,8 @@ namespace Extended.Dapper.Core.Repository
                                 throw new ApplicationException("Could not update a ManyToOne object: " + oneObj);
                         }
 
-                        updateQuery.Updates.Add(new QueryField(entityMap.TableName, attr.ForeignKey, "@p_m2o_" + attr.TableName + "_" + attr.ForeignKey));
-                        updateQuery.Params.Add("@p_m2o_" + attr.TableName + "_" + attr.ForeignKey, oneObjKey);
+                        updateQuery.Updates.Add(new QueryField(entityMap.TableName, attr.ForeignKey, "p_m2o_" + attr.TableName + "_" + attr.ForeignKey));
+                        updateQuery.Params.Add("p_m2o_" + attr.TableName + "_" + attr.ForeignKey, oneObjKey);
                     }
                     else if (attr is OneToManyAttribute)
                     {
@@ -341,8 +339,8 @@ namespace Extended.Dapper.Core.Repository
                             {
                                 var query = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "Insert", listEntityMap.Type, new[] { listItem }, this.SqlGenerator) as InsertSqlQuery;
 
-                                query.Insert.Add(new QueryField(attr.TableName, attr.ForeignKey, "@p_fk_" + attr.ForeignKey));
-                                query.Params.Add("@p_fk_" + attr.ForeignKey, foreignKey);
+                                query.Insert.Add(new QueryField(attr.TableName, attr.ForeignKey, "p_fk_" + attr.ForeignKey));
+                                query.Params.Add("p_fk_" + attr.ForeignKey, foreignKey);
 
                                 objKey = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", listEntityMap.Type, new[] { listItem }) as string;
 
@@ -356,8 +354,8 @@ namespace Extended.Dapper.Core.Repository
                                 // Update the entity
                                 var query = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "Update", listType, new[] { listItem }, this.SqlGenerator) as UpdateSqlQuery;
 
-                                query.Updates.Add(new QueryField(attr.TableName, attr.ForeignKey, "@p_fk_" + attr.ForeignKey));
-                                query.Params.Add("@p_fk_" + attr.ForeignKey, foreignKey);
+                                query.Updates.Add(new QueryField(attr.TableName, attr.ForeignKey, "p_fk_" + attr.ForeignKey));
+                                query.Params.Add("p_fk_" + attr.ForeignKey, foreignKey);
 
                                 var queryResult = await (ReflectionHelper.CallGenericMethod(typeof(QueryExecuter), "ExecuteUpdateQuery", listType, new[] { listItem, query, null, null }, this) as Task<bool>);
 

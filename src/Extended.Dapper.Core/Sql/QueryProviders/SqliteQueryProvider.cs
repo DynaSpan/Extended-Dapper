@@ -27,6 +27,11 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         }
 
         /// <summary>
+        /// The char used for parameters
+        /// </summary>
+        public override string ParameterChar { get { return "$"; } }
+
+        /// <summary>
         /// Escapes a table name in the correct format
         /// </summary>
         /// <param name="tableName"></param>

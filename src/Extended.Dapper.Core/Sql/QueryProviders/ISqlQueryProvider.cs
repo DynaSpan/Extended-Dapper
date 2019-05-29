@@ -24,6 +24,11 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         string EscapeColumn(string columnName);
 
         /// <summary>
+        /// The char used for parameters
+        /// </summary>
+        string ParameterChar { get; }
+
+        /// <summary>
         /// Builds a connection string
         /// </summary>
         /// <param name="databaseSettings"></param>

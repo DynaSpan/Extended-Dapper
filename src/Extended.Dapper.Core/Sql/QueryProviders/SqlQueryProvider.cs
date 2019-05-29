@@ -56,6 +56,11 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         public abstract string EscapeColumn(string columnName);
 
         /// <summary>
+        /// The char used for parameters
+        /// </summary>
+        public abstract string ParameterChar { get; }
+
+        /// <summary>
         /// Builds a connection string
         /// </summary>
         /// <param name="databaseSettings"></param>
@@ -105,7 +110,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         public virtual string BuildInsertQuery(InsertSqlQuery insertQuery)
         {
             var insertFields = string.Join(", ", insertQuery.Insert.Select(this.MapInsertAliasColumn));
-            var insertParams = string.Join(", ", insertQuery.Insert.Select(i => i.ParameterName));
+            var insertParams = string.Join(", ", insertQuery.Insert.Select(i => this.ParameterChar + i.ParameterName));
 
             if (SqlQueryProviderHelper.Verbose)
                 Console.WriteLine(string.Format("INSERT INTO {0} ({1}) VALUES ({2})", this.EscapeTable(insertQuery.Table), insertFields, insertParams));
@@ -120,9 +125,10 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         public virtual string BuildUpdateQuery(UpdateSqlQuery updateQuery)
         {
             var updateFields = string.Join(", ", updateQuery.Updates.Select(x => {
-                return string.Format("{0}.{1} = {2}",
+                return string.Format("{0}.{1} = {2}{3}",
                 this.EscapeTable(x.Table),
                 this.EscapeColumn(x.Field),
+                this.ParameterChar,
                 x.ParameterName);
             }));
 
@@ -150,12 +156,13 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
 
                 if (deleteQuery.UpdatedAtField != null && deleteQuery.UpdatedAtField != string.Empty)
                 {
-                    queryBuilder.AppendFormat(", {0}.{1} = @p_updatedat",
+                    queryBuilder.AppendFormat(", {0}.{1} = {2}p_updatedat",
                         this.EscapeTable(deleteQuery.Table),
-                        this.EscapeColumn(deleteQuery.UpdatedAtField));
+                        this.EscapeColumn(deleteQuery.UpdatedAtField),
+                        this.ParameterChar);
 
-                    if (!deleteQuery.Params.ContainsKey("@p_updatedat"))
-                        deleteQuery.Params.Add("@p_updatedat", DateTime.UtcNow);
+                    if (!deleteQuery.Params.ContainsKey("p_updatedat"))
+                        deleteQuery.Params.Add(this.ParameterChar + "p_updatedat", DateTime.UtcNow);
                 }
             }
             else
@@ -165,16 +172,17 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
 
             if (deleteQuery.DoNotErase != null && deleteQuery.ParentKey != string.Empty && deleteQuery.ParentKey != null)
             {
-                queryBuilder.AppendFormat(" WHERE {0}.{1} NOT IN @p_id_list AND {2}.{3} = @p_parent_key",
+                queryBuilder.AppendFormat(" WHERE {0}.{1} NOT IN {2}p_id_list AND {3}.{4} = {2}p_parent_key",
                     this.EscapeTable(deleteQuery.Table), 
                     this.EscapeColumn(deleteQuery.LocalKeyField),
+                    this.ParameterChar,
                     this.EscapeTable(deleteQuery.ParentTable),
                     this.EscapeColumn(deleteQuery.ParentKeyField));
 
-                if (!deleteQuery.Params.ContainsKey("@p_id_list"))
+                if (!deleteQuery.Params.ContainsKey("p_id_list"))
                 {
-                    deleteQuery.Params.Add("@p_id_list", deleteQuery.DoNotErase);
-                    deleteQuery.Params.Add("@p_parent_key", deleteQuery.ParentKey);
+                    deleteQuery.Params.Add(this.ParameterChar + "p_id_list", deleteQuery.DoNotErase);
+                    deleteQuery.Params.Add(this.ParameterChar + "p_parent_key", deleteQuery.ParentKey);
                 }
             }
             else
@@ -484,10 +492,11 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
                         {
                             var vKey = string.Format("{0}_p{1}", qpExpr.PropertyName, qLevel); //Handle multiple uses of a field
                             
-                            sqlBuilder.AppendFormat("{0}.{1} {2} @{3}", 
+                            sqlBuilder.AppendFormat("{0}.{1} {2} {3}{4}", 
                                 this.EscapeTable(tableName), 
                                 this.EscapeColumn(columnName), 
                                 qpExpr.QueryOperator, 
+                                this.ParameterChar,
                                 vKey);
 
                             conditions.Add(new KeyValuePair<string, object>(vKey, qpExpr.PropertyValue));
