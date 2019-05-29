@@ -20,6 +20,12 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         protected string ConnectionString { get; set; }
 
         /// <summary>
+        /// Empty constructor
+        /// </summary>
+        public SqlQueryProvider()
+        {}
+
+        /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="databaseSettings"></param>
@@ -98,7 +104,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// <param name="insertQuery"></param>
         public virtual string BuildInsertQuery(InsertSqlQuery insertQuery)
         {
-            var insertFields = string.Join(", ", insertQuery.Insert.Select(this.MapAliasColumn));
+            var insertFields = string.Join(", ", insertQuery.Insert.Select(this.MapInsertAliasColumn));
             var insertParams = string.Join(", ", insertQuery.Insert.Select(i => i.ParameterName));
 
             if (SqlQueryProviderHelper.Verbose)
@@ -185,6 +191,20 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
                 Console.WriteLine(queryBuilder.ToString());
 
             return queryBuilder.ToString();
+        }
+
+        /// <summary>
+        /// Projection function for mapping property
+        /// to SQL field
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <param name="p"></param>
+        public virtual string MapInsertAliasColumn(QueryField selectField)
+        {
+            if (!string.IsNullOrEmpty(selectField.FieldAlias))
+                return this.EscapeColumn(selectField.FieldAlias);
+            else 
+                return this.EscapeColumn(selectField.Field);
         }
 
         /// <summary>

@@ -10,10 +10,15 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.9.0" />
     <PackageReference Include="NUnit" Version="3.11.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.13.0" />
+    <PackageReference Include="System.Data.SQLite" Version="1.0.110" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Models\Extended.Dapper.Tests.Models.csproj" />
+    <None Update="test-db.sql" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\src\Extended.Dapper.Core\Extended.Dapper.Core.csproj" />
   </ItemGroup>
 
 </Project>

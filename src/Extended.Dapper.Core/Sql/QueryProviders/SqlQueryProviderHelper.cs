@@ -25,6 +25,9 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
                 case DatabaseProvider.MySQL:
                     sqlQueryProvider = new MySqlQueryProvider(databaseSettings);
                     break;
+                case DatabaseProvider.SQLite:
+                    sqlQueryProvider = new SqliteQueryProvider(databaseSettings);
+                    break;
                 default:
                     throw new NotImplementedException();
             }
@@ -45,6 +48,9 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
                     break;
                 case DatabaseProvider.MySQL:
                     sqlQueryProvider = new MySqlQueryProvider(connectionString);
+                    break;
+                case DatabaseProvider.SQLite:
+                    sqlQueryProvider = new SqliteQueryProvider(connectionString);
                     break;
                 default:
                     throw new NotImplementedException();

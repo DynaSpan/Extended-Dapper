@@ -23,6 +23,7 @@ namespace Extended.Dapper.Core.Database
     public enum DatabaseProvider 
     {
         MSSQL,
-        MySQL
+        MySQL,
+        SQLite
     }
 }

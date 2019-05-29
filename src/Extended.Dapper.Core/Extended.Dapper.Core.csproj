@@ -9,5 +9,6 @@
     <PackageReference Include="Dapper" Version="1.60.9" />
     <PackageReference Include="MySqlConnector" Version="0.53.0" />
     <PackageReference Include="System.ComponentModel.Annotations" Version="4.5.0" />
+    <PackageReference Include="System.Data.SQLite" Version="1.0.110" />
   </ItemGroup>
 </Project>
