@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Dapper;
 using Extended.Dapper.Core.Attributes.Entities.Relations;
 using Extended.Dapper.Core.Database;
+using Extended.Dapper.Core.Extensions;
 using Extended.Dapper.Core.Mappers;
 using Extended.Dapper.Core.Reflection;
 using Extended.Dapper.Core.Sql;
@@ -172,10 +173,12 @@ namespace Extended.Dapper.Core.Repository
                         var listType     = type.GetGenericArguments()[0].GetTypeInfo();
                         var listProperty = property.Key.GetValue(entity) as IList;
 
-                        var objList = objectArr.Where(x => x.GetType() == listType).ToList();
+                        var defaultListObj = Activator.CreateInstance(listType);
+
+                        var objList = objectArr.Where(x => x.GetType() == listType && !x.Equals(defaultListObj) && x != null).ToList();
                         IList value = ReflectionHelper.CastListTo(listType, objList);
 
-                        if (value != null && value.Count > 0)
+                        if (value != null)
                         {
                             if (listProperty == null)
                                 property.Key.SetValue(entity, value);
