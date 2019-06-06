@@ -23,7 +23,7 @@ namespace Extended.Dapper.Tests.Query
         {
             var databaseSettings = new DatabaseSettings()
             {
-                Host = "172.20.0.10",
+                Host = "172.18.0.5",
                 User = "dapper",
                 Password = "extended-dapper-sql-password",
                 Database = "dapper",
@@ -132,7 +132,18 @@ namespace Extended.Dapper.Tests.Query
 
             var author = AuthorRepository.Insert(newAuthor).Result;
 
-            Console.WriteLine(author);
+            var newAuthor2 = AuthorRepository.Get(a => a.Id == author.Id).Result;
+
+            Console.WriteLine(newAuthor2);
+
+            var manies = AuthorRepository.GetMany<Book>(newAuthor2, a => a.Books).Result;
+
+            foreach (var book in manies)
+            {
+                Console.WriteLine(book);
+            }
+
+            //Console.WriteLine(author);
         }
 
         [Test]
@@ -152,15 +163,11 @@ namespace Extended.Dapper.Tests.Query
         [Test]
         public void TestUpdate2()
         {
-            var author = AuthorRepository.Get(a => a.Name == "Pietje Piet", a => a.Books).Result;
+            var book = BookRepository.Get(b => b.Name == "Brief History of Space", b => b.Author).Result;
 
-            author.Books.Remove(author.Books.First());
+            var author = BookRepository.GetOne<Author>(book, b => b.Author, a => a.Books).Result;
 
             Console.WriteLine(author);
-
-            var res = AuthorRepository.Update(author, a => a.Books).Result;
-
-            Console.WriteLine(res);
         }
 
         [Test]

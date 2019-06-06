@@ -72,6 +72,37 @@ namespace Extended.Dapper.Core.Repository
         }
 
         /// <summary>
+        /// Retrieves the many of an entity
+        /// </summary>
+        /// <param name="many">The many property of the entity</param>
+        /// <param name="search">A LINQ query to filter the children</param>
+        /// <param name="includes">Which children should be included in the manies</param>
+        /// <typeparam name="M"></typeparam>
+        /// <returns>A list with manies</returns>
+        public virtual Task<IEnumerable<M>> GetMany<M>(T entity, Expression<Func<T, IEnumerable<M>>> many, Expression<Func<M, bool>> search = null, params Expression<Func<M, object>>[] includes)
+            where M : class
+        {
+            var query = this.SqlGenerator.SelectMany<T, M>(entity, many, search, includes);
+
+            return this.QueryExecuter.ExecuteSelectQuery<M>(query, null, includes);
+        }
+
+        /// <summary>
+        /// Retrieves a one of an entity
+        /// </summary>
+        /// <param name="one">The one property of the entity</param>
+        /// <param name="includes">Which children should be included in the child</param>
+        /// <typeparam name="O"></typeparam>
+        /// <returns>An instance of the child</returns>
+        public virtual async Task<O> GetOne<O>(T entity, Expression<Func<T, O>> one, params Expression<Func<O, object>>[] includes)
+            where O : class
+        {
+            var query = this.SqlGenerator.SelectOne<T, O>(entity, one, includes);
+
+            return (await this.QueryExecuter.ExecuteSelectQuery<O>(query, null, includes)).FirstOrDefault();
+        }
+
+        /// <summary>
         /// Inserts an entity into the database
         /// Also inserts the children if no ID is set
         /// on them

@@ -22,6 +22,27 @@ namespace Extended.Dapper.Core.Sql
         SelectSqlQuery Select<T>(Expression<Func<T, bool>> search = null, params Expression<Func<T, object>>[] includes);
 
         /// <summary>
+        /// Generates a SQL query for selecting the manies of an entity's property
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <param name="many"></param>
+        /// <param name="search"></param>
+        /// <param name="includes"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="M"></typeparam>
+        SelectSqlQuery SelectMany<T, M>(T entity, Expression<Func<T, IEnumerable<M>>> many, Expression<Func<M, bool>> search = null, params Expression<Func<M, object>>[] includes);
+
+        /// <summary>
+        /// Generates a SQL query for select a "one" entity
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <param name="one"></param>
+        /// <param name="includes"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="O"></typeparam>
+        SelectSqlQuery SelectOne<T, O>(T entity, Expression<Func<T, O>> one, params Expression<Func<O, object>>[] includes);
+
+        /// <summary>
         /// Generates an update query for an entity
         /// </summary>
         /// <param name="entity"></param>

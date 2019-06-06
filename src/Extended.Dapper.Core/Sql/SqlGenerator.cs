@@ -156,6 +156,64 @@ namespace Extended.Dapper.Core.Sql
             return sqlQuery;
         }
 
+        /// <summary>
+        /// Generates a SQL query for selecting the manies of an entity's property
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <param name="many"></param>
+        /// <param name="search"></param>
+        /// <param name="includes"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="M"></typeparam>
+        public SelectSqlQuery SelectMany<T, M>(T entity, Expression<Func<T, IEnumerable<M>>> many, Expression<Func<M, bool>> search = null, params Expression<Func<M, object>>[] includes)
+        {
+            var manyEntityMap = EntityMapper.GetEntityMap(typeof(M));
+            var rootEntityMap = EntityMapper.GetEntityMap(typeof(T));
+            var sqlQuery = this.Select<M>(search, includes);
+
+            var manyPropertyName = ((MemberExpression)many.Body).Member.Name.ToLower();
+            var manyProperty = rootEntityMap.RelationProperties.Where(x => x.Key.Name.ToLower() == manyPropertyName).SingleOrDefault();
+            
+            var relationAttr = System.Attribute.GetCustomAttributes(manyProperty.Key, typeof(OneToManyAttribute), true).FirstOrDefault() as OneToManyAttribute;
+            sqlQuery.Where.AppendFormat("{0} {1}.{2} = {3}o2m_parent_id", 
+                string.IsNullOrEmpty(sqlQuery.Where.ToString()) ? "" : " AND",
+                this.sqlProvider.EscapeTable(relationAttr.TableName),
+                this.sqlProvider.EscapeColumn(relationAttr.ForeignKey),
+                this.sqlProvider.ParameterChar);
+            
+            sqlQuery.Params.Add("o2m_parent_id", EntityMapper.GetCompositeUniqueKey<T>(entity));
+
+            return sqlQuery;
+        }
+
+        /// <summary>
+        /// Generates a SQL query for select a "one" entity
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <param name="one"></param>
+        /// <param name="includes"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="O"></typeparam>
+        public SelectSqlQuery SelectOne<T, O>(T entity, Expression<Func<T, O>> one, params Expression<Func<O, object>>[] includes)
+        {
+            var manyEntityMap = EntityMapper.GetEntityMap(typeof(O));
+            var rootEntityMap = EntityMapper.GetEntityMap(typeof(T));
+            var sqlQuery = this.Select<O>(null, includes);
+
+            var manyPropertyName = ((MemberExpression)one.Body).Member.Name.ToLower();
+            var manyProperty = rootEntityMap.RelationProperties.Where(x => x.Key.Name.ToLower() == manyPropertyName).SingleOrDefault();
+            
+            var relationAttr = System.Attribute.GetCustomAttributes(manyProperty.Key, typeof(ManyToOneAttribute), true).FirstOrDefault() as ManyToOneAttribute;
+            sqlQuery.Where.AppendFormat("{0}.{1} = {2}m2o_parent_id", 
+                this.sqlProvider.EscapeTable(relationAttr.TableName),
+                this.sqlProvider.EscapeColumn(relationAttr.LocalKey),
+                this.sqlProvider.ParameterChar);
+            
+            sqlQuery.Params.Add("m2o_parent_id", EntityMapper.GetCompositeUniqueKey<T>(entity));
+
+            return sqlQuery;
+        }
+
         private ICollection<SelectField> GenerateSelectFields(string tableName, ICollection<SqlPropertyMetadata> properties)
         {
             var selectList = new List<SelectField>();
