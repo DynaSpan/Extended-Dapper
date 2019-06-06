@@ -6,6 +6,9 @@ Extends Dapper functionality with a repository pattern, `OneToMany` and `ManyToO
 
 **This is still a WIP and not ready for production use!**
 
+## Known issues
+- OneToMany mapping don't work correctly when the includes aren't in the correct order
+
 ## TODO
 
 - ~Make sure all queries generate properly (`SELECT`, `UPDATE`, `DELETE`, `INSERT`)~

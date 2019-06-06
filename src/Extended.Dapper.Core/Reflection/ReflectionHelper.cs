@@ -61,6 +61,25 @@ namespace Extended.Dapper.Core.Reflection
             object[] parameters = null,
             object target = null)
         {
+            return CallGenericMethod(methodClassType, methodName, new Type[] { genericType }, parameters, target);
+        }
+
+        /// <summary>
+        /// Calls a generic method with the correct generic
+        /// </summary>
+        /// <param name="methodClassType">The type of the class that contains the method</param>
+        /// <param name="methodName">The name of the method</param>
+        /// <param name="genericTypes">The generic types this method should be called with</param>
+        /// <param name="parameters">Any parameters</param>
+        /// <param name="target">In case the method is not static, the instance of the class</param>
+        /// <returns>Result of method invocation</returns>
+        public static object CallGenericMethod(
+            Type methodClassType,
+            string methodName,
+            Type[] genericTypes,
+            object[] parameters = null,
+            object target = null
+        ) {
             if (GenericMethods == null) 
                 GenericMethods = new ConcurrentDictionary<string, MethodInfo>();
 
@@ -72,7 +91,7 @@ namespace Extended.Dapper.Core.Reflection
                 GenericMethods.TryAdd(idStr, method = methodClassType.GetMethod(methodName));
             }
 
-            return method.MakeGenericMethod(genericType).Invoke(target, parameters);
+            return method.MakeGenericMethod(genericTypes).Invoke(target, parameters);
         }
 
         /// <summary>
