@@ -175,13 +175,14 @@ namespace Extended.Dapper.Core.Repository
                         var objList = objectArr.Where(x => x.GetType() == listType).ToList();
                         IList value = ReflectionHelper.CastListTo(listType, objList);
 
-                        if (value != null)
+                        if (value != null && value.Count > 0)
                         {
                             if (listProperty == null)
                                 property.Key.SetValue(entity, value);
                             else 
                                 foreach (var val in value)
-                                    listProperty.Add(val);
+                                    if (val != null)
+                                        listProperty.Add(val);
                         }
                     }
                     else

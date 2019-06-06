@@ -23,16 +23,16 @@ namespace Extended.Dapper.Tests.Query
         {
             var databaseSettings = new DatabaseSettings()
             {
-                Host = "172.18.0.5",
+                Host = "172.20.0.10",
                 User = "dapper",
                 Password = "extended-dapper-sql-password",
                 Database = "dapper",
-                DatabaseProvider = DatabaseProvider.MySQL
+                DatabaseProvider = DatabaseProvider.MSSQL
             };
 
-            SqlQueryProviderHelper.SetProvider(DatabaseProvider.MySQL, databaseSettings);
+            SqlQueryProviderHelper.SetProvider(DatabaseProvider.MSSQL, databaseSettings);
             SqlQueryProviderHelper.Verbose = true;
-            var sqlGenerator = new SqlGenerator(DatabaseProvider.MySQL);
+            var sqlGenerator = new SqlGenerator(DatabaseProvider.MSSQL);
             
             var databaseFactory = new DatabaseFactory(databaseSettings);
             
@@ -196,6 +196,24 @@ namespace Extended.Dapper.Tests.Query
             var res2 = AuthorRepository.Delete(res).Result;
 
             Console.WriteLine(res2);
+        }
+
+        [Test]
+        public void TestTest()
+        {
+            var briefHistoryBook = BookRepository.Get(
+                b => b.ReleaseYear == 1988, 
+                b => b.Author,
+                b => b.Category
+            ).Result;
+
+            Assert.AreNotEqual(null, briefHistoryBook, "Could not retrieve the book");
+            Assert.AreNotEqual(null, briefHistoryBook.Author, "Could not retrieve the ManyToOne Author");
+            Assert.AreNotEqual(null, briefHistoryBook.Category, "Could not retrieve the ManyToOne Category");
+
+            Assert.AreEqual("Stephen Hawking", briefHistoryBook.Author.Name);
+            Assert.AreEqual("A Brief History of Time", briefHistoryBook.Name);
+            Assert.AreEqual("Science", briefHistoryBook.Category.Name);
         }
     }
 }
