@@ -184,7 +184,7 @@ namespace Extended.Dapper.Core.Repository
                                 property.Key.SetValue(entity, value);
                             else 
                                 foreach (var val in value)
-                                    if (val != null)
+                                    if (val != null && !listProperty.Contains(val))
                                         listProperty.Add(val);
                         }
                     }
