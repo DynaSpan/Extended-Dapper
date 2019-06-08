@@ -35,7 +35,7 @@ namespace Extended.Dapper.Core.Repository
         /// <param name="query"></param>
         /// <param name="transaction"></param>
         /// <param name="includes"></param>
-        public virtual async Task<IEnumerable<T>> ExecuteSelectQuery<T>(SelectSqlQuery query, IDbTransaction transaction = null, params Expression<Func<T, object>>[] includes)
+        public virtual async Task<IEnumerable<T>> ExecuteSelectQuery<T>(SelectSqlQuery query, params Expression<Func<T, object>>[] includes)
             where T : class
         {
             var typeArr = ReflectionHelper.GetTypeListFromIncludes(includes).ToArray();
@@ -48,17 +48,11 @@ namespace Extended.Dapper.Core.Repository
 
             var entityLookup = new Dictionary<string, T>();
 
-            IDbConnection connection;
+            var connection = this.DatabaseFactory.GetDatabaseConnection();
 
-            if (transaction == null) 
-            {
-                connection = this.DatabaseFactory.GetDatabaseConnection();
-                this.OpenConnection(connection);
-            }
-            else
-                connection = transaction.Connection;
+            this.OpenConnection(connection);
 
-            await connection.QueryAsync<T>(query.ToString(), typeArr, this.MapDapperEntity(typeArr, entityLookup, includes), query.Params, transaction, true, splitOn);
+            await connection.QueryAsync<T>(query.ToString(), typeArr, this.MapDapperEntity(typeArr, entityLookup, includes), query.Params, null, true, splitOn);
 
             return entityLookup.Values;
         }
@@ -431,7 +425,7 @@ namespace Extended.Dapper.Core.Repository
                         
                         try
                         {
-                            await transaction.Connection.QueryAsync(deleteQuery.ToString(), deleteQuery.Params);
+                            await transaction.Connection.QueryAsync(deleteQuery.ToString(), deleteQuery.Params, transaction);
                         }
                         catch (Exception)
                         {

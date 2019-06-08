@@ -13,9 +13,8 @@ namespace Extended.Dapper.Core.Repository
         /// Executes a select query
         /// </summary>
         /// <param name="query"></param>
-        /// <param name="transaction"></param>
         /// <param name="includes"></param>
-        Task<IEnumerable<T>> ExecuteSelectQuery<T>(SelectSqlQuery query, IDbTransaction transaction = null, params Expression<Func<T, object>>[] includes)
+        Task<IEnumerable<T>> ExecuteSelectQuery<T>(SelectSqlQuery query, params Expression<Func<T, object>>[] includes)
             where T : class;
 
         /// <summary>

@@ -271,7 +271,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
 
             if (entityMap.LogicalDelete)
             {
-                 return string.Format("{0} JOIN {1} ON {2}.{3} = {4}.{5} AND {4}.{6} {7} 1",
+                 return string.Format("{0} JOIN {1} ON {2}.{3} = {4}.{5} AND {1}.{6} {7} 1",
                     joinType,
                     this.EscapeTable(joinTable),
                     this.EscapeTable(join.LocalTable),

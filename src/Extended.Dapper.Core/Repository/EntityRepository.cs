@@ -53,7 +53,7 @@ namespace Extended.Dapper.Core.Repository
         {
             var query = this.SqlGenerator.Select<T>(search, includes);
 
-            return this.QueryExecuter.ExecuteSelectQuery(query, null, includes);
+            return this.QueryExecuter.ExecuteSelectQuery(query, includes);
         }
 
         /// <summary>
@@ -66,7 +66,7 @@ namespace Extended.Dapper.Core.Repository
         {
             var query = this.SqlGenerator.Select<T>(search, includes);
 
-            return (await this.QueryExecuter.ExecuteSelectQuery(query, null, includes)).FirstOrDefault();
+            return (await this.QueryExecuter.ExecuteSelectQuery(query, includes)).FirstOrDefault();
         }
 
         /// <summary>
@@ -105,7 +105,7 @@ namespace Extended.Dapper.Core.Repository
         {
             var query = this.SqlGenerator.SelectMany<T, M>(entity, many, search, includes);
 
-            return this.QueryExecuter.ExecuteSelectQuery<M>(query, null, includes);
+            return this.QueryExecuter.ExecuteSelectQuery<M>(query, includes);
         }
 
         /// <summary>
@@ -120,7 +120,7 @@ namespace Extended.Dapper.Core.Repository
         {
             var query = this.SqlGenerator.SelectOne<T, O>(entity, one, includes);
 
-            return (await this.QueryExecuter.ExecuteSelectQuery<O>(query, null, includes)).FirstOrDefault();
+            return (await this.QueryExecuter.ExecuteSelectQuery<O>(query, includes)).FirstOrDefault();
         }
 
         /// <summary>
