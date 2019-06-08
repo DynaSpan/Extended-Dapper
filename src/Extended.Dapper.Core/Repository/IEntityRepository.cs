@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 
@@ -32,11 +33,21 @@ namespace Extended.Dapper.Core.Repository
         /// Retrieves the many of an entity
         /// </summary>
         /// <param name="many">The many property of the entity</param>
+        /// <param name="includes">Which children should be included in the manies</param>
+        /// <typeparam name="M"></typeparam>
+        /// <returns>A list with manies</returns>
+        Task<IEnumerable<M>> GetMany<M>(T entity, Expression<Func<T, IEnumerable<M>>> many, params Expression<Func<M, object>>[] includes)
+            where M : class;
+
+        /// <summary>
+        /// Retrieves the many of an entity
+        /// </summary>
+        /// <param name="many">The many property of the entity</param>
         /// <param name="search">A LINQ query to filter the children</param>
         /// <param name="includes">Which children should be included in the manies</param>
         /// <typeparam name="M"></typeparam>
         /// <returns>A list with manies</returns>
-        Task<IEnumerable<M>> GetMany<M>(T entity, Expression<Func<T, IEnumerable<M>>> many, Expression<Func<M, bool>> search = null, params Expression<Func<M, object>>[] includes)
+        Task<IEnumerable<M>> GetMany<M>(T entity, Expression<Func<T, IEnumerable<M>>> many, Expression<Func<M, bool>> search, params Expression<Func<M, object>>[] includes)
             where M : class;
 
         /// <summary>
@@ -54,8 +65,34 @@ namespace Extended.Dapper.Core.Repository
         /// Also inserts the children if no ID is set
         /// on them
         /// </summary>
-        /// <param name="entity"></param>
+        /// <param name="entity">The entity to insert</param>
+        /// <returns>The inserted entity</returns>
         Task<T> Insert(T entity);
+
+        /// <summary>
+        /// Inserts an entity into the database
+        /// Also inserts the children if no ID is set
+        /// on them
+        /// </summary>
+        /// <param name="entity">The entity to insert</param>
+        /// <param name="transaction">Database transaction</param>
+        /// <returns>The inserted entity</returns>
+        Task<T> Insert(T entity, IDbTransaction transaction);
+
+        /// <summary>
+        /// Updates a given entity (but won't update any children info)
+        /// </summary>
+        /// <param name="entity">The entity to update</param>
+        /// <returns>True when succesful; false otherwise</returns>
+        Task<bool> Update(T entity);
+
+        /// <summary>
+        /// Updates a given entity (but won't update any children info)
+        /// </summary>
+        /// <param name="entity">The entity to update</param>
+        /// <param name="transaction">Database transaction</param>
+        /// <returns>True when succesful; false otherwise</returns>
+        Task<bool> Update(T entity, IDbTransaction transaction);
 
         /// <summary>
         /// Updates a given entity
@@ -66,15 +103,35 @@ namespace Extended.Dapper.Core.Repository
         Task<bool> Update(T entity, params Expression<Func<T, object>>[] includes);
 
         /// <summary>
+        /// Updates a given entity
+        /// </summary>
+        /// <param name="entity">The entity to update</param>
+        /// <param name="transaction">Database transaction</param>
+        /// <param name="includes">Which children should also be updated
+        /// (erases them if they don't exist in the list anymore)</param>
+        /// <returns>True when succesful; false otherwise</returns>
+        Task<bool> Update(T entity, IDbTransaction transaction, params Expression<Func<T, object>>[] includes);
+
+        /// <summary>
         /// Deletes the given entity
         /// </summary>
-        /// <param name="entity"></param>
+        /// <param name="entity">The entity to delete</param>
+        /// <returns>Number of deleted rows</returns>
         Task<int> Delete(T entity);
+
+        /// <summary>
+        /// Deletes the given entity
+        /// </summary>
+        /// <param name="entity">The entity to delete</param>
+        /// <param name="transaction">Database transaction</param>
+        /// <returns>Number of deleted rows</returns>
+        Task<int> Delete(T entity, IDbTransaction transaction);
 
         /// <summary>
         /// Deletes the entities matching the search
         /// </summary>
-        /// <param name="search"></param>
+        /// <param name="search">Search for items to delete</param>
+        /// <returns>Number of deleted rows</returns>
         Task<int> Delete(Expression<Func<T, bool>> search);
     }
 }

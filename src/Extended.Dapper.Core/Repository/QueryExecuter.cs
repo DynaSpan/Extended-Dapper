@@ -33,9 +33,9 @@ namespace Extended.Dapper.Core.Repository
         /// Executes a select query
         /// </summary>
         /// <param name="query"></param>
-        /// <param name="connection"></param>
+        /// <param name="transaction"></param>
         /// <param name="includes"></param>
-        public virtual async Task<IEnumerable<T>> ExecuteSelectQuery<T>(SelectSqlQuery query, IDbConnection connection = null, params Expression<Func<T, object>>[] includes)
+        public virtual async Task<IEnumerable<T>> ExecuteSelectQuery<T>(SelectSqlQuery query, IDbTransaction transaction = null, params Expression<Func<T, object>>[] includes)
             where T : class
         {
             var typeArr = ReflectionHelper.GetTypeListFromIncludes(includes).ToArray();
@@ -48,15 +48,17 @@ namespace Extended.Dapper.Core.Repository
 
             var entityLookup = new Dictionary<string, T>();
 
-            if (connection == null) 
-                connection = this.DatabaseFactory.GetDatabaseConnection();
+            IDbConnection connection;
 
-            using (connection)
+            if (transaction == null) 
             {
+                connection = this.DatabaseFactory.GetDatabaseConnection();
                 this.OpenConnection(connection);
-
-                await connection.QueryAsync<T>(query.ToString(), typeArr, this.MapDapperEntity(typeArr, entityLookup, includes), query.Params, null, true, splitOn);
             }
+            else
+                connection = transaction.Connection;
+
+            await connection.QueryAsync<T>(query.ToString(), typeArr, this.MapDapperEntity(typeArr, entityLookup, includes), query.Params, transaction, true, splitOn);
 
             return entityLookup.Values;
         }
@@ -65,31 +67,47 @@ namespace Extended.Dapper.Core.Repository
         /// Executes an insert query
         /// </summary>
         /// <param name="query"></param>
-        /// <param name="connection"></param>
+        /// <param name="transaction"></param>
         /// <returns>true when succesful; false otherwise</returns>
-        public virtual async Task<bool> ExecuteInsertQuery(object entity, InsertSqlQuery query, IDbConnection connection = null)
+        public virtual async Task<bool> ExecuteInsertQuery(object entity, InsertSqlQuery query, IDbTransaction transaction = null)
         {
-            if (connection == null) 
-                connection = this.DatabaseFactory.GetDatabaseConnection();
+            var shouldCommit = false;
 
-            // First grab & insert all the ManyToOnes (foreign keys of this entity)
-            query = await this.InsertManyToOnes(entity, query);
-
-            using (connection)
+            if (transaction == null) 
             {
+                var connection = this.DatabaseFactory.GetDatabaseConnection();
                 this.OpenConnection(connection);
 
-                var insertResult = await connection.ExecuteAsync(query.ToString(), query.Params);
+                transaction = connection.BeginTransaction();
+                shouldCommit = true;
+            }
+
+            // First grab & insert all the ManyToOnes (foreign keys of this entity)
+            query = await this.InsertManyToOnes(entity, query, transaction);
+
+            try
+            {
+                var insertResult = await transaction.Connection.ExecuteAsync(query.ToString(), query.Params, transaction);
 
                 if (insertResult == 1)
                 {
                     var entityKey = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", entity.GetType(), new[] { entity }) as string;
 
                     // Insert the OneToManys
-                    await this.InsertOneToManys(entity, entityKey);
+                    await this.InsertOneToManys(entity, entityKey, transaction);
+                }
+
+                if (shouldCommit)
+                {
+                    transaction.Commit();
                 }
 
                 return insertResult == 1;
+            }
+            catch (Exception)
+            {
+                transaction.Rollback();
+                throw;
             }
         }
 
@@ -98,26 +116,40 @@ namespace Extended.Dapper.Core.Repository
         /// </summary>
         /// <param name="entity"></param>
         /// <param name="query"></param>
-        /// <param name="connection"></param>
+        /// <param name="transaction"></param>
         /// <param name="includes"></param>
         /// <returns>True when succesfull; false otherwise</returns>
-        public virtual async Task<bool> ExecuteUpdateQuery<T>(T entity, UpdateSqlQuery query, IDbConnection connection = null, params Expression<Func<T, object>>[] includes)
+        public virtual async Task<bool> ExecuteUpdateQuery<T>(T entity, UpdateSqlQuery query, IDbTransaction transaction = null, params Expression<Func<T, object>>[] includes)
             where T : class
         {
-            if (connection == null)
-                connection = this.DatabaseFactory.GetDatabaseConnection();
+            var shouldCommit = false;
+
+            if (transaction == null) 
+            {
+                var connection = this.DatabaseFactory.GetDatabaseConnection();
+                this.OpenConnection(connection);
+
+                transaction = connection.BeginTransaction();
+                shouldCommit = true;
+            }
 
             // Update all children
             if (includes != null)
-                query = await this.UpdateChildren<T>(entity, query, null, includes);
+                query = await this.UpdateChildren<T>(entity, query, transaction, includes);
 
-            using (connection)
+            try
             {
-                this.OpenConnection(connection);
+                var updateResult = await transaction.Connection.ExecuteAsync(query.ToString(), query.Params, transaction);
 
-                var updateResult = await connection.ExecuteAsync(query.ToString(), query.Params);
+                if (shouldCommit)
+                    transaction.Commit();
 
                 return updateResult == 1;
+            }
+            catch (Exception)
+            {
+                transaction.Rollback();
+                throw;
             }
         }
 
@@ -125,18 +157,34 @@ namespace Extended.Dapper.Core.Repository
         /// Executes a delete query
         /// </summary>
         /// <param name="query"></param>
-        /// <param name="connection"></param>
+        /// <param name="transaction"></param>
         /// <returns>Number of deleted records</returns>
-        public virtual async Task<int> ExecuteDeleteQuery<T>(SqlQuery query, IDbConnection connection = null)
+        public virtual async Task<int> ExecuteDeleteQuery<T>(SqlQuery query, IDbTransaction transaction = null)
         {
-            if (connection == null)
-                connection = this.DatabaseFactory.GetDatabaseConnection();
+            var shouldCommit = false;
 
-            using (connection)
+            if (transaction == null) 
             {
+                var connection = this.DatabaseFactory.GetDatabaseConnection();
                 this.OpenConnection(connection);
 
-                return await connection.ExecuteAsync(query.ToString(), query.Params);
+                transaction = connection.BeginTransaction();
+                shouldCommit = true;
+            }
+
+            try
+            {
+                var result = await transaction.Connection.ExecuteAsync(query.ToString(), query.Params, transaction);
+
+                if (shouldCommit)
+                    transaction.Commit();
+
+                return result;
+            }
+            catch (Exception)
+            {
+                transaction.Rollback();
+                throw;
             }
         }
 
@@ -208,13 +256,16 @@ namespace Extended.Dapper.Core.Repository
         /// <param name="connection"></param>
         protected virtual void OpenConnection(IDbConnection connection)
         {
-            connection.Open();
-
             if (connection.State != System.Data.ConnectionState.Open)
-                throw new ApplicationException("Could not connect to the SQL server");
+            {
+                connection.Open();
+
+                if (connection.State != System.Data.ConnectionState.Open)
+                    throw new ApplicationException("Could not connect to the SQL server");
+            }
         }
 
-        protected virtual async Task<InsertSqlQuery> InsertManyToOnes(object entity, InsertSqlQuery insertQuery)
+        protected virtual async Task<InsertSqlQuery> InsertManyToOnes(object entity, InsertSqlQuery insertQuery, IDbTransaction transaction)
         {
             var entityMap = EntityMapper.GetEntityMap(entity.GetType());
 
@@ -233,7 +284,7 @@ namespace Extended.Dapper.Core.Repository
                     if (oneObjKey == string.Empty || oneObjKey == null || new Guid(oneObjKey) == Guid.Empty)
                     {
                         // Insert
-                        oneObjKey = await this.InsertEntityAndReturnId(oneObj) as string;
+                        oneObjKey = await this.InsertEntityAndReturnId(oneObj, transaction) as string;
 
                         if (oneObjKey == null)
                             throw new ApplicationException("Could not insert a ManyToOne object: " + oneObj);
@@ -247,7 +298,7 @@ namespace Extended.Dapper.Core.Repository
             return insertQuery;
         }
 
-        protected virtual async Task<bool> InsertOneToManys(object entity, object foreignKey)
+        protected virtual async Task<bool> InsertOneToManys(object entity, object foreignKey, IDbTransaction transaction = null)
         {
             var entityMap = EntityMapper.GetEntityMap(entity.GetType());
 
@@ -274,7 +325,7 @@ namespace Extended.Dapper.Core.Repository
                         query.Insert.Add(new QueryField(attr.TableName, attr.ForeignKey, "p_fk_" + attr.ForeignKey));
                         query.Params.Add("p_fk_" + attr.ForeignKey, foreignKey);
 
-                        var queryResult = await this.ExecuteInsertQuery(obj, query);
+                        var queryResult = await this.ExecuteInsertQuery(obj, query, transaction);
                     }
                 }
             }
@@ -282,7 +333,7 @@ namespace Extended.Dapper.Core.Repository
             return true;
         }
 
-        protected virtual async Task<UpdateSqlQuery> UpdateChildren<T>(T entity, UpdateSqlQuery updateQuery, IDbConnection connection = null, params Expression<Func<T, object>>[] includes)
+        protected virtual async Task<UpdateSqlQuery> UpdateChildren<T>(T entity, UpdateSqlQuery updateQuery, IDbTransaction transaction, params Expression<Func<T, object>>[] includes)
             where T : class
         {
             var entityMap = EntityMapper.GetEntityMap(typeof(T));
@@ -308,7 +359,7 @@ namespace Extended.Dapper.Core.Repository
                         if (oneObjKey == string.Empty || oneObjKey == null || new Guid(oneObjKey) == Guid.Empty)
                         {
                             // Insert
-                            oneObjKey = await this.InsertEntityAndReturnId(oneObj) as string;
+                            oneObjKey = await this.InsertEntityAndReturnId(oneObj, transaction) as string;
 
                             if (oneObjKey == null)
                                 throw new ApplicationException("Could not insert a ManyToOne object: " + oneObj);
@@ -317,7 +368,7 @@ namespace Extended.Dapper.Core.Repository
                         {
                             // Update the entity
                             var query = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "Update", oneObj.GetType(), new[] { oneObj }, this.SqlGenerator) as UpdateSqlQuery;
-                            var queryResult = await (ReflectionHelper.CallGenericMethod(typeof(QueryExecuter), "ExecuteUpdateQuery", oneObj.GetType(), new[] { oneObj, query, null, null }, this) as Task<bool>);
+                            var queryResult = await (ReflectionHelper.CallGenericMethod(typeof(QueryExecuter), "ExecuteUpdateQuery", oneObj.GetType(), new[] { oneObj, query, transaction, null }, this) as Task<bool>);
 
                             if (!queryResult)
                                 throw new ApplicationException("Could not update a ManyToOne object: " + oneObj);
@@ -348,7 +399,7 @@ namespace Extended.Dapper.Core.Repository
 
                                 objKey = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", listEntityMap.Type, new[] { listItem }) as string;
 
-                                var queryResult = await this.ExecuteInsertQuery(listItem, query);
+                                var queryResult = await this.ExecuteInsertQuery(listItem, query, transaction);
 
                                 if (!queryResult)
                                     throw new ApplicationException("Could not create a OneToMany object: " + listItem);
@@ -361,7 +412,7 @@ namespace Extended.Dapper.Core.Repository
                                 query.Updates.Add(new QueryField(attr.TableName, attr.ForeignKey, "p_fk_" + attr.ForeignKey));
                                 query.Params.Add("p_fk_" + attr.ForeignKey, foreignKey);
 
-                                var queryResult = await (ReflectionHelper.CallGenericMethod(typeof(QueryExecuter), "ExecuteUpdateQuery", listType, new[] { listItem, query, null, null }, this) as Task<bool>);
+                                var queryResult = await (ReflectionHelper.CallGenericMethod(typeof(QueryExecuter), "ExecuteUpdateQuery", listType, new[] { listItem, query, transaction, null }, this) as Task<bool>);
 
                                 if (!queryResult)
                                     throw new ApplicationException("Could not update a OneToMany object: " + listItem);
@@ -378,14 +429,14 @@ namespace Extended.Dapper.Core.Repository
                         // Delete children not in list anymore
                         var deleteQuery = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "DeleteChildren", listType, new object[] { attr.TableName, foreignKey, attr.ForeignKey, attr.LocalKey, currentChildrenIds }, this.SqlGenerator) as SqlQuery;
                         
-                        if (connection == null)
-                            connection = this.DatabaseFactory.GetDatabaseConnection();
-
-                        using (connection)
+                        try
                         {
-                            this.OpenConnection(connection);
-
-                            await connection.QueryAsync(deleteQuery.ToString(), deleteQuery.Params);
+                            await transaction.Connection.QueryAsync(deleteQuery.ToString(), deleteQuery.Params);
+                        }
+                        catch (Exception)
+                        {
+                            transaction.Rollback();
+                            throw;
                         }
                     }
                 }
@@ -398,12 +449,13 @@ namespace Extended.Dapper.Core.Repository
         /// Inserts an entity and returns it composite ID
         /// </summary>
         /// <param name="entity"></param>
+        /// <param name="transaction"></param>
         /// <returns>null when failed; id otherwise</returns>
-        protected virtual async Task<object> InsertEntityAndReturnId(object entity)
+        protected virtual async Task<object> InsertEntityAndReturnId(object entity, IDbTransaction transaction = null)
         {
             // Insert it
             var query = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "Insert", entity.GetType(), new[] { entity }, this.SqlGenerator) as InsertSqlQuery;
-            var queryResult = await this.ExecuteInsertQuery(entity, query);
+            var queryResult = await this.ExecuteInsertQuery(entity, query, transaction);
 
             if (!queryResult)
                 return null;

@@ -18,7 +18,7 @@ Extends Dapper functionality with a repository pattern, `OneToMany` and `ManyToO
 - ~Setup local DB for unittests~
 - Write unittests (working on it)
 - Setup CI/CD for automated deployment to NuGet
-- Transaction support
+- ~Transaction support~
 - Setup documentation
 - (Proper) support for more than 1 primary key
 - Optimize reflection calls

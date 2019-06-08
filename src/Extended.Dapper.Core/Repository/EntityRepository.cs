@@ -75,11 +75,21 @@ namespace Extended.Dapper.Core.Repository
         /// Retrieves the many of an entity
         /// </summary>
         /// <param name="many">The many property of the entity</param>
+        /// <param name="includes">Which children should be included in the manies</param>
+        /// <typeparam name="M"></typeparam>
+        /// <returns>A list with manies</returns>
+        public virtual Task<IEnumerable<M>> GetMany<M>(T entity, Expression<Func<T, IEnumerable<M>>> many, params Expression<Func<M, object>>[] includes)
+            where M : class => this.GetMany(entity, many, null, includes);
+
+        /// <summary>
+        /// Retrieves the many of an entity
+        /// </summary>
+        /// <param name="many">The many property of the entity</param>
         /// <param name="search">A LINQ query to filter the children</param>
         /// <param name="includes">Which children should be included in the manies</param>
         /// <typeparam name="M"></typeparam>
         /// <returns>A list with manies</returns>
-        public virtual Task<IEnumerable<M>> GetMany<M>(T entity, Expression<Func<T, IEnumerable<M>>> many, Expression<Func<M, bool>> search = null, params Expression<Func<M, object>>[] includes)
+        public virtual Task<IEnumerable<M>> GetMany<M>(T entity, Expression<Func<T, IEnumerable<M>>> many, Expression<Func<M, bool>> search, params Expression<Func<M, object>>[] includes)
             where M : class
         {
             var query = this.SqlGenerator.SelectMany<T, M>(entity, many, search, includes);
@@ -107,12 +117,23 @@ namespace Extended.Dapper.Core.Repository
         /// Also inserts the children if no ID is set
         /// on them
         /// </summary>
-        /// <param name="entity"></param>
-        public virtual async Task<T> Insert(T entity)
+        /// <param name="entity">The entity to insert</param>
+        /// <returns>The inserted entity</returns>
+        public virtual Task<T> Insert(T entity) => this.Insert(entity, null);
+
+        /// <summary>
+        /// Inserts an entity into the database
+        /// Also inserts the children if no ID is set
+        /// on them
+        /// </summary>
+        /// <param name="entity">The entity to insert</param>
+        /// <param name="transaction">Database transaction</param>
+        /// <returns>The inserted entity</returns>
+        public virtual async Task<T> Insert(T entity, IDbTransaction transaction)
         {
             var query = this.SqlGenerator.Insert<T>(entity);
 
-            if (await this.QueryExecuter.ExecuteInsertQuery(entity, query))
+            if (await this.QueryExecuter.ExecuteInsertQuery(entity, query, transaction))
                 return entity;
 
             return null;
@@ -121,43 +142,97 @@ namespace Extended.Dapper.Core.Repository
         /// <summary>
         /// Updates a given entity (but won't update any children info)
         /// </summary>
-        /// <param name="entity"></param>
-        public virtual Task<bool> Update(T entity) => this.Update(entity, null);
+        /// <param name="entity">The entity to update</param>
+        /// <returns>True when succesful; false otherwise</returns>
+        public virtual Task<bool> Update(T entity) 
+            => this.Update(null, null, entity);
+
+        /// <summary>
+        /// Updates a given entity (but won't update any children info)
+        /// </summary>
+        /// <param name="entity">The entity to update</param>
+        /// <param name="transaction">Database transaction</param>
+        /// <returns>True when succesful; false otherwise</returns>
+        public virtual Task<bool> Update(T entity, IDbTransaction transaction) 
+            => this.Update(transaction, null, entity);
 
         /// <summary>
         /// Updates a given entity
         /// </summary>
-        /// <param name="entity"></param>
+        /// <param name="entity">The entity to update</param>
         /// <param name="includes">Which children should also be updated
         /// (erases them if they don't exist in the list anymore)</param>
-        public virtual Task<bool> Update(T entity, params Expression<Func<T, object>>[] includes)
+        /// <returns>True when succesful; false otherwise</returns>
+        public virtual Task<bool> Update(T entity, params Expression<Func<T, object>>[] includes) 
+            => this.Update(null, includes, entity);
+
+        /// <summary>
+        /// Updates a given entity
+        /// </summary>
+        /// <param name="entity">The entity to update</param>
+        /// <param name="transaction">Database transaction</param>
+        /// <param name="includes">Which children should also be updated
+        /// (erases them if they don't exist in the list anymore)</param>
+        /// <returns>True when succesful; false otherwise</returns>
+        public virtual Task<bool> Update(T entity, IDbTransaction transaction, params Expression<Func<T, object>>[] includes)
+            => this.Update(transaction, includes, entity);
+
+        /// <summary>
+        /// Updates a given entity
+        /// </summary>
+        /// <param name="entity">The entity to update</param>
+        /// <param name="transaction">Database transaction</param>
+        /// <param name="includes">Which children should also be updated
+        /// (erases them if they don't exist in the list anymore)</param>
+        /// <returns>True when succesful; false otherwise</returns>
+        protected virtual Task<bool> Update(IDbTransaction transaction, Expression<Func<T, object>>[] includes, T entity)
         {
             var query = this.SqlGenerator.Update<T>(entity);
 
-            return this.QueryExecuter.ExecuteUpdateQuery<T>(entity, query, null, includes);
+            return this.QueryExecuter.ExecuteUpdateQuery<T>(entity, query, transaction, includes);
         }
 
         /// <summary>
         /// Deletes the given entity
         /// </summary>
-        /// <param name="entity"></param>
+        /// <param name="entity">The entity to delete</param>
+        /// <returns>Number of deleted rows</returns>
         public virtual Task<int> Delete(T entity)
+            => this.Delete(entity, null);
+
+        /// <summary>
+        /// Deletes the given entity
+        /// </summary>
+        /// <param name="entity">The entity to delete</param>
+        /// <param name="transaction">Database transaction</param>
+        /// <returns>Number of deleted rows</returns>
+        public virtual Task<int> Delete(T entity, IDbTransaction transaction)
         {
             var entityId = EntityMapper.GetCompositeUniqueKey<T>(entity);
             var search = this.SqlGenerator.CreateByIdExpression<T>(entityId);
 
-            return this.Delete(search);
+            return this.Delete(search, transaction);
         }
 
         /// <summary>
         /// Deletes the entities matching the search
         /// </summary>
-        /// <param name="search"></param>
+        /// <param name="search">Search for items to delete</param>
+        /// <returns>Number of deleted rows</returns>
         public virtual Task<int> Delete(Expression<Func<T, bool>> search)
+            => this.Delete(search, null);
+
+        /// <summary>
+        /// Deletes the entities matching the search
+        /// </summary>
+        /// <param name="search">Search for items to delete</param>
+        /// <param name="transaction">Database transaction</param>
+        /// <returns>Number of deleted rows</returns>
+        public virtual Task<int> Delete(Expression<Func<T, bool>> search, IDbTransaction transaction)
         {
             var query = this.SqlGenerator.Delete<T>(search);
 
-            return this.QueryExecuter.ExecuteDeleteQuery<T>(query);
+            return this.QueryExecuter.ExecuteDeleteQuery<T>(query, transaction);
         }
     }
 }

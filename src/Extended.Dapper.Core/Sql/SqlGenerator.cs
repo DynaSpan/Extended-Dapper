@@ -203,7 +203,9 @@ namespace Extended.Dapper.Core.Sql
             var manyProperty = rootEntityMap.RelationProperties.Where(x => x.Key.Name.ToLower() == manyPropertyName).SingleOrDefault();
             
             var relationAttr = System.Attribute.GetCustomAttributes(manyProperty.Key, typeof(ManyToOneAttribute), true).FirstOrDefault() as ManyToOneAttribute;
-            sqlQuery.Where.AppendFormat("{0}.{1} = {2}m2o_parent_id", 
+
+            sqlQuery.Where.AppendFormat("{0}{1}.{2} = {3}m2o_parent_id", 
+                sqlQuery.Where.ToString() == string.Empty ? "" : " AND ",
                 this.sqlProvider.EscapeTable(relationAttr.TableName),
                 this.sqlProvider.EscapeColumn(relationAttr.LocalKey),
                 this.sqlProvider.ParameterChar);
