@@ -28,6 +28,7 @@ namespace Extended.Dapper.Core.Repository
         /// </summary>
         /// <param name="search">The search criteria</param>
         /// <param name="includes">Which children to include</param>
+        /// <returns>A single entity that matches the search</returns>
         Task<T> Get(Expression<Func<T, bool>> search, params Expression<Func<T, object>>[] includes);
 
         /// <summary>
@@ -35,6 +36,7 @@ namespace Extended.Dapper.Core.Repository
         /// </summary>
         /// <param name="id">The ID of the entity</param>
         /// <param name="includes">Which children to include</param>
+        /// <returns>The entity that matches the ID</param>
         Task<T> GetById(object id, params Expression<Func<T, object>>[] includes);
 
         /// <summary>
@@ -108,6 +110,7 @@ namespace Extended.Dapper.Core.Repository
         /// <param name="entity"></param>
         /// <param name="includes">Which children should also be updated
         /// (erases them if they don't exist in the list anymore)</param>
+        /// <returns>True when succesful; false otherwise</returns>
         Task<bool> Update(T entity, params Expression<Func<T, object>>[] includes);
 
         /// <summary>
