@@ -148,8 +148,7 @@ namespace Extended.Dapper.Core.Sql
             }
 
             // Append where
-            if (search != null)
-                this.sqlProvider.AppendWherePredicateQuery(sqlQuery, search, QueryType.Select, entityMap);
+            this.sqlProvider.AppendWherePredicateQuery(sqlQuery, search, QueryType.Select, entityMap);
 
             sqlQuery.From = entityMap.TableName;
 
@@ -196,7 +195,7 @@ namespace Extended.Dapper.Core.Sql
         /// <typeparam name="O"></typeparam>
         public SelectSqlQuery SelectOne<T, O>(T entity, Expression<Func<T, O>> one, params Expression<Func<O, object>>[] includes)
         {
-            var manyEntityMap = EntityMapper.GetEntityMap(typeof(O));
+            var oneEntityMap = EntityMapper.GetEntityMap(typeof(O));
             var rootEntityMap = EntityMapper.GetEntityMap(typeof(T));
             var sqlQuery = this.Select<O>(null, includes);
 

@@ -97,9 +97,6 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
                 query.AppendFormat(" LIMIT {0}", selectQuery.Limit);
             }
 
-            if (SqlQueryProviderHelper.Verbose)
-                Console.WriteLine(query.ToString());
-
             return query.ToString();
         }
 
@@ -412,20 +409,22 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
                 }
 
                 if (entityMap.LogicalDelete && queryType == QueryType.Select)
-                    sqlQuery.Where.AppendFormat("({3}) AND {0}.{1} != {2} ", 
+                    sqlQuery.Where.AppendFormat("({3}) AND {0}.{1} {4} {2} ", 
                         this.EscapeTable(entityMap.TableName), 
                         this.EscapeColumn(entityMap.LogicalDeletePropertyMetadata.ColumnName), 
                         1, 
-                        sqlBuilder);
+                        sqlBuilder,
+                        this.GetSqlOperator(ExpressionType.NotEqual));
                 else
                     sqlQuery.Where.AppendFormat("{0} ", sqlBuilder);
             }
             else
             {
                 if (entityMap.LogicalDelete && queryType == QueryType.Select)
-                    sqlQuery.Where.AppendFormat("{0}.{1} != {2} ", 
+                    sqlQuery.Where.AppendFormat("{0}.{1} {2} {3} ", 
                         this.EscapeTable(entityMap.TableName), 
                         this.EscapeColumn(entityMap.LogicalDeletePropertyMetadata.ColumnName), 
+                        this.GetSqlOperator(ExpressionType.NotEqual),
                         1);
             }
 

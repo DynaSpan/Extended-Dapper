@@ -106,33 +106,8 @@ namespace Extended.Dapper.Tests.Query
         [Test]
         public void TestInsert2()
         {
-            var category = CategoryRepository.Get(c => c.Name == "Romance").Result;
 
-            var newBook1 = new Book() {
-                Name = "Moi Book #1",
-                ReleaseYear = 2020,
-                Category = category
-            };
-            var newBook2 = new Book() {
-                Name = "Moi Book #2",
-                ReleaseYear = 2010,
-                Category = category
-            };
-
-            var bookList = new List<Book>();
-            bookList.Add(newBook1);
-            bookList.Add(newBook2);
-
-            var newAuthor = new Author() {
-                Name = "Pietje Piet",
-                BirthYear = 1990,
-                Country = "Ergens & nergens",
-                Books = bookList
-            };
-
-            var author = AuthorRepository.Insert(newAuthor).Result;
-
-            var newAuthor2 = AuthorRepository.Get(a => a.Id == author.Id).Result;
+            var newAuthor2 = AuthorRepository.Get(a => a.Name == "Pietje Piet").Result;
 
             Console.WriteLine(newAuthor2);
 
