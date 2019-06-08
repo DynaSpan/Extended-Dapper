@@ -36,11 +36,20 @@ namespace Extended.Dapper.Core.Repository
         }
 
         /// <summary>
+        /// Gets all the entities
+        /// </summary>
+        /// <param name="includes">Which children to include</param>
+        /// <returns>List of entities</returns>
+        public virtual Task<IEnumerable<T>> GetAll(params Expression<Func<T, object>>[] includes)
+            => this.GetAll(null, includes);
+
+        /// <summary>
         /// Gets one or more entities that match the search
         /// </summary>
         /// <param name="search">The search criteria</param>
         /// <param name="includes">Which children to include</param>
-        public virtual Task<IEnumerable<T>> GetAll(Expression<Func<T, bool>> search = null, params Expression<Func<T, object>>[] includes)
+        /// <returns>List of entities</returns>
+        public virtual Task<IEnumerable<T>> GetAll(Expression<Func<T, bool>> search, params Expression<Func<T, object>>[] includes)
         {
             var query = this.SqlGenerator.Select<T>(search, includes);
 
@@ -52,7 +61,8 @@ namespace Extended.Dapper.Core.Repository
         /// </summary>
         /// <param name="search">The search criteria</param>
         /// <param name="includes">Which children to include</param>
-        public virtual async Task<T> Get(Expression<Func<T, bool>> search = null, params Expression<Func<T, object>>[] includes)
+        /// <returns>A single entity that mataches the search</returns>
+        public virtual async Task<T> Get(Expression<Func<T, bool>> search, params Expression<Func<T, object>>[] includes)
         {
             var query = this.SqlGenerator.Select<T>(search, includes);
 

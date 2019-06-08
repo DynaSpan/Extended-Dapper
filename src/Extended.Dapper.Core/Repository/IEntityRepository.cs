@@ -9,18 +9,26 @@ namespace Extended.Dapper.Core.Repository
     public interface IEntityRepository<T> where T : class
     {
         /// <summary>
+        /// Gets all the entities
+        /// </summary>
+        /// <param name="includes">Which children to include</param>
+        /// <returns>List of entities</returns>
+        Task<IEnumerable<T>> GetAll(params Expression<Func<T, object>>[] includes);
+
+        /// <summary>
         /// Gets one or more entities that match the search
         /// </summary>
         /// <param name="search">The search criteria</param>
         /// <param name="includes">Which children to include</param>
-        Task<IEnumerable<T>> GetAll(Expression<Func<T, bool>> search = null, params Expression<Func<T, object>>[] includes);
+        /// <returns>List of entities</returns>
+        Task<IEnumerable<T>> GetAll(Expression<Func<T, bool>> search, params Expression<Func<T, object>>[] includes);
 
         /// <summary>
         /// Gets one entity that matches the search
         /// </summary>
         /// <param name="search">The search criteria</param>
         /// <param name="includes">Which children to include</param>
-        Task<T> Get(Expression<Func<T, bool>> search = null, params Expression<Func<T, object>>[] includes);
+        Task<T> Get(Expression<Func<T, bool>> search, params Expression<Func<T, object>>[] includes);
 
         /// <summary>
         /// Gets an entity by its ID
