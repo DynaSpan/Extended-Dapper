@@ -83,7 +83,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
             query.AppendFormat("SELECT {0} FROM {1}", selectFields, this.EscapeTable(selectQuery.From));
 
             if (selectQuery.Joins != null && selectQuery.Joins.Count > 0)
-                query.Append(" " + string.Join(" ", selectQuery.Joins.Select(MapJoin)));
+                query.Append(" " + string.Join(" ", selectQuery.Joins.Select(j => this.MapJoin(j, EntityMapper.GetEntityMap(j.EntityType)))));
 
             if (selectQuery.Where != null && !string.IsNullOrEmpty(selectQuery.Where.ToString()))
                 query.AppendFormat(" WHERE {0}", selectQuery.Where);
@@ -252,12 +252,12 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// Projecten function for mapping a join
         /// </summary>
         /// <param name="join"></param>
-        public virtual string MapJoin(Join join)
+        public virtual string MapJoin(Join join, EntityMap entityMap)
         {
             var joinType = string.Empty;
             var joinTable = string.Empty;
 
-            switch (join.Type)
+            switch (join.JoinType)
             {
                 case JoinType.INNER:
                     joinType = "INNER"; 
@@ -269,13 +269,28 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
                     break;
             }
 
-            return string.Format("{0} JOIN {1} ON {2}.{3} = {4}.{5}",
-                joinType,
-                this.EscapeTable(joinTable),
-                this.EscapeTable(join.LocalTable),
-                this.EscapeColumn(join.LocalKey),
-                this.EscapeColumn(join.ExternalTable),
-                this.EscapeColumn(join.ExternalKey));
+            if (entityMap.LogicalDelete)
+            {
+                 return string.Format("{0} JOIN {1} ON {2}.{3} = {4}.{5} AND {4}.{6} {7} 1",
+                    joinType,
+                    this.EscapeTable(joinTable),
+                    this.EscapeTable(join.LocalTable),
+                    this.EscapeColumn(join.LocalKey),
+                    this.EscapeColumn(join.ExternalTable),
+                    this.EscapeColumn(join.ExternalKey),
+                    this.EscapeColumn(entityMap.LogicalDeletePropertyMetadata.ColumnName),
+                    this.GetSqlOperator(ExpressionType.NotEqual));
+            }
+            else
+            {
+                return string.Format("{0} JOIN {1} ON {2}.{3} = {4}.{5}",
+                    joinType,
+                    this.EscapeTable(joinTable),
+                    this.EscapeTable(join.LocalTable),
+                    this.EscapeColumn(join.LocalKey),
+                    this.EscapeColumn(join.ExternalTable),
+                    this.EscapeColumn(join.ExternalKey));
+            }
         }
 
         /// <summary>
@@ -414,27 +429,6 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
                         1, 
                         sqlBuilder,
                         this.GetSqlOperator(ExpressionType.NotEqual));
-
-                    if (includes != null)
-                    {
-                        foreach (var incl in includes)
-                        {
-                            var type = incl.Body.Type.GetTypeInfo();
-
-                            if (type.IsGenericType)
-                                type = type.GetGenericArguments()[0].GetTypeInfo();
-
-                            var inclEntityMap = EntityMapper.GetEntityMap(type);
-                            if (inclEntityMap.LogicalDelete && queryType == QueryType.Select)
-                            {
-                                sqlQuery.Where.AppendFormat("AND {0}.{1} {2} {3} ", 
-                                    this.EscapeTable(inclEntityMap.TableName), 
-                                    this.EscapeColumn(inclEntityMap.LogicalDeletePropertyMetadata.ColumnName), 
-                                    this.GetSqlOperator(ExpressionType.NotEqual),
-                                    1);
-                            }
-                        }
-                    }
                 }
                 else
                     sqlQuery.Where.AppendFormat("{0} ", sqlBuilder);
@@ -448,27 +442,6 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
                         this.EscapeColumn(entityMap.LogicalDeletePropertyMetadata.ColumnName), 
                         this.GetSqlOperator(ExpressionType.NotEqual),
                         1);
-                    
-                    if (includes != null)
-                    {
-                        foreach (var incl in includes)
-                        {
-                            var type = incl.Body.Type.GetTypeInfo();
-
-                            if (type.IsGenericType)
-                                type = type.GetGenericArguments()[0].GetTypeInfo();
-
-                            var inclEntityMap = EntityMapper.GetEntityMap(type);
-                            if (inclEntityMap.LogicalDelete && queryType == QueryType.Select)
-                            {
-                                sqlQuery.Where.AppendFormat("AND {0}.{1} {2} {3} ", 
-                                    this.EscapeTable(inclEntityMap.TableName), 
-                                    this.EscapeColumn(inclEntityMap.LogicalDeletePropertyMetadata.ColumnName), 
-                                    this.GetSqlOperator(ExpressionType.NotEqual),
-                                    1);
-                            }
-                        }
-                    }
                 }
             }
 

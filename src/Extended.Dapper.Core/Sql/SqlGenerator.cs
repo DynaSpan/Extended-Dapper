@@ -122,19 +122,19 @@ namespace Extended.Dapper.Core.Sql
                     sqlQuery.Select.AddRange(this.GenerateSelectFields(relationAttr.TableName, metadata.Cast<SqlPropertyMetadata>().ToList()));
 
                     var join = new Join();
+                    join.EntityType = relationAttr.Type;
 
                     // Check the type of relation
                     if (relationAttr is ManyToOneAttribute)
                     {
-                        join.Type = JoinType.INNER;
-
+                        join.JoinType = JoinType.INNER;
                         
                         join.ExternalTable = entityMap.TableName;
                         join.LocalTable = relationAttr.TableName;
                     }
                     else if (relationAttr is OneToManyAttribute)
                     {
-                        join.Type = JoinType.LEFT;
+                        join.JoinType = JoinType.LEFT;
 
                         join.ExternalTable = relationAttr.TableName;
                         join.LocalTable = entityMap.TableName;

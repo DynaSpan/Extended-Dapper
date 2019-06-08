@@ -106,10 +106,46 @@ namespace Extended.Dapper.Tests.Query
         [Test]
         public void TestInsert2()
         {
+            var books = new List<Book>();
 
-            var newAuthor2 = AuthorRepository.Get(a => a.Name == "Pietje Piet", a => a.Books).Result;
+            var newBook = new Book() {
+                Name = "The birth of Spees",
+                ReleaseYear = 2687,
+                Category = new Category() {
+                    Name = "Test",
+                    Description = "Blaat"
+                }
+            };
+            var newBook2 = new Book() {
+                Name = "The birth of Spees Part 2",
+                ReleaseYear = 2692,
+                Category = new Category() {
+                    Name = "Speesss",
+                    Description = "Blaat"
+                }
+            };
 
-            Console.WriteLine(newAuthor2);
+            books.Add(newBook);
+            books.Add(newBook2);
+
+            var newAuthor = new Author(){
+                Name = "Spees Kees",
+                BirthYear = 2652,
+                Country = "Republic of Earth Citizens, Mars, Solar System, Milky Way Galaxy",
+                Books = books
+            };
+
+            var author = AuthorRepository.Insert(newAuthor).Result;
+
+            BookRepository.Delete(newBook).Wait();
+
+            var testAuthor = AuthorRepository.GetById(author.Id, a => a.Books).Result;
+
+            Console.WriteLine(testAuthor);
+
+            // var newAuthor2 = AuthorRepository.Get(a => a.Name == "Pietje Piet", a => a.Books).Result;
+
+            // Console.WriteLine(newAuthor2);
 
             // var manies = AuthorRepository.GetMany<Book>(newAuthor2, a => a.Books).Result;
 

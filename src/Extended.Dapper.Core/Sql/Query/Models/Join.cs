@@ -1,3 +1,5 @@
+using System;
+
 namespace Extended.Dapper.Core.Sql.Query.Models
 {
     public class Join
@@ -5,7 +7,12 @@ namespace Extended.Dapper.Core.Sql.Query.Models
         /// <summary>
         /// Type of the join
         /// </summary>
-        public JoinType Type { get; set; }
+        public JoinType JoinType { get; set; }
+
+        /// <summary>
+        /// The type of the entity this join refers to
+        /// </summary>
+        public Type EntityType { get; set; }
 
         /// <summary>
         /// Name of the external table
