@@ -83,19 +83,16 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
             query.AppendFormat("SELECT {0} FROM {1}", selectFields, this.EscapeTable(selectQuery.From));
 
             if (selectQuery.Joins != null && selectQuery.Joins.Count > 0)
-            {
                 query.Append(" " + string.Join(" ", selectQuery.Joins.Select(MapJoin)));
-            }
 
             if (selectQuery.Where != null && !string.IsNullOrEmpty(selectQuery.Where.ToString()))
-            {
                 query.AppendFormat(" WHERE {0}", selectQuery.Where);
-            }
 
             if (selectQuery.Limit != null)
-            {
                 query.AppendFormat(" LIMIT {0}", selectQuery.Limit);
-            }
+
+            if (SqlQueryProviderHelper.Verbose)
+                Console.WriteLine(query.ToString());
 
             return query.ToString();
         }
@@ -388,8 +385,9 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// <param name="predicate"></param>
         /// <param name="queryType"></param>
         /// <param name="entityMap"></param>
+        /// <param name="includes"></param>
         /// TODO: refactor
-        public virtual void AppendWherePredicateQuery<T>(SqlQuery sqlQuery, Expression<Func<T, bool>> predicate, QueryType queryType, EntityMap entityMap)
+        public virtual void AppendWherePredicateQuery<T>(SqlQuery sqlQuery, Expression<Func<T, bool>> predicate, QueryType queryType, EntityMap entityMap, params Expression<Func<T, object>>[] includes)
         {
             //var queryParams = new Dictionary<string, object>();
 
@@ -409,23 +407,69 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
                 }
 
                 if (entityMap.LogicalDelete && queryType == QueryType.Select)
+                {
                     sqlQuery.Where.AppendFormat("({3}) AND {0}.{1} {4} {2} ", 
                         this.EscapeTable(entityMap.TableName), 
                         this.EscapeColumn(entityMap.LogicalDeletePropertyMetadata.ColumnName), 
                         1, 
                         sqlBuilder,
                         this.GetSqlOperator(ExpressionType.NotEqual));
+
+                    if (includes != null)
+                    {
+                        foreach (var incl in includes)
+                        {
+                            var type = incl.Body.Type.GetTypeInfo();
+
+                            if (type.IsGenericType)
+                                type = type.GetGenericArguments()[0].GetTypeInfo();
+
+                            var inclEntityMap = EntityMapper.GetEntityMap(type);
+                            if (inclEntityMap.LogicalDelete && queryType == QueryType.Select)
+                            {
+                                sqlQuery.Where.AppendFormat("AND {0}.{1} {2} {3} ", 
+                                    this.EscapeTable(inclEntityMap.TableName), 
+                                    this.EscapeColumn(inclEntityMap.LogicalDeletePropertyMetadata.ColumnName), 
+                                    this.GetSqlOperator(ExpressionType.NotEqual),
+                                    1);
+                            }
+                        }
+                    }
+                }
                 else
                     sqlQuery.Where.AppendFormat("{0} ", sqlBuilder);
             }
             else
             {
                 if (entityMap.LogicalDelete && queryType == QueryType.Select)
+                {
                     sqlQuery.Where.AppendFormat("{0}.{1} {2} {3} ", 
                         this.EscapeTable(entityMap.TableName), 
                         this.EscapeColumn(entityMap.LogicalDeletePropertyMetadata.ColumnName), 
                         this.GetSqlOperator(ExpressionType.NotEqual),
                         1);
+                    
+                    if (includes != null)
+                    {
+                        foreach (var incl in includes)
+                        {
+                            var type = incl.Body.Type.GetTypeInfo();
+
+                            if (type.IsGenericType)
+                                type = type.GetGenericArguments()[0].GetTypeInfo();
+
+                            var inclEntityMap = EntityMapper.GetEntityMap(type);
+                            if (inclEntityMap.LogicalDelete && queryType == QueryType.Select)
+                            {
+                                sqlQuery.Where.AppendFormat("AND {0}.{1} {2} {3} ", 
+                                    this.EscapeTable(inclEntityMap.TableName), 
+                                    this.EscapeColumn(inclEntityMap.LogicalDeletePropertyMetadata.ColumnName), 
+                                    this.GetSqlOperator(ExpressionType.NotEqual),
+                                    1);
+                            }
+                        }
+                    }
+                }
             }
 
             if (entityMap.LogicalDelete && entityMap.UpdatedAtProperty != null && queryType == QueryType.Delete)

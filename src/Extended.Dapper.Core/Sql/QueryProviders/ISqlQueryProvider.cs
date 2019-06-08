@@ -89,7 +89,8 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// <param name="predicate"></param>
         /// <param name="queryType"></param>
         /// <param name="entityMap"></param>
-        void AppendWherePredicateQuery<T>(SqlQuery sqlQuery, Expression<Func<T, bool>> predicate, QueryType queryType, EntityMap entityMap);
+        /// <param name="includes"></param>
+        void AppendWherePredicateQuery<T>(SqlQuery sqlQuery, Expression<Func<T, bool>> predicate, QueryType queryType, EntityMap entityMap, params Expression<Func<T, object>>[] includes);
 
         /// <summary>
         /// Returns a new IDbConnection

@@ -107,16 +107,16 @@ namespace Extended.Dapper.Tests.Query
         public void TestInsert2()
         {
 
-            var newAuthor2 = AuthorRepository.Get(a => a.Name == "Pietje Piet").Result;
+            var newAuthor2 = AuthorRepository.Get(a => a.Name == "Pietje Piet", a => a.Books).Result;
 
             Console.WriteLine(newAuthor2);
 
-            var manies = AuthorRepository.GetMany<Book>(newAuthor2, a => a.Books).Result;
+            // var manies = AuthorRepository.GetMany<Book>(newAuthor2, a => a.Books).Result;
 
-            foreach (var book in manies)
-            {
-                Console.WriteLine(book);
-            }
+            // foreach (var book in manies)
+            // {
+            //     Console.WriteLine(book);
+            // }
 
             //Console.WriteLine(author);
         }

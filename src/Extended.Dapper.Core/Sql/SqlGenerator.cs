@@ -148,7 +148,7 @@ namespace Extended.Dapper.Core.Sql
             }
 
             // Append where
-            this.sqlProvider.AppendWherePredicateQuery(sqlQuery, search, QueryType.Select, entityMap);
+            this.sqlProvider.AppendWherePredicateQuery(sqlQuery, search, QueryType.Select, entityMap, includes);
 
             sqlQuery.From = entityMap.TableName;
 
