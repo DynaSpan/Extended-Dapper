@@ -27,3 +27,4 @@ Extends Dapper functionality with a repository pattern, `OneToMany` and `ManyToO
 - Lazy loading of `OneToMany` and `ManyToOne`
 - Implement `ManyToMany` attribute
 - Better error-handling implementation
+- Do benchmarks

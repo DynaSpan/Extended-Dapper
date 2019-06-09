@@ -142,6 +142,7 @@ namespace Extended.Dapper.Core.Sql
 
                     join.ExternalKey = relationAttr.ForeignKey;
                     join.LocalKey    = relationAttr.LocalKey;
+                    join.Nullable    = relationAttr.Nullable;
 
                     sqlQuery.Joins.Add(join);
                 }

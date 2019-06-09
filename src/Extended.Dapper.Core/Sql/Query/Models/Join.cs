@@ -33,6 +33,11 @@ namespace Extended.Dapper.Core.Sql.Query.Models
         /// Name of the local key
         /// </summary>
         public string LocalKey { get; set; }
+
+        /// <summary>
+        /// Indicating if this join is nullable
+        /// </summary>
+        public bool Nullable { get; set; }
     }
 
     public enum JoinType

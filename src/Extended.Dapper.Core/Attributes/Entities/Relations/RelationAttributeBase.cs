@@ -30,6 +30,11 @@ namespace Extended.Dapper.Core.Attributes.Entities.Relations
         /// </summary>
         public string ForeignKey { get; set; }
 
+        /// <summary>
+        /// Indicates if this property is nullable
+        /// </summary>
+        public bool Nullable { get; set; }
+
         public RelationAttributeBase()
         { }
 
@@ -38,12 +43,39 @@ namespace Extended.Dapper.Core.Attributes.Entities.Relations
         /// </summary>
         /// <param name="type">Type of the property (if OneToMany, just entity type)</param>
         /// <param name="foreignKey">SQL COLUMN name of the foreign key</param>
-        /// <param name="localKey">SQL COLUMN name of the local key (default: "Id")</param>
+        /// <param name="nullable">Boolean indicating if the property is nullable</param>
         public RelationAttributeBase(
             Type type,
             string foreignKey,
-            string localKey = "Id") 
-        {
+            bool nullable) 
+            => this.Constructor(type, foreignKey, "Id", nullable);
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="type">Type of the property (if OneToMany, just entity type)</param>
+        /// <param name="foreignKey">SQL COLUMN name of the foreign key</param>
+        /// <param name="localKey">SQL COLUMN name of the local key (default: "Id")</param>
+        /// <param name="nullable">Boolean indicating if the property is nullable</param>
+        public RelationAttributeBase(
+            Type type,
+            string foreignKey,
+            string localKey = "Id",
+            bool nullable = false) 
+            => this.Constructor(type, foreignKey, localKey, nullable);
+        
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="type">Type of the property (if OneToMany, just entity type)</param>
+        /// <param name="foreignKey">SQL COLUMN name of the foreign key</param>
+        /// <param name="localKey">SQL COLUMN name of the local key (default: "Id")</param>
+        /// <param name="nullable">Boolean indicating if the property is nullable</param>
+        protected virtual void Constructor(
+            Type type,
+            string foreignKey,
+            string localKey = "Id",
+            bool nullable = false) {
             if (type.IsGenericType)
                 throw new ArgumentException("Type can not be a generic type");
 
@@ -56,6 +88,7 @@ namespace Extended.Dapper.Core.Attributes.Entities.Relations
 
             this.LocalKey   = localKey;
             this.ForeignKey = foreignKey;
+            this.Nullable = nullable;
         }
     }
 }

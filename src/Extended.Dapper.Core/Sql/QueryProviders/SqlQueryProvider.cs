@@ -257,16 +257,20 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
             var joinType = string.Empty;
             var joinTable = string.Empty;
 
-            switch (join.JoinType)
+            if (join.JoinType == JoinType.LEFT)
             {
-                case JoinType.INNER:
-                    joinType = "INNER"; 
-                    joinTable = join.LocalTable;
-                    break;
-                case JoinType.LEFT: 
-                    joinType = "LEFT"; 
-                    joinTable = join.ExternalTable;
-                    break;
+                joinType = "LEFT"; 
+                joinTable = join.ExternalTable;
+            }
+            else if (join.Nullable)
+            {
+                joinType = "LEFT";
+                joinTable = join.LocalTable;
+            }
+            else if (join.JoinType == JoinType.INNER)
+            {
+                joinType = "INNER"; 
+                joinTable = join.LocalTable;
             }
 
             if (entityMap.LogicalDelete)
