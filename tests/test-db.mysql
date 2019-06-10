@@ -1,0 +1,28 @@
+DROP TABLE IF EXISTS `Author`;
+DROP TABLE IF EXISTS `Book`;
+DROP TABLE IF EXISTS `Category`;
+
+CREATE TABLE `Author` (
+    `Id` CHAR(36) PRIMARY KEY,
+    `Name` VARCHAR(255),
+    `BirthYear` INT(4),
+    `Country` VARCHAR(255),
+    `UpdatedAt` DATETIME,
+    `Deleted` BOOLEAN
+);
+
+CREATE TABLE `Book` (
+    `Id` CHAR(36) PRIMARY KEY,
+    `AuthorId` CHAR(36) NOT NULL,
+    `CategoryId` CHAR(36),
+    `Name` VARCHAR(255),
+    `ReleaseYear` INT,
+    `UpdatedAt` DATETIME,
+    `Deleted` BOOLEAN
+);
+
+CREATE TABLE `Category` (
+    `Id` CHAR(36) PRIMARY KEY,
+    `Name` VARCHAR(255),
+    `Description` VARCHAR(255)
+);

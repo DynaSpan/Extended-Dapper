@@ -14,7 +14,7 @@ namespace Extended.Dapper.Tests.Models
         [ManyToOne(typeof(Author), "AuthorId")]
         public Author Author { get; set; }
 
-        [ManyToOne(typeof(Category), "CategoryId")]
+        [ManyToOne(typeof(Category), "CategoryId", true)]
         public Category Category { get; set; }
 
         public override string ToString()

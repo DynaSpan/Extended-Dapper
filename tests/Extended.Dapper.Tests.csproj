@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <None Update="test-db.sql" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="test-db.mysql" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

@@ -50,9 +50,21 @@ namespace Extended.Dapper.Core.Repository
 
             var connection = this.DatabaseFactory.GetDatabaseConnection();
 
-            this.OpenConnection(connection);
+            try
+            {
+                this.OpenConnection(connection);
 
-            await connection.QueryAsync<T>(query.ToString(), typeArr, this.MapDapperEntity(typeArr, entityLookup, includes), query.Params, null, true, splitOn);
+                await connection.QueryAsync<T>(query.ToString(), typeArr, this.MapDapperEntity(typeArr, entityLookup, includes), query.Params, null, true, splitOn);
+            }
+            catch (Exception)
+            {
+                connection.Close();
+                throw;
+            }
+            finally
+            {
+                connection.Close();
+            }
 
             return entityLookup.Values;
         }
@@ -66,10 +78,11 @@ namespace Extended.Dapper.Core.Repository
         public virtual async Task<bool> ExecuteInsertQuery(object entity, InsertSqlQuery query, IDbTransaction transaction = null)
         {
             var shouldCommit = false;
+            IDbConnection connection = null;
 
             if (transaction == null) 
             {
-                var connection = this.DatabaseFactory.GetDatabaseConnection();
+                connection = this.DatabaseFactory.GetDatabaseConnection();
                 this.OpenConnection(connection);
 
                 transaction = connection.BeginTransaction();
@@ -92,9 +105,7 @@ namespace Extended.Dapper.Core.Repository
                 }
 
                 if (shouldCommit)
-                {
                     transaction.Commit();
-                }
 
                 return insertResult == 1;
             }
@@ -102,6 +113,11 @@ namespace Extended.Dapper.Core.Repository
             {
                 transaction.Rollback();
                 throw;
+            }
+            finally 
+            {
+                if (connection != null)
+                    connection.Close();
             }
         }
 
@@ -117,10 +133,11 @@ namespace Extended.Dapper.Core.Repository
             where T : class
         {
             var shouldCommit = false;
+            IDbConnection connection = null;
 
             if (transaction == null) 
             {
-                var connection = this.DatabaseFactory.GetDatabaseConnection();
+                connection = this.DatabaseFactory.GetDatabaseConnection();
                 this.OpenConnection(connection);
 
                 transaction = connection.BeginTransaction();
@@ -145,6 +162,11 @@ namespace Extended.Dapper.Core.Repository
                 transaction.Rollback();
                 throw;
             }
+            finally
+            {
+                if (connection != null)
+                    connection.Close();
+            }
         }
 
         /// <summary>
@@ -156,10 +178,11 @@ namespace Extended.Dapper.Core.Repository
         public virtual async Task<int> ExecuteDeleteQuery<T>(SqlQuery query, IDbTransaction transaction = null)
         {
             var shouldCommit = false;
+            IDbConnection connection = null;
 
             if (transaction == null) 
             {
-                var connection = this.DatabaseFactory.GetDatabaseConnection();
+                connection = this.DatabaseFactory.GetDatabaseConnection();
                 this.OpenConnection(connection);
 
                 transaction = connection.BeginTransaction();
@@ -179,6 +202,11 @@ namespace Extended.Dapper.Core.Repository
             {
                 transaction.Rollback();
                 throw;
+            }
+            finally
+            {
+                if (connection != null)
+                    connection.Close();
             }
         }
 
@@ -234,8 +262,12 @@ namespace Extended.Dapper.Core.Repository
                     {
                         // Handle as single object
                         object value = objectArr.Where(x => x.GetType() == type).FirstOrDefault();
+                        var valueId = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", new Type[] { type }, new [] { value });
 
-                        if (property.Key != null && value != null)
+                        if (property.Key != null 
+                            && value != null 
+                            && valueId.ToString() != Guid.Empty.ToString()
+                            && valueId.ToString() != string.Empty)
                             property.Key.SetValue(entity, value);
                     }
                 }

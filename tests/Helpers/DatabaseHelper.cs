@@ -24,7 +24,7 @@ namespace Extended.Dapper.Tests.Helpers
                 connection.Open();
 
                 var createQuery = connection.CreateCommand();
-                createQuery.CommandText = File.ReadAllText("./test-db.sql");
+                createQuery.CommandText = File.ReadAllText("./test-db.mysql");
                 createQuery.ExecuteNonQuery();
             }
         }
@@ -67,10 +67,6 @@ namespace Extended.Dapper.Tests.Helpers
                 Name = "Science",
                 Description = "All kinds of books with science"
             };
-            var cosmologyCategory = new Category() {
-                Name = "Cosmology",
-                Description = "Cosmology is a branch of astronomy that involves the origin and evolution of the universe, from the Big Bang to today and on into the future."
-            };
 
             var briefHistoryBook = new Book() {
                 Name = "A Brief History of Time",
@@ -88,8 +84,7 @@ namespace Extended.Dapper.Tests.Helpers
             var cosmosBook = new Book() {
                 Name = "Cosmos: A Personal Voyage",
                 ReleaseYear = 1980,
-                Author = authorSagan,
-                Category = cosmologyCategory
+                Author = authorSagan
             };
             var paleBlueDotBook = new Book() {
                 Name = "Pale Blue Dot: A Vision of the Human Future in Space",
@@ -111,11 +106,21 @@ namespace Extended.Dapper.Tests.Helpers
         {
             if (DatabaseFactory == null)
             {
-                DatabaseFactory = new DatabaseFactory(new DatabaseSettings()
+                var databaseSettings = new DatabaseSettings()
                 {
-                    Database = "./test-db.db",
-                    DatabaseProvider = DatabaseProvider.SQLite
-                });
+                    Host = "172.18.0.5",
+                    User = "dapper",
+                    Password = "extended-dapper-sql-password",
+                    Database = "dapper",
+                    DatabaseProvider = DatabaseProvider.MySQL
+                };
+
+                DatabaseFactory = new DatabaseFactory(databaseSettings);
+                // new DatabaseSettings()
+                // {
+                //     Database = "./test-db.db",
+                //     DatabaseProvider = DatabaseProvider.SQLite
+                // });
             }
 
             return DatabaseFactory.GetDatabaseConnection();
