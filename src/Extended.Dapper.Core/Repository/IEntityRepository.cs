@@ -144,5 +144,13 @@ namespace Extended.Dapper.Core.Repository
         /// <param name="search">Search for items to delete</param>
         /// <returns>Number of deleted rows</returns>
         Task<int> Delete(Expression<Func<T, bool>> search);
+
+        /// <summary>
+        /// Deletes the entities matching the search
+        /// </summary>
+        /// <param name="search">Search for items to delete</param>
+        /// <param name="transaction">Database transaction</param>
+        /// <returns>Number of deleted rows</returns>
+        Task<int> Delete(Expression<Func<T, bool>> search, IDbTransaction transaction);
     }
 }
