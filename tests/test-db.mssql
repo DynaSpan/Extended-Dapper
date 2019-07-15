@@ -1,0 +1,29 @@
+DROP TABLE IF EXISTS [Author];
+DROP TABLE IF EXISTS [Book];
+DROP TABLE IF EXISTS [Category];
+
+CREATE TABLE [Author] (
+    [Id] UNIQUEIDENTIFIER PRIMARY KEY,
+    [Name] VARCHAR(255),
+    [BirthYear] INT,
+    [Country] VARCHAR(255),
+    [UpdatedAt] DATETIME,
+    [Deleted] BIT
+);
+
+CREATE TABLE [Book] (
+    [Id] UNIQUEIDENTIFIER PRIMARY KEY,
+    [AuthorId] UNIQUEIDENTIFIER NOT NULL,
+    [CoAuthorId] UNIQUEIDENTIFIER,
+    [CategoryId] UNIQUEIDENTIFIER,
+    [Name] VARCHAR(255),
+    [ReleaseYear] INT,
+    [UpdatedAt] DATETIME,
+    [Deleted] BIT
+);
+
+CREATE TABLE [Category] (
+    [Id] UNIQUEIDENTIFIER PRIMARY KEY,
+    [Name] VARCHAR(255),
+    [Description] VARCHAR(255)
+);

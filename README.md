@@ -1,4 +1,4 @@
-# Extended Dapper (WIP)
+# Extended Dapper (ALPHA)
 
 Based on `MicroOrm.Dapper.Repositories` by @phnx47.
 
@@ -7,7 +7,11 @@ Extends Dapper functionality with a repository pattern, `OneToMany` and `ManyToO
 **This is still a WIP and not ready for production use!**
 
 ## Known issues
-- OneToMany mapping don't work correctly when the includes aren't in the correct order
+- OneToMany mapping doesn't work correctly when the includes aren't in the correct order [WIP]
+
+## Changelog
+[0.2.9-alpha]
+Allow inclusion of multiple children of the same type, which was not possible before and resulted in an exception.
 
 ## TODO
 

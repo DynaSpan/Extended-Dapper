@@ -46,6 +46,8 @@ namespace Extended.Dapper.Core.Repository
 
             string splitOn = string.Join(",", keys.Select(k => k.Field));
 
+            Console.WriteLine(splitOn);
+
             var entityLookup = new Dictionary<string, T>();
 
             var connection = this.DatabaseFactory.GetDatabaseConnection();
@@ -230,6 +232,8 @@ namespace Extended.Dapper.Core.Repository
                     lookup.Add(entityCompositeKey, entity = entityLookup);
                 }
 
+                var singleObjectCacher = new Dictionary<Type, int>();
+
                 foreach (var incl in includes)
                 {
                     var type = incl.Body.Type.GetTypeInfo();
@@ -260,8 +264,26 @@ namespace Extended.Dapper.Core.Repository
                     }
                     else
                     {
+                        object value;
+
                         // Handle as single object
-                        object value = objectArr.Where(x => x.GetType() == type).FirstOrDefault();
+                        if (singleObjectCacher.ContainsKey(type))
+                        {
+                            singleObjectCacher[type]++;
+                            var index = singleObjectCacher[type];
+                            var objArr = objectArr.Where(x => x.GetType() == type);
+
+                            if (objArr.Count() > index)
+                                value = objArr.ElementAt(index);
+                            else
+                                value = objArr.LastOrDefault();
+                        }
+                        else
+                        {
+                            value = objectArr.Where(x => x.GetType() == type).FirstOrDefault();
+                            singleObjectCacher.Add(type, 0);
+                        }
+
                         var valueId = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", new Type[] { type }, new [] { value });
 
                         if (property.Key != null 

@@ -14,6 +14,9 @@ namespace Extended.Dapper.Tests.Models
         [ManyToOne(typeof(Author), "AuthorId")]
         public Author Author { get; set; }
 
+        [ManyToOne(typeof(Author), "CoAuthorId", true)]
+        public Author CoAuthor { get; set; }
+
         [ManyToOne(typeof(Category), "CategoryId", true)]
         public Category Category { get; set; }
 
@@ -23,6 +26,10 @@ namespace Extended.Dapper.Tests.Models
             sb.AppendFormat("{0} ({1})", Name, ReleaseYear);
             sb.AppendLine("");
             sb.AppendFormat("Category: {0} - Author: {1}", Category?.Name, Author?.Name);
+
+            if (CoAuthor != null)
+                sb.AppendFormat(" - Co-Author: {0}", CoAuthor.Name);
+
             return sb.ToString();
         }
     }

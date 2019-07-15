@@ -102,6 +102,7 @@ namespace Extended.Dapper.Core.Sql
             var sqlQuery  = new SelectSqlQuery();
 
             var joinBuilder = new StringBuilder();
+            var relationTables = new Dictionary<string, int>();
 
             sqlQuery.Select.AddRange(this.GenerateSelectFields(entityMap.TableName, entityMap.MappedPropertiesMetadata));
 
@@ -119,7 +120,12 @@ namespace Extended.Dapper.Core.Sql
 
                     var relationAttr = System.Attribute.GetCustomAttributes(property, typeof(RelationAttributeBase), true).FirstOrDefault() as RelationAttributeBase;
 
-                    sqlQuery.Select.AddRange(this.GenerateSelectFields(relationAttr.TableName, metadata.Cast<SqlPropertyMetadata>().ToList()));
+                    var tableName = relationAttr.TableName;
+
+                    if (relationTables.ContainsKey(relationAttr.Type.ToString()))
+                        tableName = tableName + "_" + relationTables[relationAttr.Type.ToString()];
+
+                    sqlQuery.Select.AddRange(this.GenerateSelectFields(tableName, metadata.Cast<SqlPropertyMetadata>().ToList()));
 
                     var join = new Join();
                     join.EntityType = relationAttr.Type;
@@ -131,6 +137,14 @@ namespace Extended.Dapper.Core.Sql
                         
                         join.ExternalTable = entityMap.TableName;
                         join.LocalTable = relationAttr.TableName;
+
+                        if (relationTables.ContainsKey(relationAttr.Type.ToString()))
+                        {
+                            join.TableAlias = relationAttr.TableName + "_" + relationTables[relationAttr.Type.ToString()];
+                            relationTables[relationAttr.Type.ToString()]++;
+                        }
+                        else
+                            relationTables.Add(relationAttr.Type.ToString(), 0);
                     }
                     else if (relationAttr is OneToManyAttribute)
                     {
@@ -138,6 +152,14 @@ namespace Extended.Dapper.Core.Sql
 
                         join.ExternalTable = relationAttr.TableName;
                         join.LocalTable = entityMap.TableName;
+
+                        if (relationTables.ContainsKey(relationAttr.Type.ToString()))
+                        {
+                            join.TableAlias = entityMap.TableName + "_" + relationTables[relationAttr.Type.ToString()];
+                            relationTables[relationAttr.Type.ToString()]++;
+                        }
+                        else
+                            relationTables.Add(relationAttr.Type.ToString(), 0);
                     }
 
                     join.ExternalKey = relationAttr.ForeignKey;
@@ -216,7 +238,7 @@ namespace Extended.Dapper.Core.Sql
             return sqlQuery;
         }
 
-        private ICollection<SelectField> GenerateSelectFields(string tableName, ICollection<SqlPropertyMetadata> properties)
+        private ICollection<SelectField> GenerateSelectFields(string tableName, ICollection<SqlPropertyMetadata> properties, string tableAlias = null)
         {
             var selectList = new List<SelectField>();
             
@@ -230,6 +252,7 @@ namespace Extended.Dapper.Core.Sql
                 new SelectField(){
                     IsMainKey = false,
                     Table = tableName,
+                    TableAlias = tableAlias,
                     Field = k.ColumnName,
                     FieldAlias = k.ColumnAlias
                 }

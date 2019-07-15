@@ -221,14 +221,29 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
                 return string.Format("1 AS {0}", 
                     this.EscapeColumn(selectField.Field));
             else if (!string.IsNullOrEmpty(selectField.FieldAlias))
-                return string.Format("{0}.{1} AS {2}", 
-                    this.EscapeTable(selectField.Table), 
-                    this.EscapeColumn(selectField.Field), 
-                    this.EscapeColumn(selectField.FieldAlias));
+            {
+                if (!string.IsNullOrEmpty(selectField.TableAlias))
+                    return string.Format("{0}.{1} AS {2}", 
+                        this.EscapeTable(selectField.TableAlias), 
+                        this.EscapeColumn(selectField.Field), 
+                        this.EscapeColumn(selectField.FieldAlias));
+                else
+                    return string.Format("{0}.{1} AS {2}", 
+                        this.EscapeTable(selectField.Table), 
+                        this.EscapeColumn(selectField.Field), 
+                        this.EscapeColumn(selectField.FieldAlias));
+            }
             else 
-                return string.Format("{0}.{1}", 
-                    this.EscapeTable(selectField.Table), 
-                    this.EscapeColumn(selectField.Field));
+            {
+                if (!string.IsNullOrEmpty(selectField.TableAlias))
+                    return string.Format("{0}.{1}", 
+                        this.EscapeTable(selectField.TableAlias), 
+                        this.EscapeColumn(selectField.Field));
+                else
+                    return string.Format("{0}.{1}", 
+                        this.EscapeTable(selectField.Table), 
+                        this.EscapeColumn(selectField.Field));
+            }
         }
 
         /// <summary>
@@ -249,7 +264,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         }
 
         /// <summary>
-        /// Projecten function for mapping a join
+        /// Projection function for mapping a join
         /// </summary>
         /// <param name="join"></param>
         public virtual string MapJoin(Join join, EntityMap entityMap)
@@ -275,10 +290,11 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
 
             if (entityMap.LogicalDelete)
             {
-                 return string.Format("{0} JOIN {1} ON {2}.{3} = {4}.{5} AND {1}.{6} {7} 1",
+                 return string.Format("{0} JOIN {1} {2} ON {3}.{4} = {5}.{6} AND {1}.{7} {8} 1",
                     joinType,
                     this.EscapeTable(joinTable),
-                    this.EscapeTable(join.LocalTable),
+                    !string.IsNullOrEmpty(join.TableAlias) ? " AS " + this.EscapeTable(join.TableAlias) : "",
+                    !string.IsNullOrEmpty(join.TableAlias) ? this.EscapeTable(join.TableAlias) : this.EscapeTable(join.LocalTable),
                     this.EscapeColumn(join.LocalKey),
                     this.EscapeColumn(join.ExternalTable),
                     this.EscapeColumn(join.ExternalKey),
@@ -287,10 +303,11 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
             }
             else
             {
-                return string.Format("{0} JOIN {1} ON {2}.{3} = {4}.{5}",
+                return string.Format("{0} JOIN {1} {2} ON {3}.{4} = {5}.{6}",
                     joinType,
                     this.EscapeTable(joinTable),
-                    this.EscapeTable(join.LocalTable),
+                    !string.IsNullOrEmpty(join.TableAlias) ? " AS " + this.EscapeTable(join.TableAlias) : "",
+                    !string.IsNullOrEmpty(join.TableAlias) ? this.EscapeTable(join.TableAlias) : this.EscapeTable(join.LocalTable),
                     this.EscapeColumn(join.LocalKey),
                     this.EscapeColumn(join.ExternalTable),
                     this.EscapeColumn(join.ExternalKey));

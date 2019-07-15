@@ -14,6 +14,7 @@ CREATE TABLE `Author` (
 CREATE TABLE `Book` (
     `Id` CHAR(36) PRIMARY KEY,
     `AuthorId` CHAR(36) NOT NULL,
+    `CoAuthorId` CHAR(36),
     `CategoryId` CHAR(36),
     `Name` VARCHAR(255),
     `ReleaseYear` INT,

@@ -38,6 +38,11 @@ namespace Extended.Dapper.Core.Sql.Query.Models
         /// Indicating if this join is nullable
         /// </summary>
         public bool Nullable { get; set; }
+
+        /// <summary>
+        /// Alias for the table if more than 1 join on a table takes place
+        /// </summary>
+        public string TableAlias { get; set; }
     }
 
     public enum JoinType

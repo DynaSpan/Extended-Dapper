@@ -91,6 +91,25 @@ namespace Extended.Dapper.Tests.Repository
             Assert.AreNotEqual(null, briefAnswersBook, "Could not retrieve OneTomany BriefAnswersBook");
         }
 
+        /// <summary>
+        /// This tests if given a model which includes multiple children of the same object,
+        /// the query and JOIN generation goes correctly (joins cant have the same table twice without aliassing)
+        /// </summary>
+        [Test]
+        public void TestGetSingleWithMultipleJoinsFromSameTable()
+        {
+            var coBook = BookRepository.Get(b => b.Name == "Science questions answered", b => b.Author, b => b.CoAuthor).Result;
+
+            Assert.AreNotEqual(null, coBook, "Could not retrieve the Book");
+            Assert.AreEqual("Science questions answered", coBook.Name);
+
+            Assert.AreNotEqual(null, coBook.Author, "Could not retrieve the Author child");
+            Assert.AreNotEqual(null, coBook.CoAuthor, "Could not retrieve the CoAuthor child");
+
+            Assert.AreEqual("Stephen Hawking", coBook.Author.Name, "Incorrect Author retrieved from the Book");
+            Assert.AreEqual("Carl Sagan", coBook.CoAuthor.Name, "Incorrect CoAuthor retrieved from the Book");
+        }
+
         #endregion
 
         #region Multiple items

@@ -24,7 +24,18 @@ namespace Extended.Dapper.Tests.Helpers
                 connection.Open();
 
                 var createQuery = connection.CreateCommand();
-                createQuery.CommandText = File.ReadAllText("./test-db.mysql");
+
+                switch (GetDatabaseFactory().DatabaseProvider)
+                {
+                    case DatabaseProvider.MSSQL:
+                        createQuery.CommandText = File.ReadAllText("./test-db.mssql"); break;
+                    case DatabaseProvider.MySQL:
+                        createQuery.CommandText = File.ReadAllText("./test-db.mysql"); break;
+                    default:
+                        createQuery.CommandText = File.ReadAllText("./test-db.sql"); break;
+                }
+
+                
                 createQuery.ExecuteNonQuery();
             }
         }
@@ -49,8 +60,8 @@ namespace Extended.Dapper.Tests.Helpers
         /// </summary>
         public static async Task<bool> PopulateDatabase()
         {
-            var bookRepository = new EntityRepository<Book>(DatabaseFactory);
-            var authorRepository = new EntityRepository<Author>(DatabaseFactory);
+            var bookRepository = new EntityRepository<Book>(GetDatabaseFactory());
+            var authorRepository = new EntityRepository<Author>(GetDatabaseFactory());
 
             var authorHawking = new Author() {
                 Name = "Stephen Hawking",
@@ -93,37 +104,47 @@ namespace Extended.Dapper.Tests.Helpers
                 Category = scienceCategory
             };
 
+            var coBook = new Book() {
+                Name = "Science questions answered",
+                ReleaseYear = 2015,
+                Author = authorHawking,
+                CoAuthor = authorSagan,
+                Category = scienceCategory
+            };
+
             await bookRepository.Insert(briefHistoryBook);
             await bookRepository.Insert(briefAnswersBook);
 
             await bookRepository.Insert(cosmosBook);
             await bookRepository.Insert(paleBlueDotBook);
 
+            await bookRepository.Insert(coBook);
+
             return true;
         }
 
-        private static IDbConnection GetConnection()
+        private static IDatabaseFactory GetDatabaseFactory()
         {
             if (DatabaseFactory == null)
             {
                 var databaseSettings = new DatabaseSettings()
                 {
-                    Host = "172.18.0.5",
+                    Host = "172.20.0.10",
                     User = "dapper",
                     Password = "extended-dapper-sql-password",
                     Database = "dapper",
-                    DatabaseProvider = DatabaseProvider.MySQL
+                    DatabaseProvider = DatabaseProvider.MSSQL
                 };
 
                 DatabaseFactory = new DatabaseFactory(databaseSettings);
-                // new DatabaseSettings()
-                // {
-                //     Database = "./test-db.db",
-                //     DatabaseProvider = DatabaseProvider.SQLite
-                // });
             }
+            
+            return DatabaseFactory;
+        }
 
-            return DatabaseFactory.GetDatabaseConnection();
+        private static IDbConnection GetConnection()
+        {
+            return GetDatabaseFactory().GetDatabaseConnection();
         }
     }
 }
