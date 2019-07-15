@@ -24,8 +24,8 @@ namespace Extended.Dapper.Tests.Repository
             DatabaseHelper.CreateDatabase();
             DatabaseHelper.PopulateDatabase().Wait();
 
-            BookRepository = new EntityRepository<Book>(DatabaseHelper.DatabaseFactory);
-            AuthorRepository = new EntityRepository<Author>(DatabaseHelper.DatabaseFactory);
+            BookRepository = new EntityRepository<Book>(DatabaseHelper.GetDatabaseFactory());
+            AuthorRepository = new EntityRepository<Author>(DatabaseHelper.GetDatabaseFactory());
         }
 
         #region Single items

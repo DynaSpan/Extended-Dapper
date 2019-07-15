@@ -9,7 +9,7 @@ namespace Extended.Dapper.Tests.Helpers
 {
     public class DatabaseHelper
     {
-        public static IDatabaseFactory DatabaseFactory { get; set; }
+        private static IDatabaseFactory DatabaseFactory { get; set; }
 
         /// <summary>
         /// Creates the database in the SQLite file
@@ -123,7 +123,7 @@ namespace Extended.Dapper.Tests.Helpers
             return true;
         }
 
-        private static IDatabaseFactory GetDatabaseFactory()
+        public static IDatabaseFactory GetDatabaseFactory()
         {
             if (DatabaseFactory == null)
             {
