@@ -180,7 +180,7 @@ namespace Extended.Dapper.Core.Helpers
             {
                 count++;
                 if (path.Length > 0)
-                    path.Insert(0, "");
+                    path.Insert(0, ".");
                 path.Insert(0, memberExpression.Member.Name);
                 memberExpression = GetMemberExpression(memberExpression.Expression);
             } while (memberExpression != null);
@@ -339,7 +339,12 @@ namespace Extended.Dapper.Core.Helpers
 
                 if (!entityMap.MappedPropertiesMetadata.Select(x => x.PropertyName).Contains(propertyName) 
                     && !entityMap.RelationProperties.Select(x => x.Key.Name).Contains(propertyName))
-                    throw new NotSupportedException("Can't parse the predicate");
+                {
+                    // Check if the predicate contains a foreign key
+                    if (!entityMap.RelationProperties.SelectMany(r => r.Value.Select(p => p.ExternalKey)).Contains(propertyName)
+                        && entityMap.RelationProperties.SelectMany(r => r.Value.Select(p => p.PropertyName)).Contains(propertyName))
+                        throw new NotSupportedException("Can't parse the predicate");
+                }
 
                 var propertyValue   = ExpressionHelper.GetValue(binaryExpression.Right);
                 var opr             = sqlQueryProvider.GetSqlOperator(binaryExpression.NodeType);

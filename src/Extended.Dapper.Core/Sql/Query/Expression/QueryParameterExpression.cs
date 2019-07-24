@@ -1,3 +1,5 @@
+using Extended.Dapper.Core.Mappers;
+
 namespace Extended.Dapper.Core.Sql.Query.Expression
 {
     /// <summary>

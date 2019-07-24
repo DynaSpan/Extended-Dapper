@@ -46,8 +46,6 @@ namespace Extended.Dapper.Core.Repository
 
             string splitOn = string.Join(",", keys.Select(k => k.Field));
 
-            Console.WriteLine(splitOn);
-
             var entityLookup = new Dictionary<string, T>();
 
             var connection = this.DatabaseFactory.GetDatabaseConnection();

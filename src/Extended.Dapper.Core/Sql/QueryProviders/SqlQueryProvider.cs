@@ -6,8 +6,10 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using Extended.Dapper.Core.Database;
+using Extended.Dapper.Core.Database.Entities;
 using Extended.Dapper.Core.Helpers;
 using Extended.Dapper.Core.Mappers;
+using Extended.Dapper.Core.Reflection;
 using Extended.Dapper.Core.Sql.Metadata;
 using Extended.Dapper.Core.Sql.Query;
 using Extended.Dapper.Core.Sql.Query.Expression;
@@ -505,17 +507,46 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
                 {
                     case QueryParameterExpression qpExpr:
                         var tableName = entityMap.TableName;
+                        var isForeign = false;
+                        var isObject = false;
                         string columnName;
                         if (qpExpr.NestedProperty)
                         {
-                            var joinProperty = entityMap.RelationProperties.First(x => x.Key.Name == qpExpr.PropertyName);
-                            var metadata = new SqlRelationPropertyMetadata(joinProperty.Key, joinProperty.Key);
-                            tableName = metadata.TableName;
-                            columnName = metadata.ColumnName;
+                            var joinProperty = entityMap.RelationProperties.Where(x => x.Key.Name == qpExpr.PropertyName);
+                            var truePropName = qpExpr.PropertyName.Split('.').Last();
+                            var trueNestedName = qpExpr.PropertyName.Split('.').First();
+
+                            if (!joinProperty.Any()) // relation in nested item
+                            {
+                                isForeign = true;
+
+                                joinProperty = entityMap.RelationProperties.Where(x => x.Key.Name == trueNestedName);
+
+                                if (joinProperty.Any())
+                                    isObject = joinProperty.Single().Value.Where(x => x.ExternalKey == qpExpr.PropertyName.Replace(".", "")).Count() == 0;
+                                else
+                                    joinProperty = entityMap.RelationProperties.Where(x => x.Value.Select(p => p.PropertyName).Contains(truePropName));
+                            }
+                            
+                            var joinProp = joinProperty.First();
+                            var prop = joinProp.Value.Where(p => p.PropertyName == truePropName);
+                            var metadata = new SqlRelationPropertyMetadata(joinProp.Key, joinProp.Key);
+                            tableName = isForeign && !isObject ? tableName : metadata.TableName;
+                            columnName = isForeign ? (!isObject ? metadata.ExternalKey : prop.Single().PropertyName) : metadata.ColumnName;
                         }
                         else
                         {
-                            columnName = entityMap.MappedPropertiesMetadata.First(x => x.PropertyName == qpExpr.PropertyName).ColumnName;
+                            var prop = entityMap.MappedPropertiesMetadata.FirstOrDefault(x => x.PropertyName == qpExpr.PropertyName);
+
+                            if (prop == null) // possibly a relation
+                            {
+                                var joinProperty = entityMap.RelationProperties.First(x => x.Key.Name == qpExpr.PropertyName);
+                                var metadata = new SqlRelationPropertyMetadata(joinProperty.Key, joinProperty.Key);
+                                //tableName = metadata.TableName;
+                                columnName = metadata.ExternalKey;
+                            } else {
+                                columnName = prop.ColumnName;
+                            }
                         }
 
                         if (qpExpr.PropertyValue == null)
@@ -527,7 +558,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
                         }
                         else
                         {
-                            var vKey = string.Format("{0}_p{1}", qpExpr.PropertyName, qLevel); //Handle multiple uses of a field
+                            var vKey = string.Format("{0}_p{1}", qpExpr.PropertyName.Replace(".", ""), qLevel); //Handle multiple uses of a field
                             
                             sqlBuilder.AppendFormat("{0}.{1} {2} {3}{4}", 
                                 this.EscapeTable(tableName), 
@@ -536,7 +567,13 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
                                 this.ParameterChar,
                                 vKey);
 
-                            conditions.Add(new KeyValuePair<string, object>(vKey, qpExpr.PropertyValue));
+                            if (qpExpr.PropertyValue is BaseEntity)
+                            {
+                                var key = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", qpExpr.PropertyValue.GetType(), new[] { qpExpr.PropertyValue });
+                                conditions.Add(new KeyValuePair<string, object>(vKey, key));
+                            }
+                            else
+                                conditions.Add(new KeyValuePair<string, object>(vKey, qpExpr.PropertyValue));
                         }
 
                         qLevel++;

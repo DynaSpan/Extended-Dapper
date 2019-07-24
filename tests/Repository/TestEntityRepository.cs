@@ -110,6 +110,52 @@ namespace Extended.Dapper.Tests.Repository
             Assert.AreEqual("Carl Sagan", coBook.CoAuthor.Name, "Incorrect CoAuthor retrieved from the Book");
         }
 
+        /// <summary>
+        /// This test checks if you can search for entities while using another
+        /// entity's ID as parameter. (e.g. retrieving all the books where the author is Stephen Hawking)
+        /// </summary>
+        [Test]
+        public void TestSearchingWithForeignEntityIdAsParameter()
+        {
+            var stephenHawking = AuthorRepository.Get(a => a.Name == "Stephen Hawking").Result;
+
+            // Grab all books written by Stephen
+            var books = BookRepository.GetAll(b => b.Author.Id == stephenHawking.Id).Result;
+
+            Assert.AreNotEqual(null, books, "Could not retrieve books by Author Id");
+            Assert.AreEqual(3, books.Count(), "Could not retrieve the correct books by Author Id");
+        }
+
+        /// <summary>
+        /// This test checks if you can search for entities while using another
+        /// entity as parameter. (e.g. retrieving all the books where the author is Stephen Hawking)
+        /// </summary>
+        [Test]
+        public void TestSearchingWithForeignEntityAsParameter()
+        {
+            var stephenHawking = AuthorRepository.Get(a => a.Name == "Stephen Hawking").Result;
+
+            // Grab all books written by Stephen
+            var books = BookRepository.GetAll(b => b.Author == stephenHawking).Result;
+
+            Assert.AreNotEqual(null, books, "Could not retrieve books by Author Id");
+            Assert.AreEqual(3, books.Count(), "Could not retrieve the correct books by Author Id");
+        }
+
+        /// <summary>
+        /// This test checks if you can search for entities while using another
+        /// entity's property as parameter. (e.g. retrieving all the books where the author is born in 1934)
+        /// </summary>
+        [Test]
+        public void TestSearchingWithForeignEntityPropertyAsParameter()
+        {
+            // Grab all books written by Carl Sagan (born in 1934)
+            var books = BookRepository.GetAll(b => b.Author.BirthYear == 1934, b => b.Author).Result;
+
+            Assert.AreNotEqual(null, books, "Could not retrieve books by Author BirthYear property");
+            Assert.AreEqual(2, books.Count(), "Could not retrieve the correct books by Author BirthYear property");
+        }
+
         #endregion
 
         #region Multiple items
