@@ -138,8 +138,8 @@ namespace Extended.Dapper.Tests.Repository
             // Grab all books written by Stephen
             var books = BookRepository.GetAll(b => b.Author == stephenHawking).Result;
 
-            Assert.AreNotEqual(null, books, "Could not retrieve books by Author Id");
-            Assert.AreEqual(3, books.Count(), "Could not retrieve the correct books by Author Id");
+            Assert.AreNotEqual(null, books, "Could not retrieve books by Author Entity");
+            Assert.AreEqual(3, books.Count(), "Could not retrieve the correct books by Author Entity");
         }
 
         /// <summary>
