@@ -359,9 +359,12 @@ namespace Extended.Dapper.Core.Sql
             query.DoNotErase        = doNotErases;
 
             query.LogicalDelete      = entityMap.LogicalDelete;
-            query.LogicalDeleteField = entityMap.LogicalDeletePropertyMetadata.ColumnName;
 
-            query.UpdatedAtField = entityMap.UpdatedAtPropertyMetadata.ColumnName;
+            if (entityMap.LogicalDelete)
+                query.LogicalDeleteField = entityMap.LogicalDeletePropertyMetadata.ColumnName;
+
+            if (entityMap.UpdatedAtPropertyMetadata != null)
+                query.UpdatedAtField = entityMap.UpdatedAtPropertyMetadata.ColumnName;
 
             return query;
         }
