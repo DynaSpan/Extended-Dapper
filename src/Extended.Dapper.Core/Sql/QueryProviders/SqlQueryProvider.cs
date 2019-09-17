@@ -540,9 +540,18 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
 
                             if (prop == null) // possibly a relation
                             {
-                                var joinProperty = entityMap.RelationProperties.First(x => x.Key.Name == qpExpr.PropertyName);
+                                KeyValuePair<PropertyInfo, ICollection<SqlRelationPropertyMetadata>> joinProperty;
+
+                                try
+                                {
+                                    joinProperty = entityMap.RelationProperties.FirstOrDefault(x => x.Key.Name == qpExpr.PropertyName);
+                                }
+                                catch 
+                                {
+                                    throw new ArgumentException("Could not find property " + qpExpr.PropertyName);
+                                }
+
                                 var metadata = new SqlRelationPropertyMetadata(joinProperty.Key, joinProperty.Key);
-                                //tableName = metadata.TableName;
                                 columnName = metadata.ExternalKey;
                             } else {
                                 columnName = prop.ColumnName;

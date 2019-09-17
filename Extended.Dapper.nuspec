@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
         <id>Extended.Dapper</id>
-        <version>0.2.10-alpha</version>
+        <version>0.2.12-alpha</version>
         <description>Micro-ORM extension for Dapper, offering LINQ queries, repositories and relation mappings.</description>
         <authors>Milan Drossaerts</authors>
 
