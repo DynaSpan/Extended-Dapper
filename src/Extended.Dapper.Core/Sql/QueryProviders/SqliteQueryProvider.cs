@@ -1,8 +1,10 @@
 using System;
 using System.Data;
 using System.Data.SQLite;
+using System.Linq;
 using System.Text;
 using Extended.Dapper.Core.Database;
+using Extended.Dapper.Core.Sql.Query;
 
 namespace Extended.Dapper.Core.Sql.QueryProviders
 {
@@ -63,6 +65,25 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         public override string BuildConnectionString(DatabaseSettings databaseSettings)
         {
             throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Builds an update query
+        /// </summary>
+        /// <param name="updateQuery"></param>
+        public override string BuildUpdateQuery(UpdateSqlQuery updateQuery)
+        {
+            var updateFields = string.Join(", ", updateQuery.Updates.Select(x => {
+                return string.Format("{0} = {1}{2}",
+                this.EscapeColumn(x.Field),
+                this.ParameterChar,
+                x.ParameterName);
+            }));
+
+            if (SqlQueryProviderHelper.Verbose)
+                Console.WriteLine(string.Format("UPDATE {0} SET {1} WHERE {2}", this.EscapeTable(updateQuery.Table), updateFields, updateQuery.Where));
+
+            return string.Format("UPDATE {0} SET {1} WHERE {2}", this.EscapeTable(updateQuery.Table), updateFields, updateQuery.Where);
         }
     }
 }
