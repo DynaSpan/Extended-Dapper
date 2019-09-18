@@ -70,7 +70,7 @@ namespace Extended.Dapper.Core.Sql
                 if (autoValueType == typeof(Guid))
                     autoValueProperty.PropertyInfo.SetValue(entity, Guid.NewGuid());
                 else
-                    throw new NotImplementedException($"AutoValue for type {autoValueProperty.GetType()} is not supported");
+                    throw new NotImplementedException($"AutoValue for type {autoValueProperty.PropertyInfo.PropertyType} is not supported");
             }
 
             insertQuery.Insert
@@ -346,7 +346,7 @@ namespace Extended.Dapper.Core.Sql
         /// <param name="parentKeyField"></param>
         /// <param name="localKeyField"></param>
         /// <param name="doNotErases"></param>
-        public DeleteSqlQuery DeleteChildren<T>(string parentTable, string parentKey, string parentKeyField, string localKeyField, List<object> doNotErases)
+        public DeleteSqlQuery DeleteChildren<T>(string parentTable, object parentKey, string parentKeyField, string localKeyField, List<object> doNotErases)
         {
             var entityMap = EntityMapper.GetEntityMap(typeof(T));
 

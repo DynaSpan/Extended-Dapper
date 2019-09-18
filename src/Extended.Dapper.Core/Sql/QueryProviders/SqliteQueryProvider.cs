@@ -16,7 +16,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// <param name="dataSource">Location of the .db file</param>
         public SqliteQueryProvider(string dataSource)
         {
-            this.ConnectionString = new SQLiteConnectionStringBuilder() { DataSource = dataSource }.ToString();
+            this.ConnectionString = new SQLiteConnectionStringBuilder() { DataSource = dataSource, BinaryGUID = true }.ToString();
         }
 
         /// <summary>
@@ -25,7 +25,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// <param name="dbSettings">Use the "database" field to locate the .db file</param>
         public SqliteQueryProvider(DatabaseSettings dbSettings)
         {
-            this.ConnectionString = new SQLiteConnectionStringBuilder() { DataSource = dbSettings.Database }.ToString();
+            this.ConnectionString = new SQLiteConnectionStringBuilder() { DataSource = dbSettings.Database, BinaryGUID = true }.ToString();
         }
 
         /// <summary>
@@ -56,7 +56,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// </summary>
         public override IDbConnection GetConnection()
         {
-            return new SQLiteConnection(this.ConnectionString);
+            return new SQLiteConnection(this.ConnectionString, true);
         }
 
         /// <summary>

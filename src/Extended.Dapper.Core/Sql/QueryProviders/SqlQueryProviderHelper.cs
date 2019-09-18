@@ -7,6 +7,8 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
     {
         public static bool Verbose { get; set; } = false;
 
+        public static DatabaseProvider DatabaseProvider { get; set; }
+
         private static SqlQueryProvider sqlQueryProvider;
 
         /// <summary>
@@ -17,6 +19,8 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// <param name="databaseSettings"></param>
         public static void SetProvider(DatabaseProvider databaseProvider, DatabaseSettings databaseSettings)
         {
+            DatabaseProvider = databaseProvider;
+
             switch (databaseProvider)
             {
                 case DatabaseProvider.MSSQL:
@@ -41,6 +45,8 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// <param name="connectionString"></param>
         public static void SetProvider(DatabaseProvider databaseProvider, string connectionString)
         {
+            DatabaseProvider = databaseProvider;
+
             switch (databaseProvider)
             {
                 case DatabaseProvider.MSSQL:

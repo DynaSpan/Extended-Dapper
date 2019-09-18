@@ -92,7 +92,7 @@ namespace Extended.Dapper.Core.Mappers
         /// <summary>
         /// Generates a unique identifier for this entity
         /// </summary>
-        public static string GetCompositeUniqueKey<T>(T entity)
+        public static object GetCompositeUniqueKey<T>(T entity)
         {
             // Get the entity map
             var entityMap = GetEntityMap(typeof(T));
@@ -102,7 +102,7 @@ namespace Extended.Dapper.Core.Mappers
                 var metadata = entityMap.PrimaryKeyPropertiesMetadata.FirstOrDefault();
                 var keyVal = metadata.PropertyInfo.GetValue(entity);
 
-                return keyVal.ToString();
+                return keyVal;
             }
 
             var compositeKeyBuilder = new StringBuilder();
@@ -115,6 +115,17 @@ namespace Extended.Dapper.Core.Mappers
             }
 
             return compositeKeyBuilder.ToString();
+        }
+
+        /// <summary>
+        /// Checks if a given key is empty
+        /// </summary>
+        /// <param name="value"></param>
+        public static bool IsKeyEmpty(object value)
+        {
+            return value == null 
+                || value.ToString() == Guid.Empty.ToString()
+                || value.ToString() == string.Empty;
         }
 
         /// <summary>

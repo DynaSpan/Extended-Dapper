@@ -40,7 +40,7 @@ namespace Extended.Dapper.Core.Sql.Query
         /// <summary>
         /// Used for the deletion of children
         /// </summary>
-        public string ParentKey { get; set; }
+        public object ParentKey { get; set; }
 
         /// <summary>
         /// Used for deletion of children

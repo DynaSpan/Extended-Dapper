@@ -11,6 +11,9 @@ Extends Dapper functionality with a repository pattern, `OneToMany` and `ManyToO
 
 ## Changelog
 
+[0.2.14-alpha] 
+Fix some issues with logical delete & updatedAt
+
 [0.2.13-alpha]
 Fix SQLite update queries
 

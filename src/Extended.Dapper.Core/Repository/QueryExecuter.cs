@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 using Dapper;
 using Extended.Dapper.Core.Attributes.Entities.Relations;
 using Extended.Dapper.Core.Database;
-using Extended.Dapper.Core.Extensions;
 using Extended.Dapper.Core.Mappers;
 using Extended.Dapper.Core.Reflection;
 using Extended.Dapper.Core.Sql;
@@ -98,7 +97,7 @@ namespace Extended.Dapper.Core.Repository
 
                 if (insertResult == 1)
                 {
-                    var entityKey = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", entity.GetType(), new[] { entity }) as string;
+                    var entityKey = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", entity.GetType(), new[] { entity });
 
                     // Insert the OneToManys
                     await this.InsertOneToManys(entity, entityKey, transaction);
@@ -225,9 +224,9 @@ namespace Extended.Dapper.Core.Repository
                 var entityMap           = EntityMapper.GetEntityMap(typeof(T));
                 T entity;
 
-                if (!lookup.TryGetValue(entityCompositeKey, out entity))
+                if (!lookup.TryGetValue(entityCompositeKey.ToString(), out entity))
                 {
-                    lookup.Add(entityCompositeKey, entity = entityLookup);
+                    lookup.Add(entityCompositeKey.ToString(), entity = entityLookup);
                 }
 
                 var singleObjectCacher = new Dictionary<Type, int>();
@@ -286,8 +285,7 @@ namespace Extended.Dapper.Core.Repository
 
                         if (property.Key != null 
                             && value != null 
-                            && valueId.ToString() != Guid.Empty.ToString()
-                            && valueId.ToString() != string.Empty)
+                            && EntityMapper.IsKeyEmpty(valueId))
                             property.Key.SetValue(entity, value);
                     }
                 }
@@ -324,13 +322,13 @@ namespace Extended.Dapper.Core.Repository
 
                 if (oneObj != null)
                 {
-                    var oneObjKey = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", oneObj.GetType(), new[] { oneObj }) as string;
+                    var oneObjKey = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", oneObj.GetType(), new[] { oneObj });
                     
                     // If it has no key, we can assume it is a new entity
-                    if (oneObjKey == string.Empty || oneObjKey == null || new Guid(oneObjKey) == Guid.Empty)
+                    if (EntityMapper.IsKeyEmpty(oneObjKey))
                     {
                         // Insert
-                        oneObjKey = await this.InsertEntityAndReturnId(oneObj, transaction) as string;
+                        oneObjKey = await this.InsertEntityAndReturnId(oneObj, transaction);
 
                         if (oneObjKey == null)
                             throw new ApplicationException("Could not insert a ManyToOne object: " + oneObj);
@@ -361,10 +359,10 @@ namespace Extended.Dapper.Core.Repository
 
                 foreach (var obj in manyObj)
                 {
-                    var objKey  = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", listEntityMap.Type, new[] { obj }) as string;
+                    var objKey  = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", listEntityMap.Type, new[] { obj });
 
                     // If it has no key, we can assume it is a new entity
-                    if (objKey == string.Empty || objKey == null || new Guid(objKey) == Guid.Empty)
+                    if (EntityMapper.IsKeyEmpty(objKey))
                     {
                         var query = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "Insert", listEntityMap.Type, new[] { obj }, this.SqlGenerator) as InsertSqlQuery;
 
@@ -399,13 +397,13 @@ namespace Extended.Dapper.Core.Repository
                 {
                     if (attr is ManyToOneAttribute)
                     {
-                        var oneObjKey = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", oneObj.GetType(), new[] { oneObj }) as string;
+                        var oneObjKey = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", oneObj.GetType(), new[] { oneObj });
                         
                         // If it has no key, we can assume it is a new entity
-                        if (oneObjKey == string.Empty || oneObjKey == null || new Guid(oneObjKey) == Guid.Empty)
+                        if (EntityMapper.IsKeyEmpty(oneObjKey))
                         {
                             // Insert
-                            oneObjKey = await this.InsertEntityAndReturnId(oneObj, transaction) as string;
+                            oneObjKey = await this.InsertEntityAndReturnId(oneObj, transaction);
 
                             if (oneObjKey == null)
                                 throw new ApplicationException("Could not insert a ManyToOne object: " + oneObj);
@@ -433,17 +431,17 @@ namespace Extended.Dapper.Core.Repository
 
                         foreach (var listItem in listObj)
                         {
-                            var objKey  = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", listEntityMap.Type, new[] { listItem }) as string;
+                            var objKey  = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", listEntityMap.Type, new[] { listItem });
 
                             // If it has no key, we can assume it is a new entity
-                            if (objKey == string.Empty || objKey == null || new Guid(objKey) == Guid.Empty)
+                            if (EntityMapper.IsKeyEmpty(objKey))
                             {
                                 var query = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "Insert", listEntityMap.Type, new[] { listItem }, this.SqlGenerator) as InsertSqlQuery;
 
                                 query.Insert.Add(new QueryField(attr.TableName, attr.ForeignKey, "p_fk_" + attr.ForeignKey));
                                 query.Params.Add("p_fk_" + attr.ForeignKey, foreignKey);
 
-                                objKey = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", listEntityMap.Type, new[] { listItem }) as string;
+                                objKey = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", listEntityMap.Type, new[] { listItem });
 
                                 var queryResult = await this.ExecuteInsertQuery(listItem, query, transaction);
 
@@ -466,7 +464,7 @@ namespace Extended.Dapper.Core.Repository
 
                             Guid guidId;
 
-                            if (Guid.TryParse(objKey, out guidId))
+                            if (Guid.TryParse(objKey.ToString(), out guidId))
                                 currentChildrenIds.Add(guidId);
                             else
                                 currentChildrenIds.Add(objKey);
@@ -507,7 +505,7 @@ namespace Extended.Dapper.Core.Repository
                 return null;
 
             // Grab primary key
-            return ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", entity.GetType(), new[] { entity }) as string;
+            return ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", entity.GetType(), new[] { entity });
         }
     }
 }

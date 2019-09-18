@@ -166,7 +166,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
                 queryBuilder.AppendFormat("DELETE FROM {0} ", this.EscapeTable(deleteQuery.Table));
             }
 
-            if (deleteQuery.DoNotErase != null && deleteQuery.ParentKey != string.Empty && deleteQuery.ParentKey != null)
+            if (deleteQuery.DoNotErase != null && !EntityMapper.IsKeyEmpty(deleteQuery.ParentKey))
             {
                 queryBuilder.AppendFormat(" WHERE {0}.{1} NOT IN {2}p_id_list AND {3}.{4} = {2}p_parent_key",
                     this.EscapeTable(deleteQuery.Table), 
