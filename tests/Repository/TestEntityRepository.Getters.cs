@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Extended.Dapper.Core.Repository;
@@ -7,7 +6,6 @@ using Extended.Dapper.Core.Sql.QueryProviders;
 using Extended.Dapper.Tests.Helpers;
 using Extended.Dapper.Tests.Models;
 using Newtonsoft.Json;
-using NUnit;
 using NUnit.Framework;
 
 namespace Extended.Dapper.Tests.Repository
@@ -57,8 +55,8 @@ namespace Extended.Dapper.Tests.Repository
         {
             var briefHistoryBook = BookRepository.Get(
                 b => b.ReleaseYear == 1988, 
-                b => b.Category,
-                b => b.Author
+                b => b.Author,
+                b => b.Category
             ).Result;
 
             Console.WriteLine(JsonConvert.SerializeObject(briefHistoryBook));

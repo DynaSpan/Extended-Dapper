@@ -1,5 +1,11 @@
 # Changelog
 
+[0.3.0-beta]
+First beta version of Extended.Dapper
+
+- Fix bug where if children weren't alphabetically ordered in the repository get methods, the query would produce incorrect results. This has been fixed.
+- SQLite support properly implemented
+
 [0.2.15-alpha] 
 SQLite support fixed
 

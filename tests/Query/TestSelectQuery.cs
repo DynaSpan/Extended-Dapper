@@ -8,6 +8,7 @@ using Extended.Dapper.Core.Sql.QueryProviders;
 using Extended.Dapper.Tests.Models;
 using NUnit.Framework;
 using System.Collections.Generic;
+using Extended.Dapper.Tests.Helpers;
 
 namespace Extended.Dapper.Tests.Query
 {
@@ -21,24 +22,13 @@ namespace Extended.Dapper.Tests.Query
         [SetUp]
         public void Setup()
         {
-            var databaseSettings = new DatabaseSettings()
-            {
-                Host = "172.18.0.5",
-                User = "dapper",
-                Password = "extended-dapper-sql-password",
-                Database = "dapper",
-                DatabaseProvider = DatabaseProvider.MySQL
-            };
-
-            SqlQueryProviderHelper.SetProvider(DatabaseProvider.MySQL, databaseSettings);
             SqlQueryProviderHelper.Verbose = true;
-            var sqlGenerator = new SqlGenerator(DatabaseProvider.MySQL);
+            DatabaseHelper.CreateDatabase();
+            DatabaseHelper.PopulateDatabase().Wait();
             
-            var databaseFactory = new DatabaseFactory(databaseSettings);
-            
-            BookRepository = new EntityRepository<Book>(databaseFactory);
-            AuthorRepository = new EntityRepository<Author>(databaseFactory);
-            CategoryRepository = new EntityRepository<Category>(databaseFactory);
+            BookRepository = new EntityRepository<Book>(DatabaseHelper.GetDatabaseFactory());
+            AuthorRepository = new EntityRepository<Author>(DatabaseHelper.GetDatabaseFactory());
+            CategoryRepository = new EntityRepository<Category>(DatabaseHelper.GetDatabaseFactory());
         }
 
         /// <summary>

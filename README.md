@@ -1,11 +1,11 @@
-# Extended Dapper (ALPHA)
+# Extended Dapper (BETA)
 
 Extends Dapper functionality with a repository (CRUD & LINQ), `OneToMany` and `ManyToOne` mappings.
 
 **This is still a WIP and not ready for production use!** Though it has been been tested in various (non-critical) production environments.
 
 ## Known issues
-- OneToMany mapping doesn't work correctly when the includes aren't in the correct order [WIP]
+- ~~OneToMany mapping doesn't work correctly when the includes aren't in the correct order~~ (FIXED)
 
 ## Changelog
 [View here](CHANGELOG.md)

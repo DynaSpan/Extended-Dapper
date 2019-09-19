@@ -2,8 +2,8 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
         <id>Extended.Dapper</id>
-        <version>0.2.15-alpha</version>
-        <description>Micro-ORM extension for Dapper, offering LINQ queries, repositories and relation mappings.</description>
+        <version>0.3.0-beta</version>
+        <description>Micro-ORM extension for Dapper, offering repositories (CRUD &amp; LINQ) and relation mappings (OneToMany, ManyToOne).</description>
         <authors>Milan Drossaerts</authors>
 
         <projectUrl>https://github.com/DynaSpan/Extended-Dapper</projectUrl>
