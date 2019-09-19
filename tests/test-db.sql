@@ -9,9 +9,9 @@ CREATE TABLE "Author" (
 
 CREATE TABLE "Book" (
     "Id" GUID PRIMARY KEY,
-    "AuthorId" BLOB,
-    "CoAuthorId" BLOB,
-    "CategoryId" BLOB,
+    "AuthorId" GUID,
+    "CoAuthorId" GUID,
+    "CategoryId" GUID,
     "Name" VARCHAR,
     "ReleaseYear" INT,
     "UpdatedAt" VARCHAR,

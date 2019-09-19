@@ -285,7 +285,7 @@ namespace Extended.Dapper.Core.Repository
 
                         if (property.Key != null 
                             && value != null 
-                            && EntityMapper.IsKeyEmpty(valueId))
+                            && !EntityMapper.IsKeyEmpty(valueId))
                             property.Key.SetValue(entity, value);
                     }
                 }

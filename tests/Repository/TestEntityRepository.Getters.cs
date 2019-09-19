@@ -7,18 +7,19 @@ using Extended.Dapper.Core.Sql.QueryProviders;
 using Extended.Dapper.Tests.Helpers;
 using Extended.Dapper.Tests.Models;
 using Newtonsoft.Json;
+using NUnit;
 using NUnit.Framework;
 
 namespace Extended.Dapper.Tests.Repository
 {
     [TestFixture]
-    public class TestEntityRepository
+    public class TestEntityRepositoryGetters
     {
         private EntityRepository<Book> BookRepository { get; set; }
         private EntityRepository<Author> AuthorRepository { get; set; }
 
-        [SetUp]
-        public void Setup()
+        [OneTimeSetUpAttribute]
+        public void FixtureSetUp()
         {
             SqlQueryProviderHelper.Verbose = true;
             DatabaseHelper.CreateDatabase();
@@ -56,9 +57,11 @@ namespace Extended.Dapper.Tests.Repository
         {
             var briefHistoryBook = BookRepository.Get(
                 b => b.ReleaseYear == 1988, 
-                b => b.Author,
-                b => b.Category
+                b => b.Category,
+                b => b.Author
             ).Result;
+
+            Console.WriteLine(JsonConvert.SerializeObject(briefHistoryBook));
 
             Assert.AreNotEqual(null, briefHistoryBook, "Could not retrieve the book");
             Assert.AreNotEqual(null, briefHistoryBook.Author, "Could not retrieve the ManyToOne Author");

@@ -9,6 +9,7 @@ namespace Extended.Dapper.Tests.Helpers
 {
     public class DatabaseHelper
     {
+        private static bool DbCleared { get; set; } = false;
         private static IDatabaseFactory DatabaseFactory { get; set; }
 
         /// <summary>
@@ -17,7 +18,11 @@ namespace Extended.Dapper.Tests.Helpers
         public static void CreateDatabase()
         {
             // Delete database first
+            if (DbCleared)
+                return;
+
             File.Delete("./test-db.db");
+            DbCleared = true;
 
             using (var connection = GetConnection())
             {
@@ -129,11 +134,8 @@ namespace Extended.Dapper.Tests.Helpers
             {
                 var databaseSettings = new DatabaseSettings()
                 {
-                    Host = "172.20.0.10",
-                    User = "dapper",
-                    Password = "extended-dapper-sql-password",
-                    Database = "dapper",
-                    DatabaseProvider = DatabaseProvider.MSSQL
+                    Database = "./test-db.db",
+                    DatabaseProvider = DatabaseProvider.SQLite
                 };
 
                 DatabaseFactory = new DatabaseFactory(databaseSettings);

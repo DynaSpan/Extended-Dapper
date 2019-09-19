@@ -1,30 +1,14 @@
 # Extended Dapper (ALPHA)
 
-Based on `MicroOrm.Dapper.Repositories` by @phnx47.
+Extends Dapper functionality with a repository (CRUD & LINQ), `OneToMany` and `ManyToOne` mappings.
 
-Extends Dapper functionality with a repository pattern, `OneToMany` and `ManyToOne` mappings and searching (on SQL level) using LINQ.
-
-**This is still a WIP and not ready for production use!**
+**This is still a WIP and not ready for production use!** Though it has been been tested in various (non-critical) production environments.
 
 ## Known issues
 - OneToMany mapping doesn't work correctly when the includes aren't in the correct order [WIP]
 
 ## Changelog
-
-[0.2.14-alpha] 
-Fix some issues with logical delete & updatedAt
-
-[0.2.13-alpha]
-Fix SQLite update queries
-
-[0.2.12-alpha]
-Change SQLite param char from '$' to '@'
-
-[0.2.10-alpha]
-Allow children as search parameters
-
-[0.2.9-alpha]
-Allow inclusion of multiple children of the same type, which was not possible before and resulted in an exception.
+[View here](CHANGELOG.md)
 
 ## TODO
 
