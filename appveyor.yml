@@ -19,9 +19,10 @@ build:
   parallel: true
   project: Extended.Dapper.sln
   publish_nuget: true
+  publish_nuget_symbols: true 
 
 artifacts:
-- path: '**\artifacts\nuget\*.nupkg'
+- path: '**\*.nupkg'
   name: NuGet
 
 deploy:
