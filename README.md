@@ -1,6 +1,6 @@
 # Extended Dapper (BETA)
 
-![Nuget (with prereleases)](https://img.shields.io/nuget/vpre/Extended.Dapper)(https://www.nuget.org/packages/Extended.Dapper)
+[![Nuget (with prereleases)](https://img.shields.io/nuget/vpre/Extended.Dapper)](https://www.nuget.org/packages/Extended.Dapper)
 
 Extends Dapper functionality with a repository (CRUD & LINQ), `OneToMany` and `ManyToOne` mappings.
 
