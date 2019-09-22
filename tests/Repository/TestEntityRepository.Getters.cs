@@ -37,12 +37,32 @@ namespace Extended.Dapper.Tests.Repository
                 b => b.Category
             ).Result;
 
-            Assert.AreNotEqual(null, briefHistoryBook, "Could not retrieve the book");
-            Assert.AreNotEqual(null, briefHistoryBook.Author, "Could not retrieve the ManyToOne Author");
-            Assert.AreNotEqual(null, briefHistoryBook.Category, "Could not retrieve the ManyToOne Category");
-
-            this.TestIfAuthorIsValid(briefHistoryBook.Author, AuthorModelType.StephenHawking);
             this.TestIfBookIsValid(briefHistoryBook, BookModelType.BriefHistoryOfTime, true, true);
+            this.TestIfAuthorIsValid(briefHistoryBook.Author, AuthorModelType.StephenHawking);
+
+            Assert.AreNotEqual(null, briefHistoryBook.Category, "Could not retrieve the ManyToOne Category");
+            Assert.AreEqual("Science", briefHistoryBook.Category.Name, "Book Category name is incorrect");
+        }
+
+        /// <summary>
+        /// This tests if getting a single item from the db
+        /// with their ManyToOne childrens works correctly when the include
+        /// order is non-alphabetical
+        /// </summary>
+        [Test]
+        public void TestGetSingleWithManyToOneChildrenNonAlphabetical()
+        {
+            var briefHistoryBook = BookRepository.Get(
+                b => b.ReleaseYear == 1988, 
+                b => b.Category,
+                b => b.Author
+            ).Result;
+
+            this.TestIfBookIsValid(briefHistoryBook, BookModelType.BriefHistoryOfTime, true, true);
+            this.TestIfAuthorIsValid(briefHistoryBook.Author, AuthorModelType.StephenHawking);
+
+            Assert.AreNotEqual(null, briefHistoryBook.Category, "Could not retrieve the ManyToOne Category");
+            Assert.AreEqual("Science", briefHistoryBook.Category.Name, "Book Category name is incorrect");
         }
 
         /// <summary>
