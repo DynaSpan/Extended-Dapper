@@ -68,54 +68,19 @@ namespace Extended.Dapper.Tests.Helpers
             var bookRepository = new EntityRepository<Book>(GetDatabaseFactory());
             var authorRepository = new EntityRepository<Author>(GetDatabaseFactory());
 
-            var authorHawking = new Author() {
-                Name = "Stephen Hawking",
-                BirthYear = 1942,
-                Country = "United Kingdom"
-            };
-            var authorSagan = new Author() {
-                Name = "Carl Sagan",
-                BirthYear = 1934,
-                Country = "United States"
-            };
+            var authorHawking   = ModelHelper.GetAuthorModel(AuthorModelType.StephenHawking);
+            var authorSagan     = ModelHelper.GetAuthorModel(AuthorModelType.CarlSagan);
 
-            var scienceCategory = new Category() {
-                Name = "Science",
-                Description = "All kinds of books with science"
-            };
+            var scienceCategory = ModelHelper.GetScienceCategory();
 
-            var briefHistoryBook = new Book() {
-                Name = "A Brief History of Time",
-                ReleaseYear = 1988,
-                Author = authorHawking,
-                Category = scienceCategory
-            };
-            var briefAnswersBook = new Book() {
-                Name = "Brief Answers to the Big Questions",
-                ReleaseYear = 2018,
-                Author = authorHawking,
-                Category = scienceCategory
-            };
+            var briefAnswersBook = ModelHelper.GetBookModel(BookModelType.BriefAnswers, scienceCategory, authorHawking);
+            var briefHistoryBook = ModelHelper.GetBookModel(BookModelType.BriefHistoryOfTime, scienceCategory, authorHawking);
+            
 
-            var cosmosBook = new Book() {
-                Name = "Cosmos: A Personal Voyage",
-                ReleaseYear = 1980,
-                Author = authorSagan
-            };
-            var paleBlueDotBook = new Book() {
-                Name = "Pale Blue Dot: A Vision of the Human Future in Space",
-                ReleaseYear = 1994,
-                Author = authorSagan,
-                Category = scienceCategory
-            };
+            var cosmosBook      = ModelHelper.GetBookModel(BookModelType.Cosmos, null, authorSagan);
+            var paleBlueDotBook = ModelHelper.GetBookModel(BookModelType.PaleBlueDot, scienceCategory, authorSagan);
 
-            var coBook = new Book() {
-                Name = "Science questions answered",
-                ReleaseYear = 2015,
-                Author = authorHawking,
-                CoAuthor = authorSagan,
-                Category = scienceCategory
-            };
+            var coBook = ModelHelper.GetBookModel(BookModelType.ScienceAnswered, scienceCategory, authorHawking, authorSagan);
 
             await bookRepository.Insert(briefHistoryBook);
             await bookRepository.Insert(briefAnswersBook);

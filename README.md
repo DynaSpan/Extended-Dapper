@@ -12,11 +12,6 @@ Extends Dapper functionality with a repository (CRUD & LINQ), `OneToMany` and `M
 
 ## TODO
 
-- ~Make sure all queries generate properly (`SELECT`, `UPDATE`, `DELETE`, `INSERT`)~
-- ~Mapping to & from POCOs~ 
-- ~Make sure `OneToMany` and `ManyToOne` mappings properly apply to `INSERT`s, `UPDATE`s, `DELETE`s & `SELECT`s~
-- ~Repositories~
-- ~Setup local DB for unittests~
 - Write unittests (working on it)
 - Setup CI/CD for automated deployment to NuGet
 - ~Transaction support~
@@ -24,8 +19,7 @@ Extends Dapper functionality with a repository (CRUD & LINQ), `OneToMany` and `M
 - (Proper) support for more than 1 primary key
 - Optimize reflection calls
 - Optimize relation mapping (should be able to better implement it with Dapper)
-- Implement more `SqlProviders` and refactor them
-- Lazy loading of `OneToMany` and `ManyToOne`
+- Implement more `SqlProviders`
+- Lazy loading of `OneToMany` and `ManyToOne` (semi-implemented; loading must be done manually)
 - Implement `ManyToMany` attribute
-- Better error-handling implementation
 - Do benchmarks

@@ -1,32 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Extended.Dapper.Core.Repository;
-using Extended.Dapper.Core.Sql.QueryProviders;
-using Extended.Dapper.Tests.Helpers;
 using Extended.Dapper.Tests.Models;
-using Newtonsoft.Json;
 using NUnit.Framework;
 
 namespace Extended.Dapper.Tests.Repository
 {
     [TestFixture]
-    public class TestEntityRepositoryGetters
+    public class TestEntityRepositoryGetters : TestEntityRepository
     {
-        private EntityRepository<Book> BookRepository { get; set; }
-        private EntityRepository<Author> AuthorRepository { get; set; }
-
-        [OneTimeSetUpAttribute]
-        public void FixtureSetUp()
-        {
-            SqlQueryProviderHelper.Verbose = true;
-            DatabaseHelper.CreateDatabase();
-            DatabaseHelper.PopulateDatabase().Wait();
-
-            BookRepository = new EntityRepository<Book>(DatabaseHelper.GetDatabaseFactory());
-            AuthorRepository = new EntityRepository<Author>(DatabaseHelper.GetDatabaseFactory());
-        }
-
         #region Single items
 
         /// <summary>
@@ -39,11 +21,7 @@ namespace Extended.Dapper.Tests.Repository
         {
             var stephenHawking = AuthorRepository.Get(a => a.Name == "Stephen Hawking").Result;
 
-            Assert.AreNotEqual(null, stephenHawking);
-            Assert.AreNotEqual(Guid.Empty, stephenHawking.Id);
-            Assert.AreEqual("Stephen Hawking", stephenHawking.Name);
-            Assert.AreEqual(1942, stephenHawking.BirthYear);
-            Assert.AreEqual("United Kingdom", stephenHawking.Country);
+            this.TestIfAuthorIsValid(stephenHawking, AuthorModelType.StephenHawking);
         }
 
         /// <summary>
@@ -59,15 +37,12 @@ namespace Extended.Dapper.Tests.Repository
                 b => b.Category
             ).Result;
 
-            Console.WriteLine(JsonConvert.SerializeObject(briefHistoryBook));
-
             Assert.AreNotEqual(null, briefHistoryBook, "Could not retrieve the book");
             Assert.AreNotEqual(null, briefHistoryBook.Author, "Could not retrieve the ManyToOne Author");
             Assert.AreNotEqual(null, briefHistoryBook.Category, "Could not retrieve the ManyToOne Category");
 
-            Assert.AreEqual("Stephen Hawking", briefHistoryBook.Author.Name);
-            Assert.AreEqual("A Brief History of Time", briefHistoryBook.Name);
-            Assert.AreEqual("Science", briefHistoryBook.Category.Name);
+            this.TestIfAuthorIsValid(briefHistoryBook.Author, AuthorModelType.StephenHawking);
+            this.TestIfBookIsValid(briefHistoryBook, BookModelType.BriefHistoryOfTime, true, true);
         }
 
         /// <summary>
@@ -82,14 +57,15 @@ namespace Extended.Dapper.Tests.Repository
                 a => a.Books
             ).Result;
 
-            Assert.AreNotEqual(null, stephenAuthor, "Could not retrieve the Author");
+            this.TestIfAuthorIsValid(stephenAuthor, AuthorModelType.StephenHawking);
+
             Assert.AreNotEqual(null, stephenAuthor.Books, "Could not retrieve the OneToMany Books");
 
             var briefHistoryBook = stephenAuthor.Books.Where(b => b.Name == "A Brief History of Time").SingleOrDefault();
             var briefAnswersBook = stephenAuthor.Books.Where(b => b.ReleaseYear == 2018).SingleOrDefault();
 
-            Assert.AreNotEqual(null, briefHistoryBook, "Could not retrieve OneToMany BriefHistoryBook");
-            Assert.AreNotEqual(null, briefAnswersBook, "Could not retrieve OneTomany BriefAnswersBook");
+            this.TestIfBookIsValid(briefHistoryBook, BookModelType.BriefHistoryOfTime);
+            this.TestIfBookIsValid(briefAnswersBook, BookModelType.BriefAnswers);
         }
 
         /// <summary>
@@ -101,14 +77,10 @@ namespace Extended.Dapper.Tests.Repository
         {
             var coBook = BookRepository.Get(b => b.Name == "Science questions answered", b => b.Author, b => b.CoAuthor).Result;
 
-            Assert.AreNotEqual(null, coBook, "Could not retrieve the Book");
-            Assert.AreEqual("Science questions answered", coBook.Name);
+            this.TestIfBookIsValid(coBook, BookModelType.ScienceAnswered, false, true, true);
 
-            Assert.AreNotEqual(null, coBook.Author, "Could not retrieve the Author child");
-            Assert.AreNotEqual(null, coBook.CoAuthor, "Could not retrieve the CoAuthor child");
-
-            Assert.AreEqual("Stephen Hawking", coBook.Author.Name, "Incorrect Author retrieved from the Book");
-            Assert.AreEqual("Carl Sagan", coBook.CoAuthor.Name, "Incorrect CoAuthor retrieved from the Book");
+            this.TestIfAuthorIsValid(coBook.Author, AuthorModelType.StephenHawking);
+            this.TestIfAuthorIsValid(coBook.CoAuthor, AuthorModelType.CarlSagan);
         }
 
         /// <summary>
@@ -119,6 +91,8 @@ namespace Extended.Dapper.Tests.Repository
         public void TestSearchingWithForeignEntityIdAsParameter()
         {
             var stephenHawking = AuthorRepository.Get(a => a.Name == "Stephen Hawking").Result;
+
+            this.TestIfAuthorIsValid(stephenHawking, AuthorModelType.StephenHawking);
 
             // Grab all books written by Stephen
             var books = BookRepository.GetAll(b => b.Author.Id == stephenHawking.Id).Result;
@@ -135,6 +109,8 @@ namespace Extended.Dapper.Tests.Repository
         public void TestSearchingWithForeignEntityAsParameter()
         {
             var stephenHawking = AuthorRepository.Get(a => a.Name == "Stephen Hawking").Result;
+
+            this.TestIfAuthorIsValid(stephenHawking, AuthorModelType.StephenHawking);
 
             // Grab all books written by Stephen
             var books = BookRepository.GetAll(b => b.Author == stephenHawking).Result;
@@ -173,22 +149,22 @@ namespace Extended.Dapper.Tests.Repository
             Assert.AreNotEqual(null, authors, "Could not retrieve Authors");
 
             var carlAuthor = authors.Where(a => a.Name == "Carl Sagan").SingleOrDefault();
-            Assert.AreNotEqual(null, carlAuthor, "Could not retrieve Author Carl Sagan");
+            this.TestIfAuthorIsValid(carlAuthor, AuthorModelType.CarlSagan);
             Assert.AreNotEqual(null, carlAuthor.Books, "Could not retrieve Books of Author Carl Sagan");
 
             var cosmosVoyageBook = carlAuthor.Books.Where(b => b.Name == "Cosmos: A Personal Voyage").SingleOrDefault();
             var paleBlueDotBook  = carlAuthor.Books.Where(b => b.ReleaseYear == 1994).SingleOrDefault();
-            Assert.AreNotEqual(null, cosmosVoyageBook, "The Cosmos Voyage Book of Carl Sagan could not be found");
-            Assert.AreNotEqual(null, paleBlueDotBook, "The Pale Blue Dot Book of Carl Sagan could not be found");
+            this.TestIfBookIsValid(cosmosVoyageBook, BookModelType.Cosmos);
+            this.TestIfBookIsValid(paleBlueDotBook, BookModelType.PaleBlueDot);
 
             var stephenAuthor = authors.Where(a => a.Name == "Stephen Hawking").SingleOrDefault();
-            Assert.AreNotEqual(null, stephenAuthor, "Could not retrieve Author Stephen Hawking");
+            this.TestIfAuthorIsValid(stephenAuthor, AuthorModelType.StephenHawking);
             Assert.AreNotEqual(null, stephenAuthor.Books, "Could not retrieve Books of Author Stephen Hawking");
 
             var briefHistoryBook = stephenAuthor.Books.Where(b => b.Name == "A Brief History of Time").SingleOrDefault();
             var briefAnswersBook = stephenAuthor.Books.Where(b => b.ReleaseYear == 2018).SingleOrDefault();
-            Assert.AreNotEqual(null, briefHistoryBook, "The Brief History of Time Book of Stephen Hawking could not be found");
-            Assert.AreNotEqual(null, briefAnswersBook, "The Brief Answers Book of Stephen Hawking could not be found");
+            this.TestIfBookIsValid(briefHistoryBook, BookModelType.BriefHistoryOfTime);
+            this.TestIfBookIsValid(briefAnswersBook, BookModelType.BriefAnswers);
         }
 
         /// <summary>
@@ -202,14 +178,14 @@ namespace Extended.Dapper.Tests.Repository
             Assert.AreNotEqual(null, authors, "Could not retrieve Authors");
 
             var carlAuthor = authors.Where(a => a.Name == "Carl Sagan").SingleOrDefault();
-            Assert.AreNotEqual(null, carlAuthor, "Could not retrieve Author");
+            this.TestIfAuthorIsValid(carlAuthor, AuthorModelType.CarlSagan);
             Assert.AreNotEqual(null, carlAuthor.Books, "Could not retrieve Books of Author");
 
             carlAuthor.Books = AuthorRepository.GetMany<Book>(carlAuthor, a => a.Books, b => b.Category).Result as ICollection<Book>;
             Assert.AreNotEqual(null, carlAuthor.Books, "Could not retrieve Many Books of Author");
 
             var nullableCategoryBook = carlAuthor.Books.Where(b => b.Name == "Cosmos: A Personal Voyage").SingleOrDefault();
-            Assert.AreNotEqual(null, nullableCategoryBook, "The Book with the nullable Category could not be found");
+            this.TestIfBookIsValid(nullableCategoryBook, BookModelType.Cosmos);
             Assert.AreEqual(null, nullableCategoryBook.Category, "The nullable Category is not null in Book");
         }
 
