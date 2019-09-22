@@ -17,6 +17,7 @@ CREATE TABLE `Book` (
     `CoAuthorId` CHAR(36),
     `CategoryId` CHAR(36),
     `Name` VARCHAR(255),
+    `OriginalName` VARCHAR(255),
     `ReleaseYear` INT,
     `UpdatedAt` DATETIME,
     `Deleted` BOOLEAN

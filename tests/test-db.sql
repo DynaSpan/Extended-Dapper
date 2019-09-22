@@ -3,7 +3,7 @@ CREATE TABLE "Author" (
     "Name" VARCHAR,
     "BirthYear" INT,
     "Country" VARCHAR,
-    "UpdatedAt" VARCHAR,
+    "UpdatedAt" DATETIME,
     "Deleted" BOOLEAN
 );
 
@@ -13,8 +13,9 @@ CREATE TABLE "Book" (
     "CoAuthorId" GUID,
     "CategoryId" GUID,
     "Name" VARCHAR,
+    "OriginalName" VARCHAR,
     "ReleaseYear" INT,
-    "UpdatedAt" VARCHAR,
+    "UpdatedAt" DATETIME,
     "Deleted" BOOLEAN
 );
 

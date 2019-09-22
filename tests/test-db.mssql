@@ -17,6 +17,7 @@ CREATE TABLE [Book] (
     [CoAuthorId] UNIQUEIDENTIFIER,
     [CategoryId] UNIQUEIDENTIFIER,
     [Name] VARCHAR(255),
+    [OriginalName] VARCHAR(255),
     [ReleaseYear] INT,
     [UpdatedAt] DATETIME,
     [Deleted] BIT

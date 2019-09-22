@@ -80,5 +80,32 @@ namespace Extended.Dapper.Tests.Repository
             briefHistoryBook = stephenWithBooks.Books.SingleOrDefault(b => b.Name == "Small History of Time");
             Assert.AreNotEqual(null, briefHistoryBook, "Book has not been updated though it was included");
         }
+
+        /// <summary>
+        /// Tests if the IgnoreOnUpdate property works as intended
+        /// </summary>
+        [Test]
+        public void TestIgnoreOnUpdate()
+        {
+            var stephenAuthor = this.AuthorRepository.Get(a => a.Name == "Stephen Hawking", a => a.Books).Result;
+            var newBook = new Book()
+            {
+                Name = "Auto-Biography of Stephen Hawking",
+                Author = stephenAuthor,
+                ReleaseYear = 2018,
+                OriginalName = "Auto-Biography of Stephen Hawking",
+            };
+
+            var newBookEntity = this.BookRepository.Insert(newBook).Result;
+
+            // Update name and originalName (IgnoreOnUpdate)
+            newBookEntity.Name          = "The Auto-Biography of Stephen Hawking";
+            newBookEntity.OriginalName  = "The Auto-Biography of Stephen Hawking";
+
+            this.BookRepository.Update(newBookEntity).Wait();
+            var updatedBookEntity = this.BookRepository.Get(b => b.Name == "The Auto-Biography of Stephen Hawking").Result;
+
+            Assert.AreEqual("Auto-Biography of Stephen Hawking", updatedBookEntity.OriginalName, "IgnoreOnUpdate property was ignored in Book");
+        }
     }
 }

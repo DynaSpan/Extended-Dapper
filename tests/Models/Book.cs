@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text;
+using Extended.Dapper.Core.Attributes.Entities;
 using Extended.Dapper.Core.Attributes.Entities.Relations;
 using Extended.Dapper.Core.Database.Entities;
 
@@ -19,6 +20,9 @@ namespace Extended.Dapper.Tests.Models
 
         [ManyToOne(typeof(Category), "CategoryId", true)]
         public Category Category { get; set; }
+
+        [IgnoreOnUpdate]
+        public string OriginalName { get; set; }
 
         public override string ToString()
         {
