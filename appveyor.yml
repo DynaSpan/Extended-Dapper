@@ -22,6 +22,7 @@ artifacts:
 - path: '**\artifacts\nuget\*.nupkg'
   name: NuGet
 
+deploy:
 - provider: NuGet
   api_key:
     secure: ZGXyzvCcQNbUmQUxTs5KJ+e6HupDy84yJNO/K64phPf2rg6lgOqx0cLqzgYPFeTG
