@@ -73,6 +73,8 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// </summary>
         public abstract IDbConnection GetConnection();
 
+        #region Select
+
         /// <summary>
         /// Build a select query
         /// </summary>
@@ -99,6 +101,10 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
             return query.ToString();
         }
 
+        #endregion
+
+        #region Insert
+
         /// <summary>
         /// Builds an insert query
         /// </summary>
@@ -115,24 +121,52 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         }
 
         /// <summary>
+        /// Projection function for mapping property
+        /// to SQL field
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <param name="p"></param>
+        public virtual string MapInsertAliasColumn(QueryField selectField)
+        {
+            if (!string.IsNullOrEmpty(selectField.FieldAlias))
+                return this.EscapeColumn(selectField.FieldAlias);
+            else 
+                return this.EscapeColumn(selectField.Field);
+        }
+
+        #endregion
+
+        #region Update
+
+        /// <summary>
         /// Builds an update query
         /// </summary>
         /// <param name="updateQuery"></param>
         public virtual string BuildUpdateQuery(UpdateSqlQuery updateQuery)
         {
-            var updateFields = string.Join(", ", updateQuery.Updates.Select(x => {
-                return string.Format("{0}.{1} = {2}{3}",
-                this.EscapeTable(x.Table),
-                this.EscapeColumn(x.Field),
-                this.ParameterChar,
-                x.ParameterName);
-            }));
+            var updateFields = this.MapUpdateColumn(updateQuery);
 
             if (SqlQueryProviderHelper.Verbose)
                 Console.WriteLine(string.Format("UPDATE {0} SET {1} WHERE {2}", this.EscapeTable(updateQuery.Table), updateFields, updateQuery.Where));
 
             return string.Format("UPDATE {0} SET {1} WHERE {2}", this.EscapeTable(updateQuery.Table), updateFields, updateQuery.Where);
         }
+        
+        /// <summary>
+        /// Maps the update columns for the query
+        /// </summary>
+        /// <param name="updateQuery"></param>
+        public virtual string MapUpdateColumn(UpdateSqlQuery updateQuery) => string.Join(", ", updateQuery.Updates.Select(x => {
+            return string.Format("{0}.{1} = {2}{3}",
+                this.EscapeTable(x.Table),
+                this.EscapeColumn(x.Field),
+                this.ParameterChar,
+                x.ParameterName);
+        }));
+
+        #endregion
+
+        #region Delete
 
         /// <summary>
         /// Builds a delete query
@@ -140,26 +174,11 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// <param name="deleteQuery"></param>
         public virtual string BuildDeleteQuery(DeleteSqlQuery deleteQuery)
         {
-            // TODO clean up DeleteSqlQuery and move
-            // addition of params to someplace else
             var queryBuilder = new StringBuilder();
 
             if (deleteQuery.LogicalDelete)
             {
-                queryBuilder.AppendFormat("UPDATE {0} SET {0}.{1} = 1",
-                    this.EscapeTable(deleteQuery.Table),
-                    this.EscapeColumn(deleteQuery.LogicalDeleteField));
-
-                if (deleteQuery.UpdatedAtField != null && deleteQuery.UpdatedAtField != string.Empty)
-                {
-                    queryBuilder.AppendFormat(", {0}.{1} = {2}p_updatedat",
-                        this.EscapeTable(deleteQuery.Table),
-                        this.EscapeColumn(deleteQuery.UpdatedAtField),
-                        this.ParameterChar);
-
-                    if (!deleteQuery.Params.ContainsKey("p_updatedat"))
-                        deleteQuery.Params.Add(this.ParameterChar + "p_updatedat", DateTime.UtcNow);
-                }
+                this.MapLogicalDelete(deleteQuery, queryBuilder);
             }
             else
             {
@@ -168,18 +187,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
 
             if (deleteQuery.DoNotErase != null && !EntityMapper.IsKeyEmpty(deleteQuery.ParentKey))
             {
-                queryBuilder.AppendFormat(" WHERE {0}.{1} NOT IN {2}p_id_list AND {3}.{4} = {2}p_parent_key",
-                    this.EscapeTable(deleteQuery.Table), 
-                    this.EscapeColumn(deleteQuery.LocalKeyField),
-                    this.ParameterChar,
-                    this.EscapeTable(deleteQuery.ParentTable),
-                    this.EscapeColumn(deleteQuery.ParentKeyField));
-
-                if (!deleteQuery.Params.ContainsKey("p_id_list"))
-                {
-                    deleteQuery.Params.Add(this.ParameterChar + "p_id_list", deleteQuery.DoNotErase);
-                    deleteQuery.Params.Add(this.ParameterChar + "p_parent_key", deleteQuery.ParentKey);
-                }
+                this.LogicalDeleteAppendParentWhere(deleteQuery, queryBuilder);
             }
             else
             {
@@ -198,18 +206,52 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         }
 
         /// <summary>
-        /// Projection function for mapping property
-        /// to SQL field
+        /// Maps a logical delete
         /// </summary>
-        /// <param name="tableName"></param>
-        /// <param name="p"></param>
-        public virtual string MapInsertAliasColumn(QueryField selectField)
+        /// <param name="deleteQuery"></param>
+        /// <param name="queryBuilder"></param>
+        public virtual void MapLogicalDelete(DeleteSqlQuery deleteQuery, StringBuilder queryBuilder)
         {
-            if (!string.IsNullOrEmpty(selectField.FieldAlias))
-                return this.EscapeColumn(selectField.FieldAlias);
-            else 
-                return this.EscapeColumn(selectField.Field);
+            queryBuilder.AppendFormat("UPDATE {0} SET {0}.{1} = 1",
+                this.EscapeTable(deleteQuery.Table),
+                this.EscapeColumn(deleteQuery.LogicalDeleteField));
+
+            if (deleteQuery.UpdatedAtField != null && deleteQuery.UpdatedAtField != string.Empty)
+            {
+                queryBuilder.AppendFormat(", {0}.{1} = {2}p_updatedat",
+                    this.EscapeTable(deleteQuery.Table),
+                    this.EscapeColumn(deleteQuery.UpdatedAtField),
+                    this.ParameterChar);
+
+                if (!deleteQuery.Params.ContainsKey("p_updatedat"))
+                    deleteQuery.Params.Add(this.ParameterChar + "p_updatedat", DateTime.UtcNow);
+            }
         }
+
+        /// <summary>
+        /// Appends the where clause to a logical delete
+        /// </summary>
+        /// <param name="deleteQuery"></param>
+        /// <param name="queryBuilder"></param>
+        public virtual void LogicalDeleteAppendParentWhere(DeleteSqlQuery deleteQuery, StringBuilder queryBuilder)
+        {
+            queryBuilder.AppendFormat(" WHERE {0}.{1} NOT IN {2}p_id_list AND {3}.{4} = {2}p_parent_key",
+                this.EscapeTable(deleteQuery.Table), 
+                this.EscapeColumn(deleteQuery.LocalKeyField),
+                this.ParameterChar,
+                this.EscapeTable(deleteQuery.ParentTable),
+                this.EscapeColumn(deleteQuery.ParentKeyField));
+
+            if (!deleteQuery.Params.ContainsKey("p_id_list"))
+            {
+                deleteQuery.Params.Add(this.ParameterChar + "p_id_list", deleteQuery.DoNotErase);
+                deleteQuery.Params.Add(this.ParameterChar + "p_parent_key", deleteQuery.ParentKey);
+            }
+        }
+
+        #endregion
+
+        #region Generic
 
         /// <summary>
         /// Projection function for mapping property
@@ -603,5 +645,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
                 }
             }
         }
+
+        #endregion
     }
 }

@@ -5,6 +5,7 @@ using System.Data.SQLite;
 using System.Linq;
 using System.Text;
 using Extended.Dapper.Core.Database;
+using Extended.Dapper.Core.Mappers;
 using Extended.Dapper.Core.Sql.Query;
 
 namespace Extended.Dapper.Core.Sql.QueryProviders
@@ -69,22 +70,36 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         }
 
         /// <summary>
-        /// Builds an update query
+        /// Maps the update columns for the query
         /// </summary>
         /// <param name="updateQuery"></param>
-        public override string BuildUpdateQuery(UpdateSqlQuery updateQuery)
-        {
-            var updateFields = string.Join(", ", updateQuery.Updates.Select(x => {
-                return string.Format("{0} = {1}{2}",
+        public override string MapUpdateColumn(UpdateSqlQuery updateQuery) => string.Join(", ", updateQuery.Updates.Select(x => {
+            return string.Format("{0} = {1}{2}",
                 this.EscapeColumn(x.Field),
                 this.ParameterChar,
                 x.ParameterName);
-            }));
+        }));
 
-            if (SqlQueryProviderHelper.Verbose)
-                Console.WriteLine(string.Format("UPDATE {0} SET {1} WHERE {2}", this.EscapeTable(updateQuery.Table), updateFields, updateQuery.Where));
+        /// <summary>
+        /// Maps a logical delete
+        /// </summary>
+        /// <param name="deleteQuery"></param>
+        /// <param name="queryBuilder"></param>
+        public override void MapLogicalDelete(DeleteSqlQuery deleteQuery, StringBuilder queryBuilder)
+        {
+            queryBuilder.AppendFormat("UPDATE {0} SET {1} = 1",
+                this.EscapeTable(deleteQuery.Table),
+                this.EscapeColumn(deleteQuery.LogicalDeleteField));
 
-            return string.Format("UPDATE {0} SET {1} WHERE {2}", this.EscapeTable(updateQuery.Table), updateFields, updateQuery.Where);
+            if (deleteQuery.UpdatedAtField != null && deleteQuery.UpdatedAtField != string.Empty)
+            {
+                queryBuilder.AppendFormat(", {0} = {1}p_updatedat",
+                    this.EscapeColumn(deleteQuery.UpdatedAtField),
+                    this.ParameterChar);
+
+                if (!deleteQuery.Params.ContainsKey("p_updatedat"))
+                    deleteQuery.Params.Add(this.ParameterChar + "p_updatedat", DateTime.UtcNow);
+            }
         }
     }
 }
