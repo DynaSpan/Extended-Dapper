@@ -1,5 +1,8 @@
 # Changelog
 
+[0.3.1-beta]
+Refactored `SqlQueryProvider` and `SqliteQueryProvider`, thereby also fixing a bug with `Sqlite` updates of entity children.
+
 [0.3.0-beta]
 First beta version of Extended.Dapper
 
