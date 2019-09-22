@@ -32,7 +32,6 @@ namespace Extended.Dapper.Core.Repository
         /// Executes a select query
         /// </summary>
         /// <param name="query"></param>
-        /// <param name="transaction"></param>
         /// <param name="includes"></param>
         public virtual async Task<IEnumerable<T>> ExecuteSelectQuery<T>(SelectSqlQuery query, params Expression<Func<T, object>>[] includes)
             where T : class
@@ -71,6 +70,7 @@ namespace Extended.Dapper.Core.Repository
         /// <summary>
         /// Executes an insert query
         /// </summary>
+        /// <param name="entity"></param>
         /// <param name="query"></param>
         /// <param name="transaction"></param>
         /// <returns>true when succesful; false otherwise</returns>
