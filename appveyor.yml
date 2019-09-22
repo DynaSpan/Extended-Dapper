@@ -13,6 +13,8 @@ skip_commits:
 
 configuration: Release
 
+before_build: dotnet restore
+
 build:
   parallel: true
   project: Extended.Dapper.sln
