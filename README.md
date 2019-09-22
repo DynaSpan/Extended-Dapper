@@ -1,6 +1,6 @@
 # Extended Dapper (BETA)
 
-![Nuget (with prereleases)](https://img.shields.io/nuget/vpre/Extended.Dapper)
+![Nuget (with prereleases)](https://img.shields.io/nuget/vpre/Extended.Dapper)(https://www.nuget.org/packages/Extended.Dapper)
 
 Extends Dapper functionality with a repository (CRUD & LINQ), `OneToMany` and `ManyToOne` mappings.
 
@@ -26,7 +26,7 @@ Extends Dapper functionality with a repository (CRUD & LINQ), `OneToMany` and `M
 ## TODO
 
 - Write unittests (working on it)
-- Setup CI/CD for automated deployment to NuGet
+- ~Setup CI/CD for automated deployment to NuGet~
 - Setup documentation
 - (Proper) support for more than 1 primary key
 - Optimize reflection calls
