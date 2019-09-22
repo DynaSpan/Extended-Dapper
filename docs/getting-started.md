@@ -66,7 +66,7 @@ We can create an EntityRepository `var categoryRepository = new EntityRepository
 
     var scienceCategoryEntity = await categoryRepository.Insert(scienceCategory);
 
-    Console.WriteLine(scienceCategoryEntity); // Will be a random GUID
+    Console.WriteLine(scienceCategoryEntity.Id); // Will be a random GUID
 
     scienceCategoryEntity.Description = "Books about science";
 
