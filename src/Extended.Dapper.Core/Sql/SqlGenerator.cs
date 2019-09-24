@@ -189,7 +189,7 @@ namespace Extended.Dapper.Core.Sql
             var sqlQuery = this.Select<M>(search, includes);
 
             var manyPropertyName = ((MemberExpression)many.Body).Member.Name.ToLower();
-            var manyProperty = rootEntityMap.RelationProperties.SingleOrDefault(x => x.Key.Name.ToLower() == manyPropertyName);
+            var manyProperty = rootEntityMap.RelationProperties.Where(x => x.Key.Name.ToLower() == manyPropertyName).SingleOrDefault();
             
             var relationAttr = System.Attribute.GetCustomAttributes(manyProperty.Key, typeof(OneToManyAttribute), true).FirstOrDefault() as OneToManyAttribute;
             sqlQuery.Where.AppendFormat("{0} {1}.{2} = {3}o2m_parent_id", 
@@ -218,7 +218,7 @@ namespace Extended.Dapper.Core.Sql
             var sqlQuery = this.Select<O>(null, includes);
 
             var manyPropertyName = ((MemberExpression)one.Body).Member.Name.ToLower();
-            var manyProperty = rootEntityMap.RelationProperties.SingleOrDefault(x => x.Key.Name.ToLower() == manyPropertyName);
+            var manyProperty = rootEntityMap.RelationProperties.Where(x => x.Key.Name.ToLower() == manyPropertyName).SingleOrDefault();
             
             var relationAttr = System.Attribute.GetCustomAttributes(manyProperty.Key, typeof(ManyToOneAttribute), true).FirstOrDefault() as ManyToOneAttribute;
 
@@ -377,7 +377,7 @@ namespace Extended.Dapper.Core.Sql
         {
             var entityMap = EntityMapper.GetEntityMap(typeof(T));
 
-            var keyProperty = entityMap.PrimaryKeyProperties.FirstOrDefault(x => x.GetCustomAttribute<AutoValueAttribute>() != null);
+            var keyProperty = entityMap.PrimaryKeyProperties.Where(x => x.GetCustomAttribute<AutoValueAttribute>() != null).FirstOrDefault();
 
             if (keyProperty == null)
                 keyProperty = entityMap.PrimaryKeyProperties.FirstOrDefault();

@@ -65,7 +65,7 @@ namespace Extended.Dapper.Core.Mappers
             entityMap.MappedPropertiesMetadata  = properties.Select(p => new SqlPropertyMetadata(p));
 
             // Grab UpdatedAt property if exists
-            var updatedAtProperty = props.FirstOrDefault(p => p.GetCustomAttributes<UpdatedAtAttribute>().Any());
+            var updatedAtProperty = props.Where(p => p.GetCustomAttributes<UpdatedAtAttribute>().Any()).FirstOrDefault();
 
             if (updatedAtProperty != null 
                 && (updatedAtProperty.PropertyType == typeof(DateTime) || updatedAtProperty.PropertyType == typeof(DateTime?)))
@@ -74,7 +74,7 @@ namespace Extended.Dapper.Core.Mappers
                 entityMap.UpdatedAtPropertyMetadata = new SqlPropertyMetadata(updatedAtProperty);
             }
 
-            var logicalDeleteProperty = props.FirstOrDefault(p => p.GetCustomAttributes<DeletedAttribute>().Any());
+            var logicalDeleteProperty = props.Where(p => p.GetCustomAttributes<DeletedAttribute>().Any()).FirstOrDefault();
 
             if (logicalDeleteProperty != null
                 && (logicalDeleteProperty.PropertyType == typeof(bool)))

@@ -235,7 +235,7 @@ namespace Extended.Dapper.Core.Repository
                     var exp = (MemberExpression)incl.Body;
                     var type = exp.Type.GetTypeInfo();
 
-                    var property = entityMap.RelationProperties.SingleOrDefault(x => x.Key.Name == exp.Member.Name);
+                    var property = entityMap.RelationProperties.Where(x => x.Key.Name == exp.Member.Name).SingleOrDefault();
 
                     if (type.IsGenericType)
                     {
@@ -276,7 +276,7 @@ namespace Extended.Dapper.Core.Repository
                         }
                         else
                         {
-                            value = objectArr.FirstOrDefault(x => x.GetType() == type);
+                            value = objectArr.Where(x => x.GetType() == type).FirstOrDefault();
                             singleObjectCacher.Add(type, 0);
                         }
 
@@ -385,7 +385,7 @@ namespace Extended.Dapper.Core.Repository
                 var type = incl.Body.Type.GetTypeInfo();
 
                 var exp = (MemberExpression)incl.Body;
-                var property = entityMap.RelationProperties.SingleOrDefault(x => x.Key.Name == exp.Member.Name);
+                var property = entityMap.RelationProperties.Where(x => x.Key.Name == exp.Member.Name).SingleOrDefault();
 
                 var oneObj   = property.Key.GetValue(entity);
                 var attr     = property.Key.GetCustomAttribute<RelationAttributeBase>();

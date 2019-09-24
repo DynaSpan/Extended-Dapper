@@ -575,7 +575,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
                         }
                         else
                         {
-                            var prop = entityMap.MappedPropertiesMetadata.FirstOrDefault(x => x.PropertyName == qpExpr.PropertyName);
+                            var prop = entityMap.MappedPropertiesMetadata.Where(x => x.PropertyName == qpExpr.PropertyName).FirstOrDefault();
 
                             if (prop == null) // possibly a relation
                             {
@@ -583,7 +583,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
 
                                 try
                                 {
-                                    joinProperty = entityMap.RelationProperties.FirstOrDefault(x => x.Key.Name == qpExpr.PropertyName);
+                                    joinProperty = entityMap.RelationProperties.Where(x => x.Key.Name == qpExpr.PropertyName).FirstOrDefault();
                                 }
                                 catch 
                                 {
