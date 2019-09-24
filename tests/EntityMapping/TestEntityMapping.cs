@@ -73,5 +73,18 @@ namespace Extended.Dapper.Tests.Query
             var coAuthorRelation    = booksRelations.Single(kv => kv.Key.Name == "CoAuthor");
             var categoryRelation    = booksRelations.Single(kv => kv.Key.Name == "Category");
         }
+
+        /// <summary>
+        /// This tests if a NotMapped field doesn't get mapped
+        /// </summary>
+        [Test]
+        public void TestIfNotMappedWorks()
+        {
+            var prop = this.BookMap.Properties.SingleOrDefault(p => p.Name == "CalculatedReviewScore");
+            var notMappedProp = this.BookMap.MappedProperties.SingleOrDefault(p => p.Name == "CalculatedReviewScore");
+
+            Assert.AreNotEqual(null, prop, "NotMapped property does not exist");
+            Assert.AreEqual(null, notMappedProp, "A property with NotMapped has been mapped!");
+        }
     }
 }

@@ -12,6 +12,10 @@ This attribute must be applied to a property with a `[Key]` attribute. It will t
 
 When applied to a property, it will not take this property when executing updates on an entity.
 
+## NotMapped
+
+Properties with this attribute will not be mapped by Extended Dapper.
+
 ## UpdatedAt
 
 Can be applied to a DateTime property, and will automatically place the current UTC timestamp on update.

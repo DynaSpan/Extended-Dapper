@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
 using Extended.Dapper.Core.Attributes.Entities;
 using Extended.Dapper.Core.Attributes.Entities.Relations;
@@ -11,6 +12,9 @@ namespace Extended.Dapper.Tests.Models
         public string Name { get; set; }
 
         public int ReleaseYear { get; set; }
+
+        [NotMapped]
+        public double CalculatedReviewScore { get; set; }
 
         [ManyToOne(typeof(Author), "AuthorId")]
         public Author Author { get; set; }
