@@ -48,7 +48,7 @@ namespace Extended.Dapper.Tests.Query
             var authorPrimaryKeys = this.AuthorMap.PrimaryKeyPropertiesMetadata;
             var authorPrimaryKey = authorPrimaryKeys.FirstOrDefault();
 
-            Assert.AreEqual(1, authorPrimaryKeys.Count);
+            Assert.AreEqual(1, authorPrimaryKeys.Count());
             Assert.AreEqual("Id", authorPrimaryKey.ColumnName);
             Assert.AreEqual("Id", authorPrimaryKey.PropertyName);
             Assert.AreEqual(typeof(Guid), authorPrimaryKey.PropertyInfo.PropertyType);

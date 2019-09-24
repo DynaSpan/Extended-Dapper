@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Text;
 using Extended.Dapper.Core.Sql.Query.Models;
+using Extended.Dapper.Core.Sql.QueryProviders;
 
 namespace Extended.Dapper.Core.Sql.Query
 {
@@ -25,6 +26,11 @@ namespace Extended.Dapper.Core.Sql.Query
         {
             this.Insert = new List<QueryField>();
             this.InsertParams = new StringBuilder();
+        }
+
+        public override string ToString()
+        {
+            return SqlQueryProviderHelper.GetProvider().BuildInsertQuery(this);
         }
     }
 }

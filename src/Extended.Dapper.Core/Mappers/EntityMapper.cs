@@ -40,10 +40,10 @@ namespace Extended.Dapper.Core.Mappers
             entityMap.TableSchema  = tableAttribute != null ? tableAttribute.Schema : string.Empty;
             entityMap.Properties   = entityType.FindClassProperties().Where(q => q.CanWrite).ToArray();
 
-            var props = entityMap.Properties.Where(ExpressionHelper.GetPrimitivePropertiesPredicate()).ToArray();
+            var props = entityMap.Properties.Where(ExpressionHelper.GetPrimitivePropertiesPredicate());
 
             // Grab all properties with a relation
-            var relationProperties = entityMap.Properties.Where(p => p.GetCustomAttributes<RelationAttributeBase>().Any()).ToArray();
+            var relationProperties = entityMap.Properties.Where(p => p.GetCustomAttributes<RelationAttributeBase>().Any());
 
             entityMap.RelationProperties = new Dictionary<PropertyInfo, ICollection<SqlRelationPropertyMetadata>>();
 
@@ -56,16 +56,16 @@ namespace Extended.Dapper.Core.Mappers
             var primaryKeyProperties = props.Where(p => p.GetCustomAttributes<KeyAttribute>().Any());
 
             entityMap.PrimaryKeyProperties          = primaryKeyProperties.ToArray();
-            entityMap.PrimaryKeyPropertiesMetadata  = primaryKeyProperties.Select(p => new SqlKeyPropertyMetadata(p)).ToArray();
+            entityMap.PrimaryKeyPropertiesMetadata  = primaryKeyProperties.Select(p => new SqlKeyPropertyMetadata(p));
 
             // Grab all properties
             var properties = props.Where(p => !p.GetCustomAttributes<NotMappedAttribute>().Any());
 
             entityMap.MappedProperties          = properties.ToArray();
-            entityMap.MappedPropertiesMetadata  = properties.Select(p => new SqlPropertyMetadata(p)).ToArray();
+            entityMap.MappedPropertiesMetadata  = properties.Select(p => new SqlPropertyMetadata(p));
 
             // Grab UpdatedAt property if exists
-            var updatedAtProperty = props.FirstOrDefault(p => p.GetCustomAttributes<UpdatedAtAttribute>().Count() == 1);
+            var updatedAtProperty = props.FirstOrDefault(p => p.GetCustomAttributes<UpdatedAtAttribute>().Any());
 
             if (updatedAtProperty != null 
                 && (updatedAtProperty.PropertyType == typeof(DateTime) || updatedAtProperty.PropertyType == typeof(DateTime?)))
@@ -74,7 +74,7 @@ namespace Extended.Dapper.Core.Mappers
                 entityMap.UpdatedAtPropertyMetadata = new SqlPropertyMetadata(updatedAtProperty);
             }
 
-            var logicalDeleteProperty = props.FirstOrDefault(p => p.GetCustomAttributes<DeletedAttribute>().Count() == 1);
+            var logicalDeleteProperty = props.FirstOrDefault(p => p.GetCustomAttributes<DeletedAttribute>().Any());
 
             if (logicalDeleteProperty != null
                 && (logicalDeleteProperty.PropertyType == typeof(bool)))
@@ -97,7 +97,7 @@ namespace Extended.Dapper.Core.Mappers
             // Get the entity map
             var entityMap = GetEntityMap(typeof(T));
 
-            if (entityMap.PrimaryKeyPropertiesMetadata.Count == 1)
+            if (entityMap.PrimaryKeyPropertiesMetadata.Count() == 1)
             {
                 var metadata = entityMap.PrimaryKeyPropertiesMetadata.FirstOrDefault();
                 var keyVal = metadata.PropertyInfo.GetValue(entity);
@@ -143,10 +143,10 @@ namespace Extended.Dapper.Core.Mappers
                 entityType = relationProperty.PropertyType.GetGenericArguments().Single();
 
             var relationInnerProperties = entityType.GetProperties().Where(q => q.CanWrite)
-                .Where(ExpressionHelper.GetPrimitivePropertiesPredicate()).ToArray();
+                .Where(ExpressionHelper.GetPrimitivePropertiesPredicate());
 
             propertyMetadata.AddRange(relationInnerProperties.Where(p => !p.GetCustomAttributes<NotMappedAttribute>().Any())
-                .Select(p => new SqlRelationPropertyMetadata(relationProperty, p)).ToArray());
+                .Select(p => new SqlRelationPropertyMetadata(relationProperty, p)));
 
             return propertyMetadata;
         }

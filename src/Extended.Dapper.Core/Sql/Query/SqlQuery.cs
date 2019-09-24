@@ -10,7 +10,7 @@ namespace Extended.Dapper.Core.Sql.Query
     /// POCO for storing information for generating
     /// SQL queries
     /// </summary>
-    public class SqlQuery
+    public abstract class SqlQuery
     {
         /// <summary>
         /// Any joins that have to take place on the query
@@ -38,20 +38,6 @@ namespace Extended.Dapper.Core.Sql.Query
 
             this.Joins = new List<Join>();
             this.Where = new StringBuilder();
-        }
-
-        public override string ToString()
-        {
-            if (this is SelectSqlQuery)
-                return SqlQueryProviderHelper.GetProvider().BuildSelectQuery(this as SelectSqlQuery);
-            else if (this is InsertSqlQuery)
-                return SqlQueryProviderHelper.GetProvider().BuildInsertQuery(this as InsertSqlQuery);
-            else if (this is UpdateSqlQuery)
-                return SqlQueryProviderHelper.GetProvider().BuildUpdateQuery(this as UpdateSqlQuery);
-            else if (this is DeleteSqlQuery)
-                return SqlQueryProviderHelper.GetProvider().BuildDeleteQuery(this as DeleteSqlQuery);
-
-            throw new NotImplementedException();
         }
     }
 }

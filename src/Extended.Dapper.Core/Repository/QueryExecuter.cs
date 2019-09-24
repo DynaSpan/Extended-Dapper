@@ -88,11 +88,10 @@ namespace Extended.Dapper.Core.Repository
                 shouldCommit = true;
             }
 
-            // First grab & insert all the ManyToOnes (foreign keys of this entity)
-            query = await this.InsertManyToOnes(entity, query, transaction);
-
             try
             {
+                // First grab & insert all the ManyToOnes (foreign keys of this entity)
+                query = await this.InsertManyToOnes(entity, query, transaction);
                 var insertResult = await transaction.Connection.ExecuteAsync(query.ToString(), query.Params, transaction);
 
                 if (insertResult == 1)
@@ -233,10 +232,10 @@ namespace Extended.Dapper.Core.Repository
 
                 foreach (var incl in includes)
                 {
-                    var type = incl.Body.Type.GetTypeInfo();
-
                     var exp = (MemberExpression)incl.Body;
-                    var property = entityMap.RelationProperties.Where(x => x.Key.Name == exp.Member.Name).SingleOrDefault();
+                    var type = exp.Type.GetTypeInfo();
+
+                    var property = entityMap.RelationProperties.SingleOrDefault(x => x.Key.Name == exp.Member.Name);
 
                     if (type.IsGenericType)
                     {
@@ -244,9 +243,9 @@ namespace Extended.Dapper.Core.Repository
                         var listType     = type.GetGenericArguments()[0].GetTypeInfo();
                         var listProperty = property.Key.GetValue(entity) as IList;
 
-                        var defaultListObj = Activator.CreateInstance(listType);
+                        //var defaultListObj = Activator.CreateInstance(listType);
 
-                        var objList = objectArr.Where(x => x.GetType() == listType && !x.Equals(defaultListObj) && x != null).ToList();
+                        var objList = objectArr.Where(x => x.GetType() == listType && /*!x.Equals(defaultListObj) &&*/ x != null).ToList();
                         IList value = ReflectionHelper.CastListTo(listType, objList);
 
                         if (value != null)
@@ -277,15 +276,13 @@ namespace Extended.Dapper.Core.Repository
                         }
                         else
                         {
-                            value = objectArr.Where(x => x.GetType() == type).FirstOrDefault();
+                            value = objectArr.FirstOrDefault(x => x.GetType() == type);
                             singleObjectCacher.Add(type, 0);
                         }
 
                         var valueId = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", new Type[] { type }, new [] { value });
 
-                        if (property.Key != null 
-                            && value != null 
-                            && !EntityMapper.IsKeyEmpty(valueId))
+                        if (property.Key != null && value != null && !EntityMapper.IsKeyEmpty(valueId))
                             property.Key.SetValue(entity, value);
                     }
                 }
@@ -388,7 +385,7 @@ namespace Extended.Dapper.Core.Repository
                 var type = incl.Body.Type.GetTypeInfo();
 
                 var exp = (MemberExpression)incl.Body;
-                var property = entityMap.RelationProperties.Where(x => x.Key.Name == exp.Member.Name).SingleOrDefault();
+                var property = entityMap.RelationProperties.SingleOrDefault(x => x.Key.Name == exp.Member.Name);
 
                 var oneObj   = property.Key.GetValue(entity);
                 var attr     = property.Key.GetCustomAttribute<RelationAttributeBase>();

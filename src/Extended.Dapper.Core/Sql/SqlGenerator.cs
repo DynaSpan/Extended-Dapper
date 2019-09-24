@@ -75,8 +75,7 @@ namespace Extended.Dapper.Core.Sql
 
             insertQuery.Insert
                 .AddRange(entityMap.MappedPropertiesMetadata
-                    .Where(x => !x.PropertyInfo.GetCustomAttributes<ManyToOneAttribute>().Any() 
-                                && !x.PropertyInfo.GetCustomAttributes<OneToManyAttribute>().Any())
+                    .Where(x => !x.PropertyInfo.GetCustomAttributes<RelationAttributeBase>().Any())
                     .Select(p => {
                         insertQuery.Params.Add("p_" + p.ColumnName, p.PropertyInfo.GetValue(entity));
 
@@ -117,9 +116,10 @@ namespace Extended.Dapper.Core.Sql
                 var relationAttr = System.Attribute.GetCustomAttributes(property, typeof(RelationAttributeBase), true).FirstOrDefault() as RelationAttributeBase;
 
                 var tableName = relationAttr.TableName;
+                var typeStr = relationAttr.Type.ToString();
 
-                if (relationTables.ContainsKey(relationAttr.Type.ToString()))
-                    tableName = tableName + "_" + relationTables[relationAttr.Type.ToString()];
+                if (relationTables.ContainsKey(typeStr))
+                    tableName = tableName + "_" + relationTables[typeStr];
 
                 sqlQuery.Select.AddRange(this.GenerateSelectFields(tableName, metadata.Cast<SqlPropertyMetadata>().ToList()));
 
@@ -134,13 +134,13 @@ namespace Extended.Dapper.Core.Sql
                     join.ExternalTable = entityMap.TableName;
                     join.LocalTable = relationAttr.TableName;
 
-                    if (relationTables.ContainsKey(relationAttr.Type.ToString()))
+                    if (relationTables.ContainsKey(typeStr))
                     {
-                        join.TableAlias = relationAttr.TableName + "_" + relationTables[relationAttr.Type.ToString()];
-                        relationTables[relationAttr.Type.ToString()]++;
+                        join.TableAlias = relationAttr.TableName + "_" + relationTables[typeStr];
+                        relationTables[typeStr]++;
                     }
                     else
-                        relationTables.Add(relationAttr.Type.ToString(), 0);
+                        relationTables.Add(typeStr, 0);
                 }
                 else if (relationAttr is OneToManyAttribute)
                 {
@@ -149,13 +149,13 @@ namespace Extended.Dapper.Core.Sql
                     join.ExternalTable = relationAttr.TableName;
                     join.LocalTable = entityMap.TableName;
 
-                    if (relationTables.ContainsKey(relationAttr.Type.ToString()))
+                    if (relationTables.ContainsKey(typeStr))
                     {
-                        join.TableAlias = entityMap.TableName + "_" + relationTables[relationAttr.Type.ToString()];
-                        relationTables[relationAttr.Type.ToString()]++;
+                        join.TableAlias = entityMap.TableName + "_" + relationTables[typeStr];
+                        relationTables[typeStr]++;
                     }
                     else
-                        relationTables.Add(relationAttr.Type.ToString(), 0);
+                        relationTables.Add(typeStr, 0);
                 }
 
                 join.ExternalKey = relationAttr.ForeignKey;
@@ -189,7 +189,7 @@ namespace Extended.Dapper.Core.Sql
             var sqlQuery = this.Select<M>(search, includes);
 
             var manyPropertyName = ((MemberExpression)many.Body).Member.Name.ToLower();
-            var manyProperty = rootEntityMap.RelationProperties.Where(x => x.Key.Name.ToLower() == manyPropertyName).SingleOrDefault();
+            var manyProperty = rootEntityMap.RelationProperties.SingleOrDefault(x => x.Key.Name.ToLower() == manyPropertyName);
             
             var relationAttr = System.Attribute.GetCustomAttributes(manyProperty.Key, typeof(OneToManyAttribute), true).FirstOrDefault() as OneToManyAttribute;
             sqlQuery.Where.AppendFormat("{0} {1}.{2} = {3}o2m_parent_id", 
@@ -218,7 +218,7 @@ namespace Extended.Dapper.Core.Sql
             var sqlQuery = this.Select<O>(null, includes);
 
             var manyPropertyName = ((MemberExpression)one.Body).Member.Name.ToLower();
-            var manyProperty = rootEntityMap.RelationProperties.Where(x => x.Key.Name.ToLower() == manyPropertyName).SingleOrDefault();
+            var manyProperty = rootEntityMap.RelationProperties.SingleOrDefault(x => x.Key.Name.ToLower() == manyPropertyName);
             
             var relationAttr = System.Attribute.GetCustomAttributes(manyProperty.Key, typeof(ManyToOneAttribute), true).FirstOrDefault() as ManyToOneAttribute;
 
@@ -233,7 +233,7 @@ namespace Extended.Dapper.Core.Sql
             return sqlQuery;
         }
 
-        private ICollection<SelectField> GenerateSelectFields(string tableName, ICollection<SqlPropertyMetadata> properties, string tableAlias = null)
+        private ICollection<SelectField> GenerateSelectFields(string tableName, IEnumerable<SqlPropertyMetadata> properties, string tableAlias = null)
         {
             var selectList = new List<SelectField>();
             
@@ -377,7 +377,7 @@ namespace Extended.Dapper.Core.Sql
         {
             var entityMap = EntityMapper.GetEntityMap(typeof(T));
 
-            var keyProperty = entityMap.PrimaryKeyProperties.Where(x => x.GetCustomAttribute<AutoValueAttribute>() != null).FirstOrDefault();
+            var keyProperty = entityMap.PrimaryKeyProperties.FirstOrDefault(x => x.GetCustomAttribute<AutoValueAttribute>() != null);
 
             if (keyProperty == null)
                 keyProperty = entityMap.PrimaryKeyProperties.FirstOrDefault();

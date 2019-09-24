@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Text;
 using Extended.Dapper.Core.Sql.Query.Models;
+using Extended.Dapper.Core.Sql.QueryProviders;
 
 namespace Extended.Dapper.Core.Sql.Query
 {
@@ -19,6 +20,11 @@ namespace Extended.Dapper.Core.Sql.Query
         public SelectSqlQuery() : base()
         {
             this.Select = new List<SelectField>();
+        }
+
+        public override string ToString()
+        {
+            return SqlQueryProviderHelper.GetProvider().BuildSelectQuery(this);
         }
     }
 }

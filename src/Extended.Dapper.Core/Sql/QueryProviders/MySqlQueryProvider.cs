@@ -77,18 +77,5 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
 
             return connStringBuilder.ToString();
         }
-
-        /// <summary>
-        /// Converts an ExpressionType to a SQL operator
-        /// </summary>
-        /// <param name="type"></param>
-        /// <returns>SQL operator as string</returns>
-        // public override string GetSqlOperator(ExpressionType type)
-        // {
-        //     if (type == ExpressionType.NotEqual)
-        //         return "<>";
-        //     else 
-        //         return base.GetSqlOperator(type);
-        // }
     }
 }

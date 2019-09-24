@@ -281,8 +281,8 @@ namespace Extended.Dapper.Core.Helpers
 
                     var propertyName = ExpressionHelper.GetPropertyNamePath(methodCallExpression, out var isNested);
 
-                    if (!entityMap.MappedPropertiesMetadata.Select(x => x.PropertyName).Contains(propertyName) 
-                        && !entityMap.RelationProperties.Select(x => x.Key.Name).Contains(propertyName))
+                    if (!entityMap.MappedPropertiesMetadata.Any(x => x.PropertyName == propertyName) 
+                        && !entityMap.RelationProperties.Any(x => x.Key.Name == propertyName))
                         throw new NotSupportedException("Can't parse the predicate");
 
                     var propertyValue   = ExpressionHelper.GetValuesFromCollection(methodCallExpression);
@@ -304,8 +304,8 @@ namespace Extended.Dapper.Core.Helpers
 
                     var propertyName = ExpressionHelper.GetPropertyNamePath(exprObj, out bool isNested);
 
-                    if (!entityMap.MappedPropertiesMetadata.Select(x => x.PropertyName).Contains(propertyName) 
-                        && !entityMap.RelationProperties.Select(x => x.Key.Name).Contains(propertyName))
+                    if (!entityMap.MappedPropertiesMetadata.Any(x => x.PropertyName == propertyName) 
+                        && !entityMap.RelationProperties.Any(x => x.Key.Name == propertyName))
                         throw new NotSupportedException("Can't parse the predicate");
 
                     var propertyValue   = ExpressionHelper.GetValuesFromStringMethod(methodCallExpression);
@@ -337,12 +337,12 @@ namespace Extended.Dapper.Core.Helpers
             {
                 var propertyName = ExpressionHelper.GetPropertyNamePath(binaryExpression, out var isNested);
 
-                if (!entityMap.MappedPropertiesMetadata.Select(x => x.PropertyName).Contains(propertyName) 
-                    && !entityMap.RelationProperties.Select(x => x.Key.Name).Contains(propertyName))
+                if (!entityMap.MappedPropertiesMetadata.Any(x => x.PropertyName == propertyName) 
+                    && !entityMap.RelationProperties.Any(x => x.Key.Name == propertyName))
                 {
                     // Check if the predicate contains a foreign key
-                    if (!entityMap.RelationProperties.SelectMany(r => r.Value.Select(p => p.ExternalKey)).Contains(propertyName)
-                        && entityMap.RelationProperties.SelectMany(r => r.Value.Select(p => p.PropertyName)).Contains(propertyName))
+                    if (!entityMap.RelationProperties.Any(r => r.Value.Any(p => p.ExternalKey == propertyName))
+                        && entityMap.RelationProperties.Any(r => r.Value.Any(p => p.PropertyName == propertyName)))
                         throw new NotSupportedException("Can't parse the predicate");
                 }
 

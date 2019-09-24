@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Text;
 using Extended.Dapper.Core.Sql.Query.Models;
+using Extended.Dapper.Core.Sql.QueryProviders;
 
 namespace Extended.Dapper.Core.Sql.Query
 {
@@ -55,6 +56,11 @@ namespace Extended.Dapper.Core.Sql.Query
         public DeleteSqlQuery() : base()
         {
             
+        }
+
+        public override string ToString()
+        {
+            return SqlQueryProviderHelper.GetProvider().BuildDeleteQuery(this);
         }
     }
 }

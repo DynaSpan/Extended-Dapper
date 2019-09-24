@@ -81,8 +81,8 @@ namespace Extended.Dapper.Tests.Repository
 
             Assert.AreNotEqual(null, stephenAuthor.Books, "Could not retrieve the OneToMany Books");
 
-            var briefHistoryBook = stephenAuthor.Books.Where(b => b.Name == "A Brief History of Time").SingleOrDefault();
-            var briefAnswersBook = stephenAuthor.Books.Where(b => b.ReleaseYear == 2018).SingleOrDefault();
+            var briefHistoryBook = stephenAuthor.Books.SingleOrDefault(b => b.Name == "A Brief History of Time");
+            var briefAnswersBook = stephenAuthor.Books.SingleOrDefault(b => b.ReleaseYear == 2018);
 
             this.TestIfBookIsValid(briefHistoryBook, BookModelType.BriefHistoryOfTime);
             this.TestIfBookIsValid(briefAnswersBook, BookModelType.BriefAnswers);
@@ -168,21 +168,21 @@ namespace Extended.Dapper.Tests.Repository
             var authors = AuthorRepository.GetAll(a => a.Books).Result;
             Assert.AreNotEqual(null, authors, "Could not retrieve Authors");
 
-            var carlAuthor = authors.Where(a => a.Name == "Carl Sagan").SingleOrDefault();
+            var carlAuthor = authors.SingleOrDefault(a => a.Name == "Carl Sagan");
             this.TestIfAuthorIsValid(carlAuthor, AuthorModelType.CarlSagan);
             Assert.AreNotEqual(null, carlAuthor.Books, "Could not retrieve Books of Author Carl Sagan");
 
-            var cosmosVoyageBook = carlAuthor.Books.Where(b => b.Name == "Cosmos: A Personal Voyage").SingleOrDefault();
-            var paleBlueDotBook  = carlAuthor.Books.Where(b => b.ReleaseYear == 1994).SingleOrDefault();
+            var cosmosVoyageBook = carlAuthor.Books.SingleOrDefault(b => b.Name == "Cosmos: A Personal Voyage");
+            var paleBlueDotBook  = carlAuthor.Books.SingleOrDefault(b => b.ReleaseYear == 1994);
             this.TestIfBookIsValid(cosmosVoyageBook, BookModelType.Cosmos);
             this.TestIfBookIsValid(paleBlueDotBook, BookModelType.PaleBlueDot);
 
-            var stephenAuthor = authors.Where(a => a.Name == "Stephen Hawking").SingleOrDefault();
+            var stephenAuthor = authors.SingleOrDefault(a => a.Name == "Stephen Hawking");
             this.TestIfAuthorIsValid(stephenAuthor, AuthorModelType.StephenHawking);
             Assert.AreNotEqual(null, stephenAuthor.Books, "Could not retrieve Books of Author Stephen Hawking");
 
-            var briefHistoryBook = stephenAuthor.Books.Where(b => b.Name == "A Brief History of Time").SingleOrDefault();
-            var briefAnswersBook = stephenAuthor.Books.Where(b => b.ReleaseYear == 2018).SingleOrDefault();
+            var briefHistoryBook = stephenAuthor.Books.SingleOrDefault(b => b.Name == "A Brief History of Time");
+            var briefAnswersBook = stephenAuthor.Books.SingleOrDefault(b => b.ReleaseYear == 2018);
             this.TestIfBookIsValid(briefHistoryBook, BookModelType.BriefHistoryOfTime);
             this.TestIfBookIsValid(briefAnswersBook, BookModelType.BriefAnswers);
         }
@@ -197,14 +197,14 @@ namespace Extended.Dapper.Tests.Repository
             var authors = AuthorRepository.GetAll(a => a.Books).Result;
             Assert.AreNotEqual(null, authors, "Could not retrieve Authors");
 
-            var carlAuthor = authors.Where(a => a.Name == "Carl Sagan").SingleOrDefault();
+            var carlAuthor = authors.SingleOrDefault(a => a.Name == "Carl Sagan");
             this.TestIfAuthorIsValid(carlAuthor, AuthorModelType.CarlSagan);
             Assert.AreNotEqual(null, carlAuthor.Books, "Could not retrieve Books of Author");
 
             carlAuthor.Books = AuthorRepository.GetMany<Book>(carlAuthor, a => a.Books, b => b.Category).Result as ICollection<Book>;
             Assert.AreNotEqual(null, carlAuthor.Books, "Could not retrieve Many Books of Author");
 
-            var nullableCategoryBook = carlAuthor.Books.Where(b => b.Name == "Cosmos: A Personal Voyage").SingleOrDefault();
+            var nullableCategoryBook = carlAuthor.Books.SingleOrDefault(b => b.Name == "Cosmos: A Personal Voyage");
             this.TestIfBookIsValid(nullableCategoryBook, BookModelType.Cosmos);
             Assert.AreEqual(null, nullableCategoryBook.Category, "The nullable Category is not null in Book");
         }

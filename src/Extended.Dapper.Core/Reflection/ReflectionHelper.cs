@@ -14,11 +14,6 @@ namespace Extended.Dapper.Core.Reflection
     public class ReflectionHelper
     {
         /// <summary>
-        /// Caches the reference to the CastListAsMethod
-        /// </summary>
-        private static MethodInfo CastListAsMethod { get; set; }
-
-        /// <summary>
         /// Caches references to generic methods
         /// </summary>
         private static ConcurrentDictionary<string, MethodInfo> GenericMethods { get; set; }
@@ -33,14 +28,14 @@ namespace Extended.Dapper.Core.Reflection
             var typeList = new List<Type>();
             typeList.Add(typeof(T));
 
-            Array.ForEach(includes, incl => {
+            typeList.AddRange(includes.Select(incl => {
                 var type = incl.Body.Type.GetTypeInfo();
 
                 if (type.IsGenericType)
-                    type = type.GetGenericArguments()[0].GetTypeInfo();
+                    return type.GetGenericArguments()[0].GetTypeInfo();
 
-                typeList.Add(type);
-            });
+                return type;
+            }));
 
             return typeList;
         }
@@ -59,10 +54,7 @@ namespace Extended.Dapper.Core.Reflection
             string methodName, 
             Type genericType, 
             object[] parameters = null,
-            object target = null)
-        {
-            return CallGenericMethod(methodClassType, methodName, new Type[] { genericType }, parameters, target);
-        }
+            object target = null) => CallGenericMethod(methodClassType, methodName, new Type[] { genericType }, parameters, target);
 
         /// <summary>
         /// Calls a generic method with the correct generic
@@ -101,9 +93,7 @@ namespace Extended.Dapper.Core.Reflection
         /// <param name="listType">The new type of the list</param>
         /// <param name="list">The list itself</param>
         public static IList CastListTo(Type listType, IList list)
-        {
-            return CallGenericMethod(typeof(ReflectionHelper), "CastListAs", listType, new[] { list }) as IList;
-        }
+            => CallGenericMethod(typeof(ReflectionHelper), "CastListAs", listType, new[] { list }) as IList;
         
         /// <summary>
         /// Casts a list to a new type
@@ -111,10 +101,6 @@ namespace Extended.Dapper.Core.Reflection
         /// <param name="source"></param>
         /// <typeparam name="TList"></typeparam>
         public static List<TList> CastListAs<TList>(IList<object> source)
-        {
-            // Here we can do anything we want with T
-            // T == source[0].GetType()
-            return source.Cast<TList>().ToList();
-        }
+            => source.Cast<TList>().ToList();
     }
 }

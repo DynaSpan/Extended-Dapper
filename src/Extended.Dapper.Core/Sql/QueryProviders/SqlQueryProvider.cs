@@ -262,8 +262,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         public virtual string MapAliasColumn(SelectField selectField)
         {
             if (selectField.IsMainKey)
-                return string.Format("1 AS {0}", 
-                    this.EscapeColumn(selectField.Field));
+                return string.Format("1 AS {0}", this.EscapeColumn(selectField.Field));
             else if (!string.IsNullOrEmpty(selectField.FieldAlias))
             {
                 if (!string.IsNullOrEmpty(selectField.TableAlias))
@@ -469,8 +468,6 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// TODO: refactor
         public virtual void AppendWherePredicateQuery<T>(SqlQuery sqlQuery, Expression<Func<T, bool>> predicate, QueryType queryType, EntityMap entityMap, params Expression<Func<T, object>>[] includes)
         {
-            //var queryParams = new Dictionary<string, object>();
-
             if (predicate != null)
             {
                 // WHERE
