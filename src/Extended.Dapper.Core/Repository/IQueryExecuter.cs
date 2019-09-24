@@ -24,7 +24,7 @@ namespace Extended.Dapper.Core.Repository
         /// <param name="query"></param>
         /// <param name="transaction"></param>
         /// <returns>true when succesful; false otherwise</returns>
-       Task<bool> ExecuteInsertQuery(object entity, InsertSqlQuery query, IDbTransaction transaction = null);
+       Task<bool> ExecuteInsertQuery<T>(T entity, InsertSqlQuery query, IDbTransaction transaction = null);
 
         /// <summary>
         /// Executes an update query

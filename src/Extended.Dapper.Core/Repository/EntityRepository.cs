@@ -1,20 +1,12 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
 using System.Threading.Tasks;
-using Dapper;
 using Extended.Dapper.Core.Database;
-using Extended.Dapper.Core.Database.Entities;
-using Extended.Dapper.Core.Helpers;
 using Extended.Dapper.Core.Mappers;
-using Extended.Dapper.Core.Reflection;
 using Extended.Dapper.Core.Sql;
-using Extended.Dapper.Core.Sql.Query;
 
 namespace Extended.Dapper.Core.Repository
 {
@@ -219,7 +211,7 @@ namespace Extended.Dapper.Core.Repository
         /// <returns>Number of deleted rows</returns>
         public virtual Task<int> Delete(T entity, IDbTransaction transaction)
         {
-            var entityId = EntityMapper.GetCompositeUniqueKey<T>(entity);
+            var entityId = EntityMapper.GetCompositeUniqueKey(entity);
             var search = this.SqlGenerator.CreateByIdExpression<T>(entityId);
 
             return this.Delete(search, transaction);

@@ -617,7 +617,8 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
 
                             if (qpExpr.PropertyValue is BaseEntity)
                             {
-                                var key = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", qpExpr.PropertyValue.GetType(), new[] { qpExpr.PropertyValue });
+                                var key = EntityMapper.GetCompositeUniqueKey(qpExpr.PropertyValue);
+                                //var key = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", qpExpr.PropertyValue.GetType(), new[] { qpExpr.PropertyValue });
                                 conditions.Add(new KeyValuePair<string, object>(vKey, key));
                             }
                             else

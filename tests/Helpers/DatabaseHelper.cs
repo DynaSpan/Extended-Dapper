@@ -1,6 +1,7 @@
 using System.Data;
 using System.IO;
 using System.Threading.Tasks;
+using Dapper;
 using Extended.Dapper.Core.Database;
 using Extended.Dapper.Core.Repository;
 using Extended.Dapper.Tests.Models;

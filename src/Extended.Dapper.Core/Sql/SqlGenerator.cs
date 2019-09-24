@@ -198,7 +198,7 @@ namespace Extended.Dapper.Core.Sql
                 this.sqlProvider.EscapeColumn(relationAttr.ForeignKey),
                 this.sqlProvider.ParameterChar);
             
-            sqlQuery.Params.Add("o2m_parent_id", EntityMapper.GetCompositeUniqueKey<T>(entity));
+            sqlQuery.Params.Add("o2m_parent_id", EntityMapper.GetCompositeUniqueKey(entity));
 
             return sqlQuery;
         }
@@ -228,7 +228,7 @@ namespace Extended.Dapper.Core.Sql
                 this.sqlProvider.EscapeColumn(relationAttr.LocalKey),
                 this.sqlProvider.ParameterChar);
             
-            sqlQuery.Params.Add("m2o_parent_id", EntityMapper.GetCompositeUniqueKey<T>(entity));
+            sqlQuery.Params.Add("m2o_parent_id", EntityMapper.GetCompositeUniqueKey(entity));
 
             return sqlQuery;
         }
