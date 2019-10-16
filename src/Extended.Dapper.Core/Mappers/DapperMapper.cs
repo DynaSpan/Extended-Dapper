@@ -81,7 +81,6 @@ namespace Extended.Dapper.Core.Mappers
                         if (value != null)
                         {
                             var valueId = EntityMapper.GetCompositeUniqueKey(value);
-                            //var valueId = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", new Type[] { type }, new [] { value });
 
                             if (!EntityMapper.IsKeyEmpty(valueId))
                                 property.Key.SetValue(entity, value);

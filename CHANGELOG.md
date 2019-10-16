@@ -1,5 +1,8 @@
 # Changelog
 
+[0.3.2-beta] 
+Fix issue where an insert query didn't escape table name.
+
 [0.3.1-beta]
 Refactored `SqlQueryProvider` and `SqliteQueryProvider`, thereby also fixing a bug with `Sqlite` updates of entity children.
 

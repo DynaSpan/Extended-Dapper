@@ -105,64 +105,67 @@ namespace Extended.Dapper.Core.Sql
 
             sqlQuery.Select.AddRange(this.GenerateSelectFields(entityMap.TableName, entityMap.MappedPropertiesMetadata));
 
-            foreach (var include in includes)
+            if (includes != null)
             {
-                var includeMemberName = ((MemberExpression)include.Body).Member.Name.ToLower();
-                var kvpProperty       = entityMap.RelationProperties.Single(x => x.Key.Name.ToLower() == includeMemberName);
-
-                var property = kvpProperty.Key;
-                var metadata = kvpProperty.Value;
-
-                var relationAttr = System.Attribute.GetCustomAttributes(property, typeof(RelationAttributeBase), true).FirstOrDefault() as RelationAttributeBase;
-
-                var tableName = relationAttr.TableName;
-                var typeStr = relationAttr.Type.ToString();
-
-                if (relationTables.ContainsKey(typeStr))
-                    tableName = tableName + "_" + relationTables[typeStr];
-
-                sqlQuery.Select.AddRange(this.GenerateSelectFields(tableName, metadata.Cast<SqlPropertyMetadata>().ToList()));
-
-                var join = new Join();
-                join.EntityType = relationAttr.Type;
-
-                // Check the type of relation
-                if (relationAttr is ManyToOneAttribute)
+                foreach (var include in includes)
                 {
-                    join.JoinType = JoinType.INNER;
-                    
-                    join.ExternalTable = entityMap.TableName;
-                    join.LocalTable = relationAttr.TableName;
+                    var includeMemberName = ((MemberExpression)include.Body).Member.Name.ToLower();
+                    var kvpProperty       = entityMap.RelationProperties.Single(x => x.Key.Name.ToLower() == includeMemberName);
+
+                    var property = kvpProperty.Key;
+                    var metadata = kvpProperty.Value;
+
+                    var relationAttr = System.Attribute.GetCustomAttributes(property, typeof(RelationAttributeBase), true).FirstOrDefault() as RelationAttributeBase;
+
+                    var tableName = relationAttr.TableName;
+                    var typeStr = relationAttr.Type.ToString();
 
                     if (relationTables.ContainsKey(typeStr))
+                        tableName = tableName + "_" + relationTables[typeStr];
+
+                    sqlQuery.Select.AddRange(this.GenerateSelectFields(tableName, metadata.Cast<SqlPropertyMetadata>().ToList()));
+
+                    var join = new Join();
+                    join.EntityType = relationAttr.Type;
+
+                    // Check the type of relation
+                    if (relationAttr is ManyToOneAttribute)
                     {
-                        join.TableAlias = relationAttr.TableName + "_" + relationTables[typeStr];
-                        relationTables[typeStr]++;
+                        join.JoinType = JoinType.INNER;
+                        
+                        join.ExternalTable = entityMap.TableName;
+                        join.LocalTable = relationAttr.TableName;
+
+                        if (relationTables.ContainsKey(typeStr))
+                        {
+                            join.TableAlias = relationAttr.TableName + "_" + relationTables[typeStr];
+                            relationTables[typeStr]++;
+                        }
+                        else
+                            relationTables.Add(typeStr, 0);
                     }
-                    else
-                        relationTables.Add(typeStr, 0);
-                }
-                else if (relationAttr is OneToManyAttribute)
-                {
-                    join.JoinType = JoinType.LEFT;
-
-                    join.ExternalTable = relationAttr.TableName;
-                    join.LocalTable = entityMap.TableName;
-
-                    if (relationTables.ContainsKey(typeStr))
+                    else if (relationAttr is OneToManyAttribute)
                     {
-                        join.TableAlias = entityMap.TableName + "_" + relationTables[typeStr];
-                        relationTables[typeStr]++;
+                        join.JoinType = JoinType.LEFT;
+
+                        join.ExternalTable = relationAttr.TableName;
+                        join.LocalTable = entityMap.TableName;
+
+                        if (relationTables.ContainsKey(typeStr))
+                        {
+                            join.TableAlias = entityMap.TableName + "_" + relationTables[typeStr];
+                            relationTables[typeStr]++;
+                        }
+                        else
+                            relationTables.Add(typeStr, 0);
                     }
-                    else
-                        relationTables.Add(typeStr, 0);
+
+                    join.ExternalKey = relationAttr.ForeignKey;
+                    join.LocalKey    = relationAttr.LocalKey;
+                    join.Nullable    = relationAttr.Nullable;
+
+                    sqlQuery.Joins.Add(join);
                 }
-
-                join.ExternalKey = relationAttr.ForeignKey;
-                join.LocalKey    = relationAttr.LocalKey;
-                join.Nullable    = relationAttr.Nullable;
-
-                sqlQuery.Joins.Add(join);
             }
 
             // Append where

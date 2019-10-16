@@ -243,7 +243,6 @@ namespace Extended.Dapper.Core.Repository
                 if (oneObj != null)
                 {
                     var oneObjKey = EntityMapper.GetCompositeUniqueKey(oneObj);
-                    //var oneObjKey = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", oneObj.GetType(), new[] { oneObj });
                     
                     // If it has no key, we can assume it is a new entity
                     if (EntityMapper.IsKeyEmpty(oneObjKey))
@@ -282,7 +281,6 @@ namespace Extended.Dapper.Core.Repository
                 foreach (var obj in manyObj)
                 {
                     var objKey = EntityMapper.GetCompositeUniqueKey(obj);
-                    //var objKey  = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", listEntityMap.Type, new[] { obj });
 
                     // If it has no key, we can assume it is a new entity
                     if (EntityMapper.IsKeyEmpty(objKey))
@@ -321,7 +319,6 @@ namespace Extended.Dapper.Core.Repository
                     if (attr is ManyToOneAttribute)
                     {
                         var oneObjKey = EntityMapper.GetCompositeUniqueKey(oneObj);
-                        //var oneObjKey = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", oneObj.GetType(), new[] { oneObj });
                         
                         // If it has no key, we can assume it is a new entity
                         if (EntityMapper.IsKeyEmpty(oneObjKey))
@@ -356,7 +353,6 @@ namespace Extended.Dapper.Core.Repository
                         foreach (var listItem in listObj)
                         {
                             var objKey = EntityMapper.GetCompositeUniqueKey(listItem);
-                            //var objKey  = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", listEntityMap.Type, new[] { listItem });
 
                             // If it has no key, we can assume it is a new entity
                             if (EntityMapper.IsKeyEmpty(objKey))
@@ -367,7 +363,6 @@ namespace Extended.Dapper.Core.Repository
                                 query.Params.Add("p_fk_" + attr.ForeignKey, foreignKey);
 
                                 objKey = EntityMapper.GetCompositeUniqueKey(listItem);
-                                //objKey = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", listEntityMap.Type, new[] { listItem });
 
                                 var queryResult = await this.ExecuteInsertQuery(listItem, query, transaction);
 
@@ -432,7 +427,6 @@ namespace Extended.Dapper.Core.Repository
 
             // Grab primary key
             return EntityMapper.GetCompositeUniqueKey(entity);
-            //return ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", entity.GetType(), new[] { entity });
         }
     }
 }
