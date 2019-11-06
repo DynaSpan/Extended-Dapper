@@ -28,7 +28,7 @@ namespace Extended.Dapper.Core.Mappers
         public static EntityMap GetEntityMap(Type entityType)
         {
             if (entityMapCache.ContainsKey(entityType))
-                return entityMapCache.Single(x => x.Key == entityType).Value;
+                return entityMapCache[entityType];
 
             var entityTypeInfo  = entityType.GetTypeInfo();
             var tableAttribute  = entityTypeInfo.GetCustomAttribute<TableAttribute>();
@@ -145,7 +145,8 @@ namespace Extended.Dapper.Core.Mappers
             var relationInnerProperties = entityType.GetProperties().Where(q => q.CanWrite)
                 .Where(ExpressionHelper.GetPrimitivePropertiesPredicate());
 
-            propertyMetadata.AddRange(relationInnerProperties.Where(p => !p.GetCustomAttributes<NotMappedAttribute>().Any())
+            propertyMetadata.AddRange(relationInnerProperties
+                .Where(p => !p.GetCustomAttributes<NotMappedAttribute>().Any())
                 .Select(p => new SqlRelationPropertyMetadata(relationProperty, p)));
 
             return propertyMetadata;
