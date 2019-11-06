@@ -52,7 +52,7 @@ namespace Extended.Dapper.Core.Repository
             {
                 this.OpenConnection(connection);
 
-                await connection.QueryAsync<T>(query.ToString(), typeArr, this.MapDapperEntity(typeArr, entityLookup, includes), query.Params, null, true, splitOn);
+                await connection.QueryAsync<T>(query.ToString(), typeArr, DapperMapper.MapDapperEntity<T>(typeArr, entityLookup, includes), query.Params, null, true, splitOn);
             }
             catch (Exception)
             {
@@ -74,7 +74,7 @@ namespace Extended.Dapper.Core.Repository
         /// <param name="query"></param>
         /// <param name="transaction"></param>
         /// <returns>true when succesful; false otherwise</returns>
-        public virtual async Task<bool> ExecuteInsertQuery(object entity, InsertSqlQuery query, IDbTransaction transaction = null)
+        public virtual async Task<bool> ExecuteInsertQuery<T>(T entity, InsertSqlQuery query, IDbTransaction transaction = null)
         {
             var shouldCommit = false;
             IDbConnection connection = null;
@@ -91,31 +91,33 @@ namespace Extended.Dapper.Core.Repository
             try
             {
                 // First grab & insert all the ManyToOnes (foreign keys of this entity)
-                query = await this.InsertManyToOnes(entity, query, transaction);
+                query = await this.InsertManyToOnes<T>(entity, query, transaction);
                 var insertResult = await transaction.Connection.ExecuteAsync(query.ToString(), query.Params, transaction);
 
                 if (insertResult == 1)
                 {
-                    var entityKey = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", entity.GetType(), new[] { entity });
+                    var entityKey = EntityMapper.GetCompositeUniqueKey(entity);
 
                     // Insert the OneToManys
-                    await this.InsertOneToManys(entity, entityKey, transaction);
+                    await this.InsertOneToManys<T>(entity, entityKey, transaction);
                 }
 
                 if (shouldCommit)
                     transaction.Commit();
 
+                connection?.Close();
+
                 return insertResult == 1;
             }
             catch (Exception)
             {
-                transaction.Rollback();
+                transaction?.Rollback();
+                connection?.Close();
                 throw;
             }
             finally 
             {
-                if (connection != null)
-                    connection.Close();
+                connection?.Close();
             }
         }
 
@@ -153,17 +155,19 @@ namespace Extended.Dapper.Core.Repository
                 if (shouldCommit)
                     transaction.Commit();
 
+                connection?.Close();
+
                 return updateResult == 1;
             }
             catch (Exception)
             {
-                transaction.Rollback();
+                transaction?.Rollback();
+                connection?.Close();
                 throw;
             }
             finally
             {
-                if (connection != null)
-                    connection.Close();
+                connection?.Close();
             }
         }
 
@@ -194,101 +198,20 @@ namespace Extended.Dapper.Core.Repository
                 if (shouldCommit)
                     transaction.Commit();
 
+                connection?.Close();
+
                 return result;
             }
             catch (Exception)
             {
-                transaction.Rollback();
+                transaction?.Rollback();
+                connection?.Close();
                 throw;
             }
             finally
             {
-                if (connection != null)
-                    connection.Close();
+                connection?.Close();
             }
-        }
-
-        /// <summary>
-        /// Maps a query result set to an entity
-        /// </summary>
-        /// <param name="typeArr">Array with all sub-types</param>
-        /// <param name="lookup">Dictionary to lookup entities</param>
-        /// <param name="includes">Which children should be included</param>
-        protected virtual Func<object[], T> MapDapperEntity<T>(Type[] typeArr, Dictionary<string, T> lookup, params Expression<Func<T, object>>[] includes)
-            where T : class
-        {
-            return (objectArr) => {
-                var entityLookup        = objectArr[0] as T;
-                var entityCompositeKey  = EntityMapper.GetCompositeUniqueKey<T>(entityLookup);
-                var entityMap           = EntityMapper.GetEntityMap(typeof(T));
-                T entity;
-
-                if (!lookup.TryGetValue(entityCompositeKey.ToString(), out entity))
-                {
-                    lookup.Add(entityCompositeKey.ToString(), entity = entityLookup);
-                }
-
-                var singleObjectCacher = new Dictionary<Type, int>();
-
-                foreach (var incl in includes)
-                {
-                    var exp = (MemberExpression)incl.Body;
-                    var type = exp.Type.GetTypeInfo();
-
-                    var property = entityMap.RelationProperties.SingleOrDefault(x => x.Key.Name == exp.Member.Name);
-
-                    if (type.IsGenericType)
-                    {
-                        // Handle as list, get all entities with this type
-                        var listType     = type.GetGenericArguments()[0].GetTypeInfo();
-                        var listProperty = property.Key.GetValue(entity) as IList;
-
-                        //var defaultListObj = Activator.CreateInstance(listType);
-
-                        var objList = objectArr.Where(x => x.GetType() == listType && /*!x.Equals(defaultListObj) &&*/ x != null).ToList();
-                        IList value = ReflectionHelper.CastListTo(listType, objList);
-
-                        if (value != null)
-                        {
-                            if (listProperty == null)
-                                property.Key.SetValue(entity, value);
-                            else 
-                                foreach (var val in value)
-                                    if (val != null && !listProperty.Contains(val))
-                                        listProperty.Add(val);
-                        }
-                    }
-                    else
-                    {
-                        object value;
-
-                        // Handle as single object
-                        if (singleObjectCacher.ContainsKey(type))
-                        {
-                            singleObjectCacher[type]++;
-                            var index = singleObjectCacher[type];
-                            var objArr = objectArr.Where(x => x.GetType() == type);
-
-                            if (objArr.Count() > index)
-                                value = objArr.ElementAt(index);
-                            else
-                                value = objArr.LastOrDefault();
-                        }
-                        else
-                        {
-                            value = objectArr.FirstOrDefault(x => x.GetType() == type);
-                            singleObjectCacher.Add(type, 0);
-                        }
-
-                        var valueId = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", new Type[] { type }, new [] { value });
-
-                        if (property.Key != null && value != null && !EntityMapper.IsKeyEmpty(valueId))
-                            property.Key.SetValue(entity, value);
-                    }
-                }
-
-                return entity;
-            };
         }
 
         /// <summary>
@@ -306,9 +229,9 @@ namespace Extended.Dapper.Core.Repository
             }
         }
 
-        protected virtual async Task<InsertSqlQuery> InsertManyToOnes(object entity, InsertSqlQuery insertQuery, IDbTransaction transaction)
+        protected virtual async Task<InsertSqlQuery> InsertManyToOnes<T>(T entity, InsertSqlQuery insertQuery, IDbTransaction transaction)
         {
-            var entityMap = EntityMapper.GetEntityMap(entity.GetType());
+            var entityMap = EntityMapper.GetEntityMap(typeof(T));
 
             var manyToOnes = entityMap.RelationProperties.Where(x => x.Key.GetCustomAttribute<ManyToOneAttribute>() != null);
 
@@ -319,7 +242,7 @@ namespace Extended.Dapper.Core.Repository
 
                 if (oneObj != null)
                 {
-                    var oneObjKey = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", oneObj.GetType(), new[] { oneObj });
+                    var oneObjKey = EntityMapper.GetCompositeUniqueKey(oneObj);
                     
                     // If it has no key, we can assume it is a new entity
                     if (EntityMapper.IsKeyEmpty(oneObjKey))
@@ -339,9 +262,9 @@ namespace Extended.Dapper.Core.Repository
             return insertQuery;
         }
 
-        protected virtual async Task<bool> InsertOneToManys(object entity, object foreignKey, IDbTransaction transaction = null)
+        protected virtual async Task<bool> InsertOneToManys<T>(T entity, object foreignKey, IDbTransaction transaction = null)
         {
-            var entityMap = EntityMapper.GetEntityMap(entity.GetType());
+            var entityMap = EntityMapper.GetEntityMap(typeof(T));
 
             var oneToManys = entityMap.RelationProperties.Where(x => x.Key.GetCustomAttribute<OneToManyAttribute>() != null);
 
@@ -349,14 +272,15 @@ namespace Extended.Dapper.Core.Repository
             {
                 var manyObj = many.Key.GetValue(entity) as IList;
 
-                if (manyObj == null) continue;
+                if (manyObj == null) 
+                    continue;
 
-                var attr    = many.Key.GetCustomAttribute<OneToManyAttribute>();
-                var listEntityMap = EntityMapper.GetEntityMap(manyObj.GetType().GetGenericArguments()[0].GetTypeInfo());
+                var attr            = many.Key.GetCustomAttribute<OneToManyAttribute>();
+                var listEntityMap   = EntityMapper.GetEntityMap(manyObj.GetType().GetGenericArguments()[0].GetTypeInfo());
 
                 foreach (var obj in manyObj)
                 {
-                    var objKey  = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", listEntityMap.Type, new[] { obj });
+                    var objKey = EntityMapper.GetCompositeUniqueKey(obj);
 
                     // If it has no key, we can assume it is a new entity
                     if (EntityMapper.IsKeyEmpty(objKey))
@@ -378,14 +302,14 @@ namespace Extended.Dapper.Core.Repository
             where T : class
         {
             var entityMap = EntityMapper.GetEntityMap(typeof(T));
-            var foreignKey = EntityMapper.GetCompositeUniqueKey<T>(entity);
+            var foreignKey = EntityMapper.GetCompositeUniqueKey(entity);
 
             foreach (var incl in includes)
             {
                 var type = incl.Body.Type.GetTypeInfo();
 
                 var exp = (MemberExpression)incl.Body;
-                var property = entityMap.RelationProperties.SingleOrDefault(x => x.Key.Name == exp.Member.Name);
+                var property = entityMap.RelationProperties.Where(x => x.Key.Name == exp.Member.Name).SingleOrDefault();
 
                 var oneObj   = property.Key.GetValue(entity);
                 var attr     = property.Key.GetCustomAttribute<RelationAttributeBase>();
@@ -394,7 +318,7 @@ namespace Extended.Dapper.Core.Repository
                 {
                     if (attr is ManyToOneAttribute)
                     {
-                        var oneObjKey = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", oneObj.GetType(), new[] { oneObj });
+                        var oneObjKey = EntityMapper.GetCompositeUniqueKey(oneObj);
                         
                         // If it has no key, we can assume it is a new entity
                         if (EntityMapper.IsKeyEmpty(oneObjKey))
@@ -428,7 +352,7 @@ namespace Extended.Dapper.Core.Repository
 
                         foreach (var listItem in listObj)
                         {
-                            var objKey  = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", listEntityMap.Type, new[] { listItem });
+                            var objKey = EntityMapper.GetCompositeUniqueKey(listItem);
 
                             // If it has no key, we can assume it is a new entity
                             if (EntityMapper.IsKeyEmpty(objKey))
@@ -438,7 +362,7 @@ namespace Extended.Dapper.Core.Repository
                                 query.Insert.Add(new QueryField(attr.TableName, attr.ForeignKey, "p_fk_" + attr.ForeignKey));
                                 query.Params.Add("p_fk_" + attr.ForeignKey, foreignKey);
 
-                                objKey = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", listEntityMap.Type, new[] { listItem });
+                                objKey = EntityMapper.GetCompositeUniqueKey(listItem);
 
                                 var queryResult = await this.ExecuteInsertQuery(listItem, query, transaction);
 
@@ -502,7 +426,7 @@ namespace Extended.Dapper.Core.Repository
                 return null;
 
             // Grab primary key
-            return ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", entity.GetType(), new[] { entity });
+            return EntityMapper.GetCompositeUniqueKey(entity);
         }
     }
 }

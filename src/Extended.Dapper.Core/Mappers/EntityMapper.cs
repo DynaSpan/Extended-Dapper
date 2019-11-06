@@ -36,8 +36,8 @@ namespace Extended.Dapper.Core.Mappers
             var entityMap = new EntityMap();
 
             entityMap.Type         = entityType;
-            entityMap.TableName    = tableAttribute != null ? tableAttribute.Name : entityTypeInfo.Name;
-            entityMap.TableSchema  = tableAttribute != null ? tableAttribute.Schema : string.Empty;
+            entityMap.TableName    = tableAttribute?.Name ?? entityTypeInfo.Name;
+            entityMap.TableSchema  = tableAttribute?.Schema ?? string.Empty;
             entityMap.Properties   = entityType.FindClassProperties().Where(q => q.CanWrite).ToArray();
 
             var props = entityMap.Properties.Where(ExpressionHelper.GetPrimitivePropertiesPredicate());
@@ -65,7 +65,7 @@ namespace Extended.Dapper.Core.Mappers
             entityMap.MappedPropertiesMetadata  = properties.Select(p => new SqlPropertyMetadata(p));
 
             // Grab UpdatedAt property if exists
-            var updatedAtProperty = props.FirstOrDefault(p => p.GetCustomAttributes<UpdatedAtAttribute>().Any());
+            var updatedAtProperty = props.Where(p => p.GetCustomAttributes<UpdatedAtAttribute>().Any()).FirstOrDefault();
 
             if (updatedAtProperty != null 
                 && (updatedAtProperty.PropertyType == typeof(DateTime) || updatedAtProperty.PropertyType == typeof(DateTime?)))
@@ -74,7 +74,7 @@ namespace Extended.Dapper.Core.Mappers
                 entityMap.UpdatedAtPropertyMetadata = new SqlPropertyMetadata(updatedAtProperty);
             }
 
-            var logicalDeleteProperty = props.FirstOrDefault(p => p.GetCustomAttributes<DeletedAttribute>().Any());
+            var logicalDeleteProperty = props.Where(p => p.GetCustomAttributes<DeletedAttribute>().Any()).FirstOrDefault();
 
             if (logicalDeleteProperty != null
                 && (logicalDeleteProperty.PropertyType == typeof(bool)))
@@ -92,10 +92,10 @@ namespace Extended.Dapper.Core.Mappers
         /// <summary>
         /// Generates a unique identifier for this entity
         /// </summary>
-        public static object GetCompositeUniqueKey<T>(T entity)
+        public static object GetCompositeUniqueKey(object entity)
         {
             // Get the entity map
-            var entityMap = GetEntityMap(typeof(T));
+            var entityMap = GetEntityMap(entity.GetType());
 
             if (entityMap.PrimaryKeyPropertiesMetadata.Count() == 1)
             {

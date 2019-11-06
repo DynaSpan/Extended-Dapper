@@ -117,7 +117,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
             if (SqlQueryProviderHelper.Verbose)
                 Console.WriteLine(string.Format("INSERT INTO {0} ({1}) VALUES ({2})", this.EscapeTable(insertQuery.Table), insertFields, insertParams));
 
-            return string.Format("INSERT INTO {0} ({1}) VALUES ({2})", insertQuery.Table, insertFields, insertParams);
+            return string.Format("INSERT INTO {0} ({1}) VALUES ({2})", this.EscapeTable(insertQuery.Table), insertFields, insertParams);
         }
 
         /// <summary>
@@ -575,7 +575,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
                         }
                         else
                         {
-                            var prop = entityMap.MappedPropertiesMetadata.FirstOrDefault(x => x.PropertyName == qpExpr.PropertyName);
+                            var prop = entityMap.MappedPropertiesMetadata.Where(x => x.PropertyName == qpExpr.PropertyName).FirstOrDefault();
 
                             if (prop == null) // possibly a relation
                             {
@@ -583,7 +583,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
 
                                 try
                                 {
-                                    joinProperty = entityMap.RelationProperties.FirstOrDefault(x => x.Key.Name == qpExpr.PropertyName);
+                                    joinProperty = entityMap.RelationProperties.Where(x => x.Key.Name == qpExpr.PropertyName).FirstOrDefault();
                                 }
                                 catch 
                                 {
@@ -617,7 +617,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
 
                             if (qpExpr.PropertyValue is BaseEntity)
                             {
-                                var key = ReflectionHelper.CallGenericMethod(typeof(EntityMapper), "GetCompositeUniqueKey", qpExpr.PropertyValue.GetType(), new[] { qpExpr.PropertyValue });
+                                var key = EntityMapper.GetCompositeUniqueKey(qpExpr.PropertyValue);
                                 conditions.Add(new KeyValuePair<string, object>(vKey, key));
                             }
                             else

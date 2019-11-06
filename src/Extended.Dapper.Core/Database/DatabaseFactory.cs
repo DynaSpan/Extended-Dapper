@@ -31,6 +31,7 @@ namespace Extended.Dapper.Core.Database
         /// <param name="databaseProvider"></param>
         public DatabaseFactory(string connectionString, DatabaseProvider databaseProvider)
         {
+            Console.WriteLine("Extended.Dapper perf-2"); // temp for benchmarking
             SqlQueryProviderHelper.SetProvider(databaseProvider, connectionString);
 
             this.DatabaseProvider = databaseProvider;

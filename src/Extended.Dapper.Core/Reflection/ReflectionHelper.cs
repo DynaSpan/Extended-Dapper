@@ -28,14 +28,15 @@ namespace Extended.Dapper.Core.Reflection
             var typeList = new List<Type>();
             typeList.Add(typeof(T));
 
-            typeList.AddRange(includes.Select(incl => {
+            foreach (var incl in includes)
+            {
                 var type = incl.Body.Type.GetTypeInfo();
 
                 if (type.IsGenericType)
-                    return type.GetGenericArguments()[0].GetTypeInfo();
-
-                return type;
-            }));
+                    typeList.Add(type.GetGenericArguments()[0].GetTypeInfo());
+                else
+                    typeList.Add(type);
+            }
 
             return typeList;
         }
@@ -92,7 +93,7 @@ namespace Extended.Dapper.Core.Reflection
         /// </summary>
         /// <param name="listType">The new type of the list</param>
         /// <param name="list">The list itself</param>
-        public static IList CastListTo(Type listType, IList list)
+        public static IList CastListTo(Type listType, IEnumerable list)
             => CallGenericMethod(typeof(ReflectionHelper), "CastListAs", listType, new[] { list }) as IList;
         
         /// <summary>
@@ -100,7 +101,7 @@ namespace Extended.Dapper.Core.Reflection
         /// </summary>
         /// <param name="source"></param>
         /// <typeparam name="TList"></typeparam>
-        public static List<TList> CastListAs<TList>(IList<object> source)
+        public static List<TList> CastListAs<TList>(IEnumerable source)
             => source.Cast<TList>().ToList();
     }
 }
