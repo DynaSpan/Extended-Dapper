@@ -111,8 +111,11 @@ namespace Extended.Dapper.Core.Repository
             }
             catch (Exception)
             {
-                transaction?.Rollback();
+                if (shouldCommit)
+                    transaction?.Rollback();
+
                 connection?.Close();
+
                 throw;
             }
             finally 
@@ -161,8 +164,11 @@ namespace Extended.Dapper.Core.Repository
             }
             catch (Exception)
             {
-                transaction?.Rollback();
+                if (shouldCommit)
+                    transaction?.Rollback();
+
                 connection?.Close();
+            
                 throw;
             }
             finally
@@ -204,8 +210,11 @@ namespace Extended.Dapper.Core.Repository
             }
             catch (Exception)
             {
-                transaction?.Rollback();
+                if (shouldCommit)
+                    transaction?.Rollback();
+
                 connection?.Close();
+                
                 throw;
             }
             finally
