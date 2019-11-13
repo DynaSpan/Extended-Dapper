@@ -1,5 +1,8 @@
 # Changelog
 
+[0.3.3-beta]
+Fix incorrect exceptions when an exception gets thrown during query execution.
+
 [0.3.2-beta] 
 Fix issue where an insert query didn't escape table name.
 
