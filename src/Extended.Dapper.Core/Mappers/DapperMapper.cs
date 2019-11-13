@@ -44,7 +44,7 @@ namespace Extended.Dapper.Core.Mappers
                         var listType     = type.GetGenericArguments()[0].GetTypeInfo();
                         var listProperty = property.Key.GetValue(entity) as IList;
 
-                        var objList = objectArr.Where(x => x != null && x.GetType() == listType);
+                        var objList = objectArr.Where(x => x != null && x.GetType() == listType && !EntityMapper.IsKeyEmpty(EntityMapper.GetCompositeUniqueKey(x)));
                         IList value = ReflectionHelper.CastListTo(listType, objList);
 
                         if (value != null)

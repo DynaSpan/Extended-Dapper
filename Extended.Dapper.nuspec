@@ -10,7 +10,7 @@
         <license type="expression">MIT</license>
 
         <dependencies>
-            <dependency id="Dapper" version="2.0.4" />
+            <dependency id="Dapper" version="2.0.30" />
         </dependencies>
     </metadata>
     <files>

@@ -24,6 +24,12 @@ namespace Extended.Dapper.Tests.Models
                         BirthYear = 1942,
                         Country = "United Kingdom"
                     };
+                case AuthorModelType.AuthorWithoutBooks:
+                    return new Author() {
+                        Name = "Author w/o Books",
+                        BirthYear = 1900,
+                        Country = "Earth"
+                    };
             }
 
             return null;
@@ -111,7 +117,8 @@ namespace Extended.Dapper.Tests.Models
     public enum AuthorModelType
     {
         CarlSagan,
-        StephenHawking
+        StephenHawking,
+        AuthorWithoutBooks
     }
 
     public enum BookModelType

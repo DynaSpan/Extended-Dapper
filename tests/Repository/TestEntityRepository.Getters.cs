@@ -89,6 +89,25 @@ namespace Extended.Dapper.Tests.Repository
         }
 
         /// <summary>
+        /// This tests if getting a single item from the db
+        /// with their OneToMany children works correctly, if
+        /// it doesn't have any children
+        /// </summary>
+        [Test]
+        public void TestGetSingleWithEmptyOneToManyChildren()
+        {
+            var authorWithoutBooks = AuthorRepository.Get(
+                a => a.Name == "Author w/o Books",
+                a => a.Books
+            ).Result;
+
+            this.TestIfAuthorIsValid(authorWithoutBooks, AuthorModelType.AuthorWithoutBooks);
+
+            if (authorWithoutBooks.Books != null)
+                Assert.AreEqual(0, authorWithoutBooks.Books.Count, "Empty object detected in child");
+        }
+
+        /// <summary>
         /// This tests if given a model which includes multiple children of the same object,
         /// the query and JOIN generation goes correctly (joins cant have the same table twice without aliassing)
         /// </summary>

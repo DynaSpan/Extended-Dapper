@@ -1,6 +1,9 @@
 # Changelog
 
-[0.3.3-beta]
+[0.3.5-beta]
+Fix some mapping issues
+
+[0.3.3-beta] - [0.3.4-beta]
 Fix incorrect exceptions when an exception gets thrown during query execution.
 
 [0.3.2-beta] 

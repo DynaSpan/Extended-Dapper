@@ -71,6 +71,7 @@ namespace Extended.Dapper.Tests.Helpers
 
             var authorHawking   = ModelHelper.GetAuthorModel(AuthorModelType.StephenHawking);
             var authorSagan     = ModelHelper.GetAuthorModel(AuthorModelType.CarlSagan);
+            var authorWithoutBooks = ModelHelper.GetAuthorModel(AuthorModelType.AuthorWithoutBooks);
 
             var scienceCategory = ModelHelper.GetScienceCategory();
 
@@ -90,6 +91,8 @@ namespace Extended.Dapper.Tests.Helpers
             await bookRepository.Insert(paleBlueDotBook);
 
             await bookRepository.Insert(coBook);
+
+            await authorRepository.Insert(authorWithoutBooks);
 
             return true;
         }
