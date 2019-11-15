@@ -1,5 +1,8 @@
 # Changelog
 
+[0.3.6-beta]
+Fix the GetOne<T> method + add unit tests to cover GetOne<T> and GetMany<T>.
+
 [0.3.5-beta]
 Fix some mapping issues
 

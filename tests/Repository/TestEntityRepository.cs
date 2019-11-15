@@ -82,8 +82,10 @@ namespace Extended.Dapper.Tests.Repository
             if (includeAuthor)
                 this.TestIfAuthorIsValid(book.Author, ModelHelper.GetAuthorModelFromBookModel(bookType));
 
-            if (includeCoAuthor)
+            if (includeCoAuthor && bookType == BookModelType.ScienceAnswered)
                 this.TestIfAuthorIsValid(book.CoAuthor, AuthorModelType.CarlSagan); // Coauthor is always Carl in tests
+            else if (includeCoAuthor)
+                Assert.AreEqual(null, book.CoAuthor, "Co Author was not empty on Book that doesn't have one");
         }
     }
 

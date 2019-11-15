@@ -172,6 +172,46 @@ namespace Extended.Dapper.Tests.Repository
             Assert.AreEqual(2, books.Count(), "Could not retrieve the correct books by Author BirthYear property");
         }
 
+        /// <summary>
+        /// This test should check if getting one child via the dedicated method works
+        /// correctly
+        /// </summary>
+        [Test]
+        public void TestGetOneChild()
+        {
+            // Grab book
+            var book = BookRepository.Get(b => b.Name == "Science questions answered").Result;
+            book.Author = BookRepository.GetOne<Author>(book, b => b.Author).Result;
+
+            Assert.AreNotEqual(null, book.Author, "Could not retrieve child with GetOne<T>");
+            this.TestIfAuthorIsValid(book.Author, AuthorModelType.StephenHawking);
+        }
+
+        /// <summary>
+        /// This test should check if getting one child via the dedicated method works
+        /// correctly
+        /// </summary>
+        [Test]
+        public void TestGetOneChildWithIncludes()
+        {
+            // Grab book
+            var book = BookRepository.Get(b => b.Name == "Science questions answered").Result;
+            book.Author = BookRepository.GetOne<Author>(book, b => b.Author, a => a.Books).Result;
+
+            Assert.AreNotEqual(null, book.Author, "Could not retrieve child with GetOne<T>");
+            this.TestIfAuthorIsValid(book.Author, AuthorModelType.StephenHawking);
+
+            Assert.AreNotEqual(null, book.Author.Books, "Could not retrieve many children of child with GetOne<T>");
+            Assert.AreEqual(3, book.Author.Books.Count(), "Retrieved incorrect amount of children of child with GetOne<T>");
+
+            var briefHistoryBook = book.Author.Books.SingleOrDefault(b => b.Name == "A Brief History of Time");
+            var briefAnswersBook = book.Author.Books.SingleOrDefault(b => b.ReleaseYear == 2018);
+            var scienceAnswersBook = book.Author.Books.SingleOrDefault(b => b.Name == "Science questions answered");
+            this.TestIfBookIsValid(briefHistoryBook, BookModelType.BriefHistoryOfTime);
+            this.TestIfBookIsValid(briefAnswersBook, BookModelType.BriefAnswers);
+            this.TestIfBookIsValid(scienceAnswersBook, BookModelType.ScienceAnswered);
+        }
+
         #endregion
 
         #region Multiple items
@@ -226,6 +266,94 @@ namespace Extended.Dapper.Tests.Repository
             var nullableCategoryBook = carlAuthor.Books.SingleOrDefault(b => b.Name == "Cosmos: A Personal Voyage");
             this.TestIfBookIsValid(nullableCategoryBook, BookModelType.Cosmos);
             Assert.AreEqual(null, nullableCategoryBook.Category, "The nullable Category is not null in Book");
+        }
+
+        /// <summary>
+        /// This test should check if getting many children via the dedicated method works
+        /// correctly
+        /// </summary>
+        [Test]
+        public void TestGetManyChildren()
+        {
+            // Grab author
+            var author = AuthorRepository.Get(a => a.Name == "Stephen Hawking").Result;
+            author.Books = AuthorRepository.GetMany<Book>(author, a => a.Books).Result.ToList();
+
+            Assert.AreNotEqual(null, author.Books, "Could not retrieve children with GetMany<T>");
+            Assert.AreEqual(3, author.Books.Count(), "Retrieved incorrect amount of children with GetMany<T>");
+
+            var briefHistoryBook = author.Books.SingleOrDefault(b => b.Name == "A Brief History of Time");
+            var briefAnswersBook = author.Books.SingleOrDefault(b => b.ReleaseYear == 2018);
+            var scienceAnswersBook = author.Books.SingleOrDefault(b => b.Name == "Science questions answered");
+            this.TestIfBookIsValid(briefHistoryBook, BookModelType.BriefHistoryOfTime);
+            this.TestIfBookIsValid(briefAnswersBook, BookModelType.BriefAnswers);
+            this.TestIfBookIsValid(scienceAnswersBook, BookModelType.ScienceAnswered);
+        }
+
+        /// <summary>
+        /// This test should check if getting many children via the dedicated method works
+        /// correctly when including children
+        /// </summary>
+        [Test]
+        public void TestGetManyChildrenWithIncludes()
+        {
+            // Grab author
+            var author = AuthorRepository.Get(a => a.Name == "Stephen Hawking").Result;
+            author.Books = AuthorRepository.GetMany<Book>(author, a => a.Books, b => b.Category).Result.ToList();
+
+            Assert.AreNotEqual(null, author.Books, "Could not retrieve children with GetMany<T>");
+            Assert.AreEqual(3, author.Books.Count(), "Retrieved incorrect amount of children with GetMany<T>");
+
+            var briefHistoryBook = author.Books.SingleOrDefault(b => b.Name == "A Brief History of Time");
+            var briefAnswersBook = author.Books.SingleOrDefault(b => b.ReleaseYear == 2018);
+            var scienceAnswersBook = author.Books.SingleOrDefault(b => b.Name == "Science questions answered");
+            this.TestIfBookIsValid(briefHistoryBook, BookModelType.BriefHistoryOfTime, true);
+            this.TestIfBookIsValid(briefAnswersBook, BookModelType.BriefAnswers, true);
+            this.TestIfBookIsValid(scienceAnswersBook, BookModelType.ScienceAnswered, true);
+        }
+
+        /// <summary>
+        /// This test should check if getting many children via the dedicated method works
+        /// correctly when including optional children
+        /// </summary>
+        [Test]
+        public void TestGetManyChildrenWithOptionalIncludes()
+        {
+            // Grab author
+            var author = AuthorRepository.Get(a => a.Name == "Stephen Hawking").Result;
+            author.Books = AuthorRepository.GetMany<Book>(author, a => a.Books, b => b.Category, b => b.CoAuthor).Result.ToList();
+
+            Assert.AreNotEqual(null, author.Books, "Could not retrieve children with GetMany<T>");
+            Assert.AreEqual(3, author.Books.Count(), "Retrieved incorrect amount of children with GetMany<T>");
+
+            var briefHistoryBook = author.Books.SingleOrDefault(b => b.Name == "A Brief History of Time");
+            var briefAnswersBook = author.Books.SingleOrDefault(b => b.ReleaseYear == 2018);
+            var scienceAnswersBook = author.Books.SingleOrDefault(b => b.Name == "Science questions answered");
+            this.TestIfBookIsValid(briefHistoryBook, BookModelType.BriefHistoryOfTime, true, false, true);
+            this.TestIfBookIsValid(briefAnswersBook, BookModelType.BriefAnswers, true, false, true);
+            this.TestIfBookIsValid(scienceAnswersBook, BookModelType.ScienceAnswered, true, false, true);
+        }
+
+        /// <summary>
+        /// This test should check if getting many children via the dedicated method works
+        /// correctly when including optional children of the same type
+        /// </summary>
+        [Test]
+        public void TestGetManyChildrenWithOptionalIncludesOfSameType()
+        {
+            // Grab author
+            var author = AuthorRepository.Get(a => a.Name == "Stephen Hawking").Result;
+            author.Books = AuthorRepository.GetMany<Book>(author, a => a.Books, b => b.Category, b => b.Author, b => b.CoAuthor).Result.ToList();
+
+            Assert.AreNotEqual(null, author.Books, "Could not retrieve children with GetMany<T>");
+            Assert.AreEqual(3, author.Books.Count(), "Retrieved incorrect amount of children with GetMany<T>");
+
+            var briefHistoryBook = author.Books.SingleOrDefault(b => b.Name == "A Brief History of Time");
+            var briefAnswersBook = author.Books.SingleOrDefault(b => b.ReleaseYear == 2018);
+            var scienceAnswersBook = author.Books.SingleOrDefault(b => b.Name == "Science questions answered");
+            this.TestIfBookIsValid(briefHistoryBook, BookModelType.BriefHistoryOfTime, true, true, true);
+            this.TestIfBookIsValid(briefAnswersBook, BookModelType.BriefAnswers, true, true, true);
+            this.TestIfBookIsValid(scienceAnswersBook, BookModelType.ScienceAnswered, true, true, true);
         }
 
         #endregion

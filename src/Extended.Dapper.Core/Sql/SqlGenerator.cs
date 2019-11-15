@@ -177,6 +177,32 @@ namespace Extended.Dapper.Core.Sql
         }
 
         /// <summary>
+        /// Generates a select query for an entity
+        /// </summary>
+        /// <param name="search"></param>
+        /// <typeparam name="T"></typeparam>
+        public SelectSqlQuery SelectForeignKey<T>(Expression<Func<T, bool>> search, string keyName)
+        {
+            var entityMap = EntityMapper.GetEntityMap(typeof(T));
+            var sqlQuery  = new SelectSqlQuery();
+
+            sqlQuery.Select.Add(
+                new SelectField()
+                {
+                    Field = keyName,
+                    Table = entityMap.TableName
+                }
+            );
+
+            // Append where
+            this.sqlProvider.AppendWherePredicateQuery(sqlQuery, search, QueryType.Select, entityMap);
+
+            sqlQuery.From = entityMap.TableName;
+
+            return sqlQuery;
+        }
+
+        /// <summary>
         /// Generates a SQL query for selecting the manies of an entity's property
         /// </summary>
         /// <param name="entity"></param>
@@ -225,13 +251,17 @@ namespace Extended.Dapper.Core.Sql
             
             var relationAttr = System.Attribute.GetCustomAttributes(manyProperty.Key, typeof(ManyToOneAttribute), true).FirstOrDefault() as ManyToOneAttribute;
 
-            sqlQuery.Where.AppendFormat("{0}{1}.{2} = {3}m2o_parent_id", 
+            var selectRootExpr = this.CreateByIdExpression<T>(EntityMapper.GetCompositeUniqueKey(entity));
+            var selectRootQuery = this.SelectForeignKey<T>(selectRootExpr, relationAttr.ForeignKey);
+
+            sqlQuery.Where.AppendFormat("{0}{1}.{2} = ({3})", 
                 sqlQuery.Where.ToString() == string.Empty ? "" : " AND ",
-                this.sqlProvider.EscapeTable(relationAttr.TableName),
+                this.sqlProvider.EscapeTable(oneEntityMap.TableName),
                 this.sqlProvider.EscapeColumn(relationAttr.LocalKey),
-                this.sqlProvider.ParameterChar);
+                selectRootQuery.ToString());
             
-            sqlQuery.Params.Add("m2o_parent_id", EntityMapper.GetCompositeUniqueKey(entity));
+            foreach (var param in selectRootQuery.Params)
+                sqlQuery.Params.Add(param.Key, param.Value);
 
             return sqlQuery;
         }
