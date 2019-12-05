@@ -44,7 +44,7 @@ namespace Extended.Dapper.Tests.Models
         /// <param name="author"></param>
         /// <param name="coAuthor"></param>
         /// <returns></returns>
-        public static Book GetBookModel(BookModelType modelType, Category category = null, Author author = null, Author coAuthor = null)
+        public static Book GetBookModel(BookModelType modelType, Category category = null, Author author = null, Author coAuthor = null, bool forceNullCategory = false, bool forceNullAuthor = false)
         {
             switch (modelType)
             {
@@ -52,36 +52,36 @@ namespace Extended.Dapper.Tests.Models
                     return new Book() {
                         Name = "Brief Answers to the Big Questions",
                         ReleaseYear = 2018,
-                        Author = author != null ? author : GetAuthorModel(AuthorModelType.StephenHawking),
-                        Category = category != null ? category : GetScienceCategory()
+                        Author = author != null || forceNullAuthor ? author : GetAuthorModel(AuthorModelType.StephenHawking),
+                        Category = category != null || forceNullCategory ? category : GetScienceCategory()
                     };
                 case BookModelType.BriefHistoryOfTime:
                     return new Book() {
                         Name = "A Brief History of Time",
                         ReleaseYear = 1988,
-                        Author = author != null ? author : GetAuthorModel(AuthorModelType.StephenHawking),
-                        Category = category != null ? category : GetScienceCategory()
+                        Author = author != null || forceNullAuthor ? author : GetAuthorModel(AuthorModelType.StephenHawking),
+                        Category = category != null || forceNullCategory ? category : GetScienceCategory()
                     };
                 case BookModelType.Cosmos:
                     return new Book() {
                         Name = "Cosmos: A Personal Voyage",
                         ReleaseYear = 1980,
-                        Author = author != null ? author : GetAuthorModel(AuthorModelType.CarlSagan)
+                        Author = author != null || forceNullAuthor ? author : GetAuthorModel(AuthorModelType.CarlSagan)
                     };
                 case BookModelType.PaleBlueDot:
                     return new Book() {
                         Name = "Pale Blue Dot: A Vision of the Human Future in Space",
                         ReleaseYear = 1994,
-                        Author = author != null ? author : GetAuthorModel(AuthorModelType.CarlSagan),
-                        Category = category != null ? category : GetScienceCategory()
+                        Author = author != null || forceNullAuthor ? author : GetAuthorModel(AuthorModelType.CarlSagan),
+                        Category = category != null || forceNullCategory ? category : GetScienceCategory()
                     };
                 case BookModelType.ScienceAnswered:
                     return new Book() {
                         Name = "Science questions answered",
                         ReleaseYear = 2015,
-                        Author = author != null ? author : GetAuthorModel(AuthorModelType.StephenHawking),
+                        Author = author != null || forceNullAuthor ? author : GetAuthorModel(AuthorModelType.StephenHawking),
                         CoAuthor = coAuthor != null ? coAuthor : GetAuthorModel(AuthorModelType.CarlSagan),
-                        Category = category != null ? category : GetScienceCategory()
+                        Category = category != null || forceNullCategory ? category : GetScienceCategory()
                     };
             }
 

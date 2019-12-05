@@ -49,10 +49,17 @@ namespace Extended.Dapper.Core.Sql
         /// Generates an insert query for a given entity
         /// </summary>
         /// <param name="entity"></param>
+        /// <param name="typeOverride"></param>
         /// <typeparam name="T"></typeparam>
-        public InsertSqlQuery Insert<T>(T entity)
+        public InsertSqlQuery Insert<T>(T entity, Type typeOverride = null)
+            where T : class
         {
-            var entityMap = EntityMapper.GetEntityMap(typeof(T));
+            EntityMap entityMap;
+            
+            if (typeOverride != null)
+                entityMap = EntityMapper.GetEntityMap(typeOverride);
+            else
+                entityMap = EntityMapper.GetEntityMap(typeof(T));
 
             if (entityMap.UpdatedAtProperty != null)
                 entityMap.UpdatedAtProperty.SetValue(entity, DateTime.UtcNow);
@@ -66,8 +73,11 @@ namespace Extended.Dapper.Core.Sql
             foreach (var autoValueProperty in autoValueProperties)
             {
                 var autoValueType = autoValueProperty.PropertyInfo.PropertyType;
+                var key = autoValueProperty.PropertyInfo.GetValue(entity);
 
-                if (autoValueType == typeof(Guid))
+                if (!EntityMapper.IsKeyEmpty(key))
+                    insertQuery.IdAlreadyPresent = true;
+                else if (autoValueType == typeof(Guid))
                     autoValueProperty.PropertyInfo.SetValue(entity, Guid.NewGuid());
                 else
                     throw new NotImplementedException($"AutoValue for type {autoValueProperty.PropertyInfo.PropertyType} is not supported");
@@ -96,6 +106,7 @@ namespace Extended.Dapper.Core.Sql
         /// <param name="search"></param>
         /// <typeparam name="T"></typeparam>
         public SelectSqlQuery Select<T>(Expression<Func<T, bool>> search = null, params Expression<Func<T, object>>[] includes)
+            where T : class
         {
             var entityMap = EntityMapper.GetEntityMap(typeof(T));
             var sqlQuery  = new SelectSqlQuery();
@@ -212,6 +223,8 @@ namespace Extended.Dapper.Core.Sql
         /// <typeparam name="T"></typeparam>
         /// <typeparam name="M"></typeparam>
         public SelectSqlQuery SelectMany<T, M>(T entity, Expression<Func<T, IEnumerable<M>>> many, Expression<Func<M, bool>> search = null, params Expression<Func<M, object>>[] includes)
+            where T : class
+            where M : class
         {
             var manyEntityMap = EntityMapper.GetEntityMap(typeof(M));
             var rootEntityMap = EntityMapper.GetEntityMap(typeof(T));
@@ -227,7 +240,7 @@ namespace Extended.Dapper.Core.Sql
                 this.sqlProvider.EscapeColumn(relationAttr.ForeignKey),
                 this.sqlProvider.ParameterChar);
             
-            sqlQuery.Params.Add("o2m_parent_id", EntityMapper.GetCompositeUniqueKey(entity));
+            sqlQuery.Params.Add("o2m_parent_id", EntityMapper.GetCompositeUniqueKey<T>(entity));
 
             return sqlQuery;
         }
@@ -241,6 +254,8 @@ namespace Extended.Dapper.Core.Sql
         /// <typeparam name="T"></typeparam>
         /// <typeparam name="O"></typeparam>
         public SelectSqlQuery SelectOne<T, O>(T entity, Expression<Func<T, O>> one, params Expression<Func<O, object>>[] includes)
+            where T : class
+            where O : class
         {
             var oneEntityMap = EntityMapper.GetEntityMap(typeof(O));
             var rootEntityMap = EntityMapper.GetEntityMap(typeof(T));
@@ -251,7 +266,7 @@ namespace Extended.Dapper.Core.Sql
             
             var relationAttr = System.Attribute.GetCustomAttributes(manyProperty.Key, typeof(ManyToOneAttribute), true).FirstOrDefault() as ManyToOneAttribute;
 
-            var selectRootExpr = this.CreateByIdExpression<T>(EntityMapper.GetCompositeUniqueKey(entity));
+            var selectRootExpr = this.CreateByIdExpression<T>(EntityMapper.GetCompositeUniqueKey<T>(entity));
             var selectRootQuery = this.SelectForeignKey<T>(selectRootExpr, relationAttr.ForeignKey);
 
             sqlQuery.Where.AppendFormat("{0}{1}.{2} = ({3})", 
@@ -298,6 +313,7 @@ namespace Extended.Dapper.Core.Sql
         /// </summary>
         /// <param name="entity"></param>
         public UpdateSqlQuery Update<T>(T entity)
+            where T : class
         {
             var entityMap = EntityMapper.GetEntityMap(typeof(T));
 
@@ -318,7 +334,7 @@ namespace Extended.Dapper.Core.Sql
                 updateQuery.Params.Add("p_" + property.ColumnName, property.PropertyInfo.GetValue(entity));
             }
 
-            var idExpression = this.CreateByIdExpression<T>(EntityMapper.GetCompositeUniqueKey(entity));
+            var idExpression = this.CreateByIdExpression<T>(EntityMapper.GetCompositeUniqueKey<T>(entity));
             this.sqlProvider.AppendWherePredicateQuery<T>(updateQuery, idExpression, QueryType.Update, entityMap);
             
             return updateQuery;
@@ -334,6 +350,7 @@ namespace Extended.Dapper.Core.Sql
         /// <param name="search"></param>
         /// <typeparam name="T"></typeparam>
         public SqlQuery Delete<T>(Expression<Func<T, bool>> search)
+            where T : class
         {
             var entityMap = EntityMapper.GetEntityMap(typeof(T));
 
@@ -375,6 +392,7 @@ namespace Extended.Dapper.Core.Sql
         /// <param name="localKeyField"></param>
         /// <param name="doNotErases"></param>
         public DeleteSqlQuery DeleteChildren<T>(string parentTable, object parentKey, string parentKeyField, string localKeyField, List<object> doNotErases)
+            where T : class
         {
             var entityMap = EntityMapper.GetEntityMap(typeof(T));
 
@@ -407,6 +425,7 @@ namespace Extended.Dapper.Core.Sql
         /// <param name="id">The id that is wanted</param>
         /// <typeparam name="T">Entity type</typeparam>
         public virtual Expression<Func<T, bool>> CreateByIdExpression<T>(object id)
+            where T : class
         {
             var entityMap = EntityMapper.GetEntityMap(typeof(T));
 

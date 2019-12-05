@@ -22,6 +22,12 @@ namespace Extended.Dapper.Core.Sql.Query
         /// </summary>
         public string Table { get; set; }
 
+        /// <summary>
+        /// Boolean indicating if an id was already present,
+        /// meaning this object has been inserted already
+        /// </summary>
+        public bool IdAlreadyPresent { get; set; }
+
         public InsertSqlQuery() : base()
         {
             this.Insert = new List<QueryField>();

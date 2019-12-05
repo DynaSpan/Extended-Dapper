@@ -43,9 +43,7 @@ namespace Extended.Dapper.Core.Repository
         /// <returns>List of entities</returns>
         public virtual Task<IEnumerable<T>> GetAll(Expression<Func<T, bool>> search, params Expression<Func<T, object>>[] includes)
         {
-            var query = this.SqlGenerator.Select<T>(search, includes);
-
-            return this.QueryExecuter.ExecuteSelectQuery(query, includes);
+            return this.QueryExecuter.ExecuteSelectQuery<T>(search, includes);
         }
 
         /// <summary>
@@ -56,9 +54,7 @@ namespace Extended.Dapper.Core.Repository
         /// <returns>A single entity that mataches the search</returns>
         public virtual async Task<T> Get(Expression<Func<T, bool>> search, params Expression<Func<T, object>>[] includes)
         {
-            var query = this.SqlGenerator.Select<T>(search, includes);
-
-            return (await this.QueryExecuter.ExecuteSelectQuery(query, includes)).FirstOrDefault();
+            return (await this.QueryExecuter.ExecuteSelectQuery<T>(search, includes)).FirstOrDefault();
         }
 
         /// <summary>
@@ -69,9 +65,7 @@ namespace Extended.Dapper.Core.Repository
         /// <returns>The entity that matches the ID</param>
         public virtual Task<T> GetById(object id, params Expression<Func<T, object>>[] includes)
         {
-            var search = this.SqlGenerator.CreateByIdExpression<T>(id);
-
-            return this.Get(search, includes);
+            return this.QueryExecuter.ExecuteSelectByIdQuery<T>(id, includes);
         }
 
         /// <summary>
@@ -95,9 +89,7 @@ namespace Extended.Dapper.Core.Repository
         public virtual Task<IEnumerable<M>> GetMany<M>(T entity, Expression<Func<T, IEnumerable<M>>> many, Expression<Func<M, bool>> search, params Expression<Func<M, object>>[] includes)
             where M : class
         {
-            var query = this.SqlGenerator.SelectMany<T, M>(entity, many, search, includes);
-
-            return this.QueryExecuter.ExecuteSelectQuery<M>(query, includes);
+            return this.QueryExecuter.ExecuteSelectManyQuery<T, M>(entity, many, search, includes);
         }
 
         /// <summary>
@@ -110,9 +102,7 @@ namespace Extended.Dapper.Core.Repository
         public virtual async Task<O> GetOne<O>(T entity, Expression<Func<T, O>> one, params Expression<Func<O, object>>[] includes)
             where O : class
         {
-            var query = this.SqlGenerator.SelectOne<T, O>(entity, one, includes);
-
-            return (await this.QueryExecuter.ExecuteSelectQuery<O>(query, includes)).FirstOrDefault();
+            return (await this.QueryExecuter.ExecuteSelectOneQuery<T, O>(entity, one, includes)).FirstOrDefault();
         }
 
         /// <summary>
@@ -134,9 +124,7 @@ namespace Extended.Dapper.Core.Repository
         /// <returns>The inserted entity</returns>
         public virtual async Task<T> Insert(T entity, IDbTransaction transaction)
         {
-            var query = this.SqlGenerator.Insert<T>(entity);
-
-            if (await this.QueryExecuter.ExecuteInsertQuery(entity, query, transaction))
+            if (await this.QueryExecuter.ExecuteInsertEntityQuery<T>(entity, transaction))
                 return entity;
 
             return null;
@@ -190,9 +178,7 @@ namespace Extended.Dapper.Core.Repository
         /// <returns>True when succesful; false otherwise</returns>
         protected virtual Task<bool> Update(IDbTransaction transaction, Expression<Func<T, object>>[] includes, T entity)
         {
-            var query = this.SqlGenerator.Update<T>(entity);
-
-            return this.QueryExecuter.ExecuteUpdateQuery<T>(entity, query, transaction, includes);
+            return this.QueryExecuter.ExecuteUpdateQuery<T>(entity, transaction, includes);
         }
 
         /// <summary>
@@ -211,10 +197,7 @@ namespace Extended.Dapper.Core.Repository
         /// <returns>Number of deleted rows</returns>
         public virtual Task<int> Delete(T entity, IDbTransaction transaction)
         {
-            var entityId = EntityMapper.GetCompositeUniqueKey(entity);
-            var search = this.SqlGenerator.CreateByIdExpression<T>(entityId);
-
-            return this.Delete(search, transaction);
+            return this.QueryExecuter.ExecuteDeleteEntityQuery(entity, transaction);
         }
 
         /// <summary>
@@ -233,9 +216,7 @@ namespace Extended.Dapper.Core.Repository
         /// <returns>Number of deleted rows</returns>
         public virtual Task<int> Delete(Expression<Func<T, bool>> search, IDbTransaction transaction)
         {
-            var query = this.SqlGenerator.Delete<T>(search);
-
-            return this.QueryExecuter.ExecuteDeleteQuery<T>(query, transaction);
+            return this.QueryExecuter.ExecuteDeleteQuery<T>(search, transaction);
         }
     }
 }

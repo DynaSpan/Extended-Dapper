@@ -5,6 +5,7 @@ using System.Data;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
 using Extended.Dapper.Core.Attributes.Entities.Relations;
@@ -12,6 +13,7 @@ using Extended.Dapper.Core.Database;
 using Extended.Dapper.Core.Mappers;
 using Extended.Dapper.Core.Reflection;
 using Extended.Dapper.Core.Sql;
+using Extended.Dapper.Core.Sql.Metadata;
 using Extended.Dapper.Core.Sql.Query;
 using Extended.Dapper.Core.Sql.Query.Models;
 
@@ -29,6 +31,63 @@ namespace Extended.Dapper.Core.Repository
         }
 
         /// <summary>
+        /// Executes a select query by id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="includes"></param>
+        public virtual async Task<T> ExecuteSelectByIdQuery<T>(object id, params Expression<Func<T, object>>[] includes)
+            where T : class
+        {
+            var search = this.SqlGenerator.CreateByIdExpression<T>(id);
+
+            return (await this.ExecuteSelectQuery<T>(search, includes)).FirstOrDefault();
+        }
+
+        /// <summary>
+        /// Executes a select many children query
+        /// </summary>
+        /// <param name="entity"></paran>
+        /// <param name="many"></param>
+        /// <param name="search"></param>
+        /// <param name="includes"></param>
+        public virtual Task<IEnumerable<M>> ExecuteSelectManyQuery<T, M>(T entity, Expression<Func<T, IEnumerable<M>>> many, Expression<Func<M, bool>> search, params Expression<Func<M, object>>[] includes)
+            where T : class
+            where M : class
+        {
+            var query = this.SqlGenerator.SelectMany<T, M>(entity, many, search, includes);
+
+            return this.ExecuteSelectQuery<M>(query, includes);
+        }
+
+        /// <summary>
+        /// Executes a select one children query
+        /// </summary>
+        /// <param name="entity"></paran>
+        /// <param name="one"></param>
+        /// <param name="includes"></param>
+        public virtual Task<IEnumerable<O>> ExecuteSelectOneQuery<T, O>(T entity, Expression<Func<T, O>> one, params Expression<Func<O, object>>[] includes)
+            where T : class
+            where O : class
+        {
+            var query = this.SqlGenerator.SelectOne<T, O>(entity, one, includes);
+
+            return this.ExecuteSelectQuery<O>(query, includes);
+        }
+
+        /// <summary>
+        /// Executes a select query
+        /// </summary>
+        /// <param name="search"></param>
+        /// <param name="includes"></param>
+        public virtual Task<IEnumerable<T>> ExecuteSelectQuery<T>(Expression<Func<T, bool>> search, params Expression<Func<T, object>>[] includes)
+            where T : class
+        {
+            var query = this.SqlGenerator.Select<T>(search, includes);
+
+            return this.ExecuteSelectQuery<T>(query, includes);
+        }
+
+        /// <summary>
         /// Executes a select query
         /// </summary>
         /// <param name="query"></param>
@@ -36,7 +95,7 @@ namespace Extended.Dapper.Core.Repository
         public virtual async Task<IEnumerable<T>> ExecuteSelectQuery<T>(SelectSqlQuery query, params Expression<Func<T, object>>[] includes)
             where T : class
         {
-            var typeArr = ReflectionHelper.GetTypeListFromIncludes(includes).ToArray();
+            var typeArr = ReflectionHelper.GetTypeListFromIncludes<T>(includes).ToArray();
             
             // Grab keys
             var keys = query.Select.Where(x => x.IsMainKey).ToList();
@@ -71,10 +130,28 @@ namespace Extended.Dapper.Core.Repository
         /// Executes an insert query
         /// </summary>
         /// <param name="entity"></param>
-        /// <param name="query"></param>
         /// <param name="transaction"></param>
         /// <returns>true when succesful; false otherwise</returns>
-        public virtual async Task<bool> ExecuteInsertQuery<T>(T entity, InsertSqlQuery query, IDbTransaction transaction = null)
+        public virtual Task<bool> ExecuteInsertEntityQuery<T>(T entity, IDbTransaction transaction = null, Type typeOverride = null)
+            where T : class
+            => this.ExecuteInsertQuery<T>(entity, transaction);
+
+        /// <summary>
+        /// Executes an insert query
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <param name="query"></paran>
+        /// <param name="transaction"></param>
+        /// <param name="queryFields"></param>
+        /// <param name="queryParams"></param>
+        /// <returns>true when succesful; false otherwise</returns>
+        public virtual async Task<bool> ExecuteInsertQuery<T>(
+            T entity, 
+            IDbTransaction transaction = null, 
+            Type typeOverride = null,
+            IEnumerable<QueryField> queryFields = null,
+            Dictionary<string, object> queryParams = null)
+            where T : class
         {
             var shouldCommit = false;
             IDbConnection connection = null;
@@ -90,16 +167,42 @@ namespace Extended.Dapper.Core.Repository
 
             try
             {
+                var entityKey = EntityMapper.GetCompositeUniqueKey<T>(entity, typeOverride);
+                bool hasNoKey = EntityMapper.IsKeyEmpty(entityKey);
+
                 // First grab & insert all the ManyToOnes (foreign keys of this entity)
-                query = await this.InsertManyToOnes<T>(entity, query, transaction);
-                var insertResult = await transaction.Connection.ExecuteAsync(query.ToString(), query.Params, transaction);
+                var m2oInsertQuery = await this.InsertManyToOnes<T>(entity, transaction, typeOverride, queryFields, queryParams);
 
-                if (insertResult == 1)
+                hasNoKey = hasNoKey && EntityMapper.IsKeyEmpty(entityKey);
+
+                int insertResult = 0;
+
+                if (hasNoKey)
                 {
-                    var entityKey = EntityMapper.GetCompositeUniqueKey(entity);
+                    InsertSqlQuery insertQuery = this.SqlGenerator.Insert<T>(entity, typeOverride);
+                    entityKey = EntityMapper.GetCompositeUniqueKey<T>(entity, typeOverride);
 
+                    if (queryFields != null)
+                        insertQuery.Insert.AddRange(queryFields);
+
+                    if (queryParams != null)
+                        foreach (var param in queryParams)
+                            insertQuery.Params.Add(param.Key, param.Value);
+            
+                    insertQuery.Insert.AddRange(m2oInsertQuery.Insert);
+
+                    foreach (var param in m2oInsertQuery.Params)
+                        if (!insertQuery.Params.ContainsKey(param.Key))
+                            insertQuery.Params.Add(param.Key, param.Value);
+                
+                    insertResult = await transaction.Connection.ExecuteAsync(insertQuery.ToString(), insertQuery.Params, transaction);
+                }
+
+                if (insertResult == 1 || !hasNoKey)
+                {
                     // Insert the OneToManys
-                    await this.InsertOneToManys<T>(entity, entityKey, transaction);
+                    if (!await this.InsertOneToManys<T>(entity, entityKey, transaction, typeOverride))
+                        insertResult = -1;
                 }
 
                 if (shouldCommit)
@@ -107,7 +210,7 @@ namespace Extended.Dapper.Core.Repository
 
                 connection?.Close();
 
-                return insertResult == 1;
+                return insertResult == 1 || (insertResult == 0 && !hasNoKey);
             }
             catch (Exception)
             {
@@ -129,13 +232,20 @@ namespace Extended.Dapper.Core.Repository
         /// Executes an update query
         /// </summary>
         /// <param name="entity"></param>
-        /// <param name="query"></param>
         /// <param name="transaction"></param>
         /// <param name="includes"></param>
+        /// <param name="queryFields"></param>
+        /// <param name="queryParams"></param>
         /// <returns>True when succesfull; false otherwise</returns>
-        public virtual async Task<bool> ExecuteUpdateQuery<T>(T entity, UpdateSqlQuery query, IDbTransaction transaction = null, params Expression<Func<T, object>>[] includes)
+        public virtual async Task<bool> ExecuteUpdateQuery<T>(
+            T entity, 
+            IDbTransaction transaction = null, 
+            Expression<Func<T, object>>[] includes = null,
+            IEnumerable<QueryField> queryFields = null,
+            Dictionary<string, object> queryParams = null)
             where T : class
         {
+            var query = this.SqlGenerator.Update<T>(entity);
             var shouldCommit = false;
             IDbConnection connection = null;
 
@@ -148,9 +258,24 @@ namespace Extended.Dapper.Core.Repository
                 shouldCommit = true;
             }
 
+            if (queryFields != null)
+                query.Updates.AddRange(queryFields);
+
+            if (queryParams != null)
+                foreach (var param in queryParams)
+                    query.Params.Add(param.Key, param.Value);
+
             // Update all children
             if (includes != null)
-                query = await this.UpdateChildren<T>(entity, query, transaction, includes);
+            {
+                var updateQuery = await this.UpdateChildren<T>(entity, transaction, includes);
+
+                updateQuery.Updates.AddRange(updateQuery.Updates);
+
+                foreach (var param in updateQuery.Params)
+                    if (!updateQuery.Params.ContainsKey(param.Key))
+                        updateQuery.Params.Add(param.Key, param.Value);
+            }
 
             try
             {
@@ -182,11 +307,28 @@ namespace Extended.Dapper.Core.Repository
         /// <summary>
         /// Executes a delete query
         /// </summary>
-        /// <param name="query"></param>
+        /// <param name="search"></param>
         /// <param name="transaction"></param>
         /// <returns>Number of deleted records</returns>
-        public virtual async Task<int> ExecuteDeleteQuery<T>(SqlQuery query, IDbTransaction transaction = null)
+        public virtual Task<int> ExecuteDeleteEntityQuery<T>(T entity, IDbTransaction transaction = null)
+            where T : class
         {
+            var entityId = EntityMapper.GetCompositeUniqueKey<T>(entity);
+            var search = this.SqlGenerator.CreateByIdExpression<T>(entityId);
+
+            return this.ExecuteDeleteQuery<T>(search, transaction);
+        }
+
+        /// <summary>
+        /// Executes a delete query
+        /// </summary>
+        /// <param name="search"></param>
+        /// <param name="transaction"></param>
+        /// <returns>Number of deleted records</returns>
+        public virtual async Task<int> ExecuteDeleteQuery<T>(Expression<Func<T, bool>> search, IDbTransaction transaction = null)
+            where T : class
+        {
+            var query = this.SqlGenerator.Delete<T>(search);
             var shouldCommit = false;
             IDbConnection connection = null;
 
@@ -241,42 +383,81 @@ namespace Extended.Dapper.Core.Repository
             }
         }
 
-        protected virtual async Task<InsertSqlQuery> InsertManyToOnes<T>(T entity, InsertSqlQuery insertQuery, IDbTransaction transaction)
+        protected virtual async Task<InsertSqlQuery> InsertManyToOnes<T>(
+            T entity, 
+            IDbTransaction transaction, 
+            Type typeOverride = null,
+            IEnumerable<QueryField> queryFields = null,
+            Dictionary<string, object> queryParams = null)
+            where T : class
         {
-            var entityMap = EntityMapper.GetEntityMap(typeof(T));
+            EntityMap entityMap;
 
-            var manyToOnes = entityMap.RelationProperties.Where(x => x.Key.GetCustomAttribute<ManyToOneAttribute>() != null);
+            if (typeOverride != null)
+                entityMap = EntityMapper.GetEntityMap(typeOverride);
+            else
+                entityMap = EntityMapper.GetEntityMap(typeof(T));
+
+            var manyToOnes = entityMap.RelationProperties.Where(x => x.Key.GetCustomAttributes<ManyToOneAttribute>().Any());
+
+            InsertSqlQuery insertQuery = new InsertSqlQuery();
+            insertQuery.Insert = new List<QueryField>();
+            insertQuery.Params = new Dictionary<string, object>();
 
             foreach (var one in manyToOnes)
             {
-                var oneObj  = one.Key.GetValue(entity);
-                var attr    = one.Key.GetCustomAttribute<ManyToOneAttribute>();
+                var oneObj          = one.Key.GetValue(entity);
+                var attr            = one.Key.GetCustomAttribute<ManyToOneAttribute>();
 
                 if (oneObj != null)
                 {
-                    var oneObjKey = EntityMapper.GetCompositeUniqueKey(oneObj);
+                    Type oneObjType = oneObj.GetType();
+                    var oneObjKey = EntityMapper.GetCompositeUniqueKey(oneObj, oneObjType);
                     
                     // If it has no key, we can assume it is a new entity
                     if (EntityMapper.IsKeyEmpty(oneObjKey))
                     {
                         // Insert
-                        oneObjKey = await this.InsertEntityAndReturnId(oneObj, transaction);
+                        oneObjKey = await this.InsertEntityAndReturnId(oneObj, oneObjType, transaction);
 
                         if (oneObjKey == null)
                             throw new ApplicationException("Could not insert a ManyToOne object: " + oneObj);
                     }
 
-                    insertQuery.Insert.Add(new QueryField(entityMap.TableName, attr.ForeignKey, "p_m2o_" + attr.TableName + "_" + attr.ForeignKey));
-                    insertQuery.Params.Add("p_m2o_" + attr.TableName + "_" + attr.ForeignKey, oneObjKey);
+                    if (queryParams == null || !queryParams.ContainsKey("p_fk_" + attr.ForeignKey))
+                    {
+                        insertQuery.Insert.Add(new QueryField(entityMap.TableName, attr.ForeignKey, "p_m2o_" + attr.TableName + "_" + attr.ForeignKey));
+                        insertQuery.Params.Add("p_m2o_" + attr.TableName + "_" + attr.ForeignKey, oneObjKey);
+                    }
+                } 
+                else if (!attr.Nullable && (queryParams == null || !queryParams.ContainsKey("p_fk_" + attr.ForeignKey)))
+                {
+                    var oneObjEntityMap = EntityMapper.GetEntityMap(one.Key.PropertyType);
+                    var prop = oneObjEntityMap.RelationProperties.Where(p => p.Key.GetCustomAttribute<OneToManyAttribute>() != null
+                        && p.Key.GetCustomAttribute<OneToManyAttribute>().ForeignKey == attr.ForeignKey).Count();
+
+                    if (prop > 0)
+                    {
+                        var entityKey = EntityMapper.GetCompositeUniqueKey<T>(entity);
+
+                        insertQuery.Insert.Add(new QueryField(entityMap.TableName, attr.ForeignKey, "p_m2o_" + attr.TableName + "_" + attr.ForeignKey));
+                        insertQuery.Params.Add("p_m2o_" + attr.TableName + "_" + attr.ForeignKey, entityKey);
+                    }
                 }
             }
 
             return insertQuery;
         }
 
-        protected virtual async Task<bool> InsertOneToManys<T>(T entity, object foreignKey, IDbTransaction transaction = null)
+        protected virtual async Task<bool> InsertOneToManys<T>(T entity, object foreignKey, IDbTransaction transaction = null, Type typeOverride = null)
+            where T : class
         {
-            var entityMap = EntityMapper.GetEntityMap(typeof(T));
+            EntityMap entityMap;
+
+            if (typeOverride != null)
+                entityMap = EntityMapper.GetEntityMap(typeOverride);
+            else
+                entityMap = EntityMapper.GetEntityMap(typeof(T));
 
             var oneToManys = entityMap.RelationProperties.Where(x => x.Key.GetCustomAttribute<OneToManyAttribute>() != null);
 
@@ -288,21 +469,27 @@ namespace Extended.Dapper.Core.Repository
                     continue;
 
                 var attr            = many.Key.GetCustomAttribute<OneToManyAttribute>();
-                var listEntityMap   = EntityMapper.GetEntityMap(manyObj.GetType().GetGenericArguments()[0].GetTypeInfo());
+                var listType        = manyObj.GetType().GetGenericArguments()[0].GetTypeInfo();
+                var listEntityMap   = EntityMapper.GetEntityMap(listType);
 
                 foreach (var obj in manyObj)
                 {
-                    var objKey = EntityMapper.GetCompositeUniqueKey(obj);
+                    Type objType = obj.GetType();
+                    var objKey = EntityMapper.GetCompositeUniqueKey(obj, objType);
 
                     // If it has no key, we can assume it is a new entity
                     if (EntityMapper.IsKeyEmpty(objKey))
                     {
-                        var query = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "Insert", listEntityMap.Type, new[] { obj }, this.SqlGenerator) as InsertSqlQuery;
+                        var queryField = new List<QueryField>();
+                        queryField.Add(new QueryField(attr.TableName, attr.ForeignKey, "p_fk_" + attr.ForeignKey));
+                        
+                        var queryParams = new Dictionary<string, object>();
+                        queryParams.Add("p_fk_" + attr.ForeignKey, foreignKey);
 
-                        query.Insert.Add(new QueryField(attr.TableName, attr.ForeignKey, "p_fk_" + attr.ForeignKey));
-                        query.Params.Add("p_fk_" + attr.ForeignKey, foreignKey);
+                        var queryResult = await this.ExecuteInsertQuery(obj, transaction, objType, queryField, queryParams);
 
-                        var queryResult = await this.ExecuteInsertQuery(obj, query, transaction);
+                        if (!queryResult)
+                            return false;
                     }
                 }
             }
@@ -310,11 +497,15 @@ namespace Extended.Dapper.Core.Repository
             return true;
         }
 
-        protected virtual async Task<UpdateSqlQuery> UpdateChildren<T>(T entity, UpdateSqlQuery updateQuery, IDbTransaction transaction, params Expression<Func<T, object>>[] includes)
+        protected virtual async Task<UpdateSqlQuery> UpdateChildren<T>(T entity, IDbTransaction transaction, params Expression<Func<T, object>>[] includes)
             where T : class
         {
+            UpdateSqlQuery updateQuery = new UpdateSqlQuery();
+            updateQuery.Updates = new List<QueryField>();
+            updateQuery.Params = new Dictionary<string, object>();
+
             var entityMap = EntityMapper.GetEntityMap(typeof(T));
-            var foreignKey = EntityMapper.GetCompositeUniqueKey(entity);
+            var foreignKey = EntityMapper.GetCompositeUniqueKey<T>(entity);
 
             foreach (var incl in includes)
             {
@@ -330,13 +521,14 @@ namespace Extended.Dapper.Core.Repository
                 {
                     if (attr is ManyToOneAttribute)
                     {
-                        var oneObjKey = EntityMapper.GetCompositeUniqueKey(oneObj);
+                        var objType = oneObj.GetType();
+                        var oneObjKey = EntityMapper.GetCompositeUniqueKey(oneObj, objType);
                         
                         // If it has no key, we can assume it is a new entity
                         if (EntityMapper.IsKeyEmpty(oneObjKey))
                         {
                             // Insert
-                            oneObjKey = await this.InsertEntityAndReturnId(oneObj, transaction);
+                            oneObjKey = await this.InsertEntityAndReturnId(oneObj, objType, transaction);
 
                             if (oneObjKey == null)
                                 throw new ApplicationException("Could not insert a ManyToOne object: " + oneObj);
@@ -344,8 +536,8 @@ namespace Extended.Dapper.Core.Repository
                         else
                         {
                             // Update the entity
-                            var query = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "Update", oneObj.GetType(), new[] { oneObj }, this.SqlGenerator) as UpdateSqlQuery;
-                            var queryResult = await (ReflectionHelper.CallGenericMethod(typeof(QueryExecuter), "ExecuteUpdateQuery", oneObj.GetType(), new[] { oneObj, query, transaction, null }, this) as Task<bool>);
+                            var query = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "Update", objType, new[] { oneObj }, this.SqlGenerator) as UpdateSqlQuery;
+                            var queryResult = await (ReflectionHelper.CallGenericMethod(typeof(QueryExecuter), "ExecuteUpdateQuery", oneObj.GetType(), new[] { oneObj, transaction, null, null }, this) as Task<bool>);
 
                             if (!queryResult)
                                 throw new ApplicationException("Could not update a ManyToOne object: " + oneObj);
@@ -364,19 +556,20 @@ namespace Extended.Dapper.Core.Repository
 
                         foreach (var listItem in listObj)
                         {
-                            var objKey = EntityMapper.GetCompositeUniqueKey(listItem);
+                            var objKey = EntityMapper.GetCompositeUniqueKey(listItem, listType);
 
                             // If it has no key, we can assume it is a new entity
                             if (EntityMapper.IsKeyEmpty(objKey))
                             {
-                                var query = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "Insert", listEntityMap.Type, new[] { listItem }, this.SqlGenerator) as InsertSqlQuery;
+                                var queryField = new List<QueryField>();
+                                queryField.Add(new QueryField(attr.TableName, attr.ForeignKey, "p_fk_" + attr.ForeignKey));
+                                
+                                var queryParams = new Dictionary<string, object>();
+                                queryParams.Add("p_fk_" + attr.ForeignKey, foreignKey);
 
-                                query.Insert.Add(new QueryField(attr.TableName, attr.ForeignKey, "p_fk_" + attr.ForeignKey));
-                                query.Params.Add("p_fk_" + attr.ForeignKey, foreignKey);
+                                objKey = EntityMapper.GetCompositeUniqueKey(listItem, listType);
 
-                                objKey = EntityMapper.GetCompositeUniqueKey(listItem);
-
-                                var queryResult = await this.ExecuteInsertQuery(listItem, query, transaction);
+                                var queryResult = await this.ExecuteInsertQuery(listItem, transaction, listType, queryField, queryParams);
 
                                 if (!queryResult)
                                     throw new ApplicationException("Could not create a OneToMany object: " + listItem);
@@ -384,12 +577,13 @@ namespace Extended.Dapper.Core.Repository
                             else
                             {
                                 // Update the entity
-                                var query = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "Update", listType, new[] { listItem }, this.SqlGenerator) as UpdateSqlQuery;
+                                var queryField = new List<QueryField>();
+                                queryField.Add(new QueryField(attr.TableName, attr.ForeignKey, "p_fk_" + attr.ForeignKey));
+                                
+                                var queryParams = new Dictionary<string, object>();
+                                queryParams.Add("p_fk_" + attr.ForeignKey, foreignKey);
 
-                                query.Updates.Add(new QueryField(attr.TableName, attr.ForeignKey, "p_fk_" + attr.ForeignKey));
-                                query.Params.Add("p_fk_" + attr.ForeignKey, foreignKey);
-
-                                var queryResult = await (ReflectionHelper.CallGenericMethod(typeof(QueryExecuter), "ExecuteUpdateQuery", listType, new[] { listItem, query, transaction, null }, this) as Task<bool>);
+                                var queryResult = await (ReflectionHelper.CallGenericMethod(typeof(QueryExecuter), "ExecuteUpdateQuery", listType, new[] { listItem, transaction, null, queryField, queryParams }, this) as Task<bool>);
 
                                 if (!queryResult)
                                     throw new ApplicationException("Could not update a OneToMany object: " + listItem);
@@ -433,17 +627,17 @@ namespace Extended.Dapper.Core.Repository
         /// <param name="entity"></param>
         /// <param name="transaction"></param>
         /// <returns>null when failed; id otherwise</returns>
-        protected virtual async Task<object> InsertEntityAndReturnId(object entity, IDbTransaction transaction = null)
+        protected virtual async Task<object> InsertEntityAndReturnId<T>(T entity, Type typeOverride = null, IDbTransaction transaction = null)
+            where T : class
         {
             // Insert it
-            var query = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "Insert", entity.GetType(), new[] { entity }, this.SqlGenerator) as InsertSqlQuery;
-            var queryResult = await this.ExecuteInsertQuery(entity, query, transaction);
+            var queryResult = await this.ExecuteInsertQuery(entity, transaction, typeOverride);
 
             if (!queryResult)
                 return null;
 
             // Grab primary key
-            return EntityMapper.GetCompositeUniqueKey(entity);
+            return EntityMapper.GetCompositeUniqueKey<T>(entity, typeOverride);
         }
     }
 }

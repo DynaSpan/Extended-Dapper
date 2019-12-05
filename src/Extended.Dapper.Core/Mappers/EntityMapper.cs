@@ -92,10 +92,19 @@ namespace Extended.Dapper.Core.Mappers
         /// <summary>
         /// Generates a unique identifier for this entity
         /// </summary>
-        public static object GetCompositeUniqueKey(object entity)
+        public static object GetCompositeUniqueKey<T>(T entity, Type typeOverride = null)
+            where T : class
         {
+            if (entity == null)
+                return null;
+
             // Get the entity map
-            var entityMap = GetEntityMap(entity.GetType());
+            EntityMap entityMap;
+
+            if (typeOverride != null)
+                entityMap = GetEntityMap(typeOverride);
+            else
+                entityMap = GetEntityMap(typeof(T));
 
             if (entityMap.PrimaryKeyPropertiesMetadata.Count() == 1)
             {

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Extended.Dapper.Tests.Helpers;
 using Extended.Dapper.Tests.Models;
 using NUnit.Framework;
 
@@ -9,6 +10,13 @@ namespace Extended.Dapper.Tests.Repository
     [TestFixture]
     public class TestEntityRepositoryGetters : TestEntityRepository
     {
+        [OneTimeSetUp]
+        public override void FixtureSetUp()
+        {
+            base.FixtureSetUp();
+            DatabaseHelper.PopulateDatabase().Wait();
+        }
+
         #region Single items
 
         /// <summary>

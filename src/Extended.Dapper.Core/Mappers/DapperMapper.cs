@@ -21,13 +21,11 @@ namespace Extended.Dapper.Core.Mappers
         {
             return (objectArr) => {
                 T entity;
-                var entityCompositeKey  = EntityMapper.GetCompositeUniqueKey((T)objectArr[0]);
+                var entityCompositeKey  = EntityMapper.GetCompositeUniqueKey<T>((T)objectArr[0]);
                 var entityMap           = EntityMapper.GetEntityMap(typeof(T));
 
                 if (!lookup.TryGetValue(entityCompositeKey.ToString(), out entity))
-                {
                     lookup.Add(entityCompositeKey.ToString(), entity = (T)objectArr[0]);
-                }
 
                 var singleObjectCacher = new Dictionary<Type, int>();
 
@@ -44,7 +42,7 @@ namespace Extended.Dapper.Core.Mappers
                         var listType     = type.GetGenericArguments()[0].GetTypeInfo();
                         var listProperty = property.Key.GetValue(entity) as IList;
 
-                        var objList = objectArr.Where(x => x != null && x.GetType() == listType && !EntityMapper.IsKeyEmpty(EntityMapper.GetCompositeUniqueKey(x)));
+                        var objList = objectArr.Where(x => x != null && x.GetType() == listType && !EntityMapper.IsKeyEmpty(EntityMapper.GetCompositeUniqueKey(x, x.GetType())));
                         IList value = ReflectionHelper.CastListTo(listType, objList);
 
                         if (value != null)
@@ -59,7 +57,7 @@ namespace Extended.Dapper.Core.Mappers
                     }
                     else
                     {
-                        object value;
+                        object value = null;
 
                         // Handle as single object
                         if (singleObjectCacher.ContainsKey(type))
@@ -80,7 +78,7 @@ namespace Extended.Dapper.Core.Mappers
 
                         if (value != null)
                         {
-                            var valueId = EntityMapper.GetCompositeUniqueKey(value);
+                            var valueId = EntityMapper.GetCompositeUniqueKey(value, value.GetType());
 
                             if (!EntityMapper.IsKeyEmpty(valueId))
                                 property.Key.SetValue(entity, value);

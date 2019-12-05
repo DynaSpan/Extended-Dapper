@@ -16,12 +16,11 @@ namespace Extended.Dapper.Tests.Repository
         protected EntityRepository<Author> AuthorRepository { get; set; }
         protected EntityRepository<Category> CategoryRepository { get; set; }
 
-        [OneTimeSetUpAttribute]
-        public void FixtureSetUp()
+        [OneTimeSetUp]
+        public virtual void FixtureSetUp()
         {
             SqlQueryProviderHelper.Verbose = true;
             DatabaseHelper.CreateDatabase();
-            DatabaseHelper.PopulateDatabase().Wait();
 
             BookRepository = new EntityRepository<Book>(DatabaseHelper.GetDatabaseFactory());
             AuthorRepository = new EntityRepository<Author>(DatabaseHelper.GetDatabaseFactory());

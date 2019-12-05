@@ -1,5 +1,5 @@
 CREATE TABLE "Author" (
-    "Id" GUID PRIMARY KEY,
+    "Id" GUID PRIMARY KEY NOT NULL,
     "Name" VARCHAR,
     "BirthYear" INT,
     "Country" VARCHAR,
@@ -8,8 +8,8 @@ CREATE TABLE "Author" (
 );
 
 CREATE TABLE "Book" (
-    "Id" GUID PRIMARY KEY,
-    "AuthorId" GUID,
+    "Id" GUID PRIMARY KEY NOT NULL,
+    "AuthorId" GUID NOT NULL,
     "CoAuthorId" GUID,
     "CategoryId" GUID,
     "Name" VARCHAR,
@@ -20,7 +20,7 @@ CREATE TABLE "Book" (
 );
 
 CREATE TABLE "Category" (
-    "Id" GUID PRIMARY KEY,
+    "Id" GUID PRIMARY KEY NOT NULL,
     "Name" VARCHAR,
     "Description" VARCHAR
 );
