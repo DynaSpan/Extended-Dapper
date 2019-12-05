@@ -74,4 +74,27 @@ We can create an EntityRepository `var categoryRepository = new EntityRepository
     // the original object as well
     await categoryRepository.Update(scienceCategoryEntity); 
 
+    // Get category with the Books children
+    var myCategory = await categoryRepository.Get(c => c.Name == "Science", c => c.Books);
+
+    // With inserts, children get automatically inserted if they dont exist yet (i.e. key is empty)
+    var horrorCategory = new Category()
+    {
+        Name = "Horror"
+    };
+    var horrorBook = new Book()
+    {
+        Name = "A Horror Story",
+        ReleaseYear = 2010
+    };
+    horrorCategory.Books.Add(horrorBook);
+
+    var horrorCategoryEntity = await categoryRepository.Insert(horrorCategory);
+
+    Console.WriteLine(horrorBook.Id); // Will be a random GUID
+
+    // With updates, you'll have to include the children you want to update
+    // to prevent deletion of children if the child is null
+    bool updateResult = await categoryRepository.Update(horrorCategory, c => c.Books);
+
 // TODO: add more here
