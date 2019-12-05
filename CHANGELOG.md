@@ -1,5 +1,8 @@
 # Changelog
 
+[0.3.7-beta]
+Fix a bug where inserting an entity with children multiple levels deep didn't work correctly. While doing this also refactored some stuff + unittest for the problem.
+
 [0.3.6-beta]
 Fix the GetOne<T> method + add unit tests to cover GetOne<T> and GetMany<T>.
 
