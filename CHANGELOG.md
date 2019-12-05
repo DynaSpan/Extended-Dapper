@@ -1,5 +1,9 @@
 # Changelog
 
+[0.3.8-beta]
+Fix another bug where updating children didn't always work correctly if the children
+were not inserted into the database yet.
+
 [0.3.7-beta]
 Fix a bug where inserting an entity with children multiple levels deep didn't work correctly. While doing this also refactored some stuff + unittest for the problem.
 

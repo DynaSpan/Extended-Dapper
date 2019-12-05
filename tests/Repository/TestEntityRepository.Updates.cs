@@ -82,6 +82,38 @@ namespace Extended.Dapper.Tests.Repository
         }
 
         /// <summary>
+        /// This tests if updating children that already exists (i.e. have an id)
+        /// works properly
+        /// </summary>
+        [Test]
+        public void TestUpdateWithExistingAndNewChildren()
+        {
+            var stephenAuthor = this.AuthorRepository.Get(a => a.Name == "Stephen Hawking", a => a.Books).Result;
+            var briefHistoryBook = stephenAuthor.Books.Single(b => b.Name == "A Brief History of Time");
+            briefHistoryBook.Name = "Small History of Time";
+
+            // Create a new book
+            Book newBook = new Book()
+            {
+                Author = stephenAuthor,
+                Name = "The Grand Design",
+                ReleaseYear = 2010
+            };
+            stephenAuthor.Books.Add(newBook);
+
+            this.AuthorRepository.Update(stephenAuthor, a => a.Books).Wait();
+
+            // Check if books still exists
+            var stephenWithBooks = this.AuthorRepository.Get(a => a.Name == "Stephen Hawking", a => a.Books).Result;
+            Assert.AreEqual(4, stephenWithBooks.Books.Count, "Books have not been saved properly through update");
+
+            briefHistoryBook = stephenWithBooks.Books.SingleOrDefault(b => b.Name == "Small History of Time");
+            var grandDesignBook = stephenWithBooks.Books.SingleOrDefault(b => b.Name == "The Grand Design");
+            Assert.AreNotEqual(null, briefHistoryBook, "Book has not been updated though it was included");
+            Assert.AreNotEqual(null, grandDesignBook, "The newly inserted child could not be found");
+        }
+
+        /// <summary>
         /// Tests if the IgnoreOnUpdate property works as intended
         /// </summary>
         [Test]

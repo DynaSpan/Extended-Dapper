@@ -567,9 +567,9 @@ namespace Extended.Dapper.Core.Repository
                                 var queryParams = new Dictionary<string, object>();
                                 queryParams.Add("p_fk_" + attr.ForeignKey, foreignKey);
 
-                                objKey = EntityMapper.GetCompositeUniqueKey(listItem, listType);
-
                                 var queryResult = await this.ExecuteInsertQuery(listItem, transaction, listType, queryField, queryParams);
+
+                                objKey = EntityMapper.GetCompositeUniqueKey(listItem, listType);
 
                                 if (!queryResult)
                                     throw new ApplicationException("Could not create a OneToMany object: " + listItem);
