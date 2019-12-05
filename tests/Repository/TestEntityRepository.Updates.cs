@@ -83,7 +83,7 @@ namespace Extended.Dapper.Tests.Repository
 
         /// <summary>
         /// This tests if updating children that already exists (i.e. have an id)
-        /// works properly
+        /// works properly when mixed with new children that don't have an id
         /// </summary>
         [Test]
         public void TestUpdateWithExistingAndNewChildren()
