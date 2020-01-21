@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using Extended.Dapper.Tests.Helpers;
 using Extended.Dapper.Tests.Models;
@@ -153,6 +154,50 @@ namespace Extended.Dapper.Tests.Repository
             var numberOfBooks = this.BookRepository.GetAll().Result.Count();
 
             Assert.AreEqual(1, numberOfCategories, "Number of categories is not equal to 1");
+            Assert.AreEqual(1, numberOfAuthors, "Number of authors is not equal to 1");
+            Assert.AreEqual(1, numberOfBooks, "Number of books are not equal to 1");
+        }
+
+        /// <summary>
+        /// Tests if an object without Autovalue keys gets inserted properly
+        /// </summary>
+        [Test]
+        public void TestInsertWithoutAutovalueKeys()
+        {
+            var paleBlueDotBook = ModelHelper.GetBookModel(BookModelType.PaleBlueDot);
+            var bookEntity = this.BookRepository.Insert(paleBlueDotBook).Result;
+
+            var log = this.Log(bookEntity, "CREATE").Result;
+
+            var numberOfLogs = this.LogRepository.GetAll().Result.Count();
+            Assert.AreEqual(1, numberOfLogs, "Incorrect number of logs");
+        }
+
+        /// <summary>
+        /// This tests if inserting objects within a transaction works correctly
+        /// </summary>
+        [Test]
+        public void TestInsertWithTransaction()
+        {
+            IDbConnection connection = DatabaseHelper.GetDatabaseFactory().GetDatabaseConnection();
+            connection.Open();
+
+            IDbTransaction transaction = connection.BeginTransaction();
+
+            var carlSagan = ModelHelper.GetAuthorModel(AuthorModelType.CarlSagan);
+            var insertEntity = this.AuthorRepository.Insert(carlSagan, transaction).Result;
+
+            this.TestIfAuthorIsValid(insertEntity, AuthorModelType.CarlSagan);
+
+            var paleBlueDotBook = ModelHelper.GetBookModel(BookModelType.PaleBlueDot, null, insertEntity, null, true);
+            var insertedBook = this.BookRepository.Insert(paleBlueDotBook, transaction);
+
+            transaction.Commit();
+            connection.Close();
+
+            var numberOfAuthors = this.AuthorRepository.GetAll().Result.Count();
+            var numberOfBooks = this.BookRepository.GetAll().Result.Count();
+
             Assert.AreEqual(1, numberOfAuthors, "Number of authors is not equal to 1");
             Assert.AreEqual(1, numberOfBooks, "Number of books are not equal to 1");
         }

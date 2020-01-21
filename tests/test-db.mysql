@@ -28,3 +28,10 @@ CREATE TABLE `Category` (
     `Name` VARCHAR(255),
     `Description` VARCHAR(255)
 );
+
+CREATE TABLE `Log` (
+    `Date` DATETIME PRIMARY KEY NOT NULL,
+    `SubjectId` VARCHAR(255) PRIMARY KEY NOT NULL,
+    `UserId` CHAR(36),
+    `Action` VARCHAR(255)
+);

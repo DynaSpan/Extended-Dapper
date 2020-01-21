@@ -1,5 +1,8 @@
 # Changelog
 
+[0.3.9-beta]
+Fix a bug where an object wouldn't get inserted if it had non-autovalue primary keys, that were filled on insert.
+
 [0.3.8-beta]
 Fix another bug where updating children didn't always work correctly if the children
 were not inserted into the database yet.

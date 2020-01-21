@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using Extended.Dapper.Tests.Helpers;
 using Extended.Dapper.Tests.Models;
@@ -138,6 +139,40 @@ namespace Extended.Dapper.Tests.Repository
             var updatedBookEntity = this.BookRepository.Get(b => b.Name == "The Auto-Biography of Stephen Hawking").Result;
 
             Assert.AreEqual("Auto-Biography of Stephen Hawking", updatedBookEntity.OriginalName, "IgnoreOnUpdate property was ignored in Book");
+        }
+
+        /// <summary>
+        /// Tests if updating with transactions is working properly
+        /// </summary>
+        [Test]
+        public void TestUpdateWithTransaction()
+        {
+            IDbConnection connection = DatabaseHelper.GetDatabaseFactory().GetDatabaseConnection();
+            connection.Open();
+
+            IDbTransaction transaction = connection.BeginTransaction();
+
+            var stephenAuthor = this.AuthorRepository.Get(a => a.Name == "Stephen Hawking", a => a.Books).Result;
+            stephenAuthor.Country = "UK";
+
+            this.AuthorRepository.Update(stephenAuthor, transaction).Wait();
+
+            var newBook = new Book()
+            {
+                Name = "Auto-Biography of Stephen Hawking",
+                Author = stephenAuthor,
+                ReleaseYear = 2018,
+                OriginalName = "Auto-Biography of Stephen Hawking",
+            };
+
+            var newBookEntity = this.BookRepository.Insert(newBook, transaction).Result;
+
+            transaction.Commit();
+            connection.Close();
+
+            var bookEntity = this.BookRepository.Get(b => b.Name == "Auto-Biography of Stephen Hawking").Result;
+
+            Assert.AreNotEqual(null, bookEntity, "Insert in transaction failed");
         }
     }
 }

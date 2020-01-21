@@ -168,12 +168,12 @@ namespace Extended.Dapper.Core.Repository
             try
             {
                 var entityKey = EntityMapper.GetCompositeUniqueKey<T>(entity, typeOverride);
-                bool hasNoKey = EntityMapper.IsKeyEmpty(entityKey);
+                bool hasNoKey = EntityMapper.IsAutovalueKeysEmpty<T>(entity, typeOverride);
 
                 // First grab & insert all the ManyToOnes (foreign keys of this entity)
                 var m2oInsertQuery = await this.InsertManyToOnes<T>(entity, transaction, typeOverride, queryFields, queryParams);
 
-                hasNoKey = hasNoKey && EntityMapper.IsKeyEmpty(entityKey);
+                hasNoKey = hasNoKey && EntityMapper.IsAutovalueKeysEmpty<T>(entity, typeOverride);
 
                 int insertResult = 0;
 

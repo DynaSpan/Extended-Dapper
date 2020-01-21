@@ -138,6 +138,37 @@ namespace Extended.Dapper.Core.Mappers
         }
 
         /// <summary>
+        /// Checks if all the autofilled values are empty
+        /// </summary>
+        public static bool IsAutovalueKeysEmpty<T>(T entity, Type typeOverride = null)
+            where T : class
+        {
+            // Get the entity map
+            EntityMap entityMap;
+
+            if (typeOverride != null)
+                entityMap = GetEntityMap(typeOverride);
+            else
+                entityMap = GetEntityMap(typeof(T));
+
+            var autoValProps = entityMap.PrimaryKeyPropertiesMetadata.Where(x => x.AutoValue);
+
+            if (autoValProps.Count() > 0)
+            {
+                foreach (var autoValueProperty in autoValProps)
+                {
+                    var autoValueType = autoValueProperty.PropertyInfo.PropertyType;
+                    var key = autoValueProperty.PropertyInfo.GetValue(entity);
+
+                    if (!EntityMapper.IsKeyEmpty(key))
+                        return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
         /// Maps properties with OneToMany or ManyToOne relations
         /// </summary>
         /// <param name="relationProperty">Propertiy with a RelationAttribute</param>

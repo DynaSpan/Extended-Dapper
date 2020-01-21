@@ -24,3 +24,11 @@ CREATE TABLE "Category" (
     "Name" VARCHAR,
     "Description" VARCHAR
 );
+
+CREATE TABLE "Log" (
+    "Date" DATETIME NOT NULL,
+    "SubjectId" VARCHAR NOT NULL,
+    "UserId" GUID,
+    "Action" VARCHAR,
+    PRIMARY KEY ("Date", "SubjectId")
+);
