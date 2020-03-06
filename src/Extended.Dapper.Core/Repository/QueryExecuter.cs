@@ -537,7 +537,7 @@ namespace Extended.Dapper.Core.Repository
                         {
                             // Update the entity
                             var query = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "Update", objType, new[] { oneObj }, this.SqlGenerator) as UpdateSqlQuery;
-                            var queryResult = await (ReflectionHelper.CallGenericMethod(typeof(QueryExecuter), "ExecuteUpdateQuery", oneObj.GetType(), new[] { oneObj, transaction, null, null }, this) as Task<bool>);
+                            var queryResult = await (ReflectionHelper.CallGenericMethod(typeof(QueryExecuter), "ExecuteUpdateQuery", oneObj.GetType(), new[] { oneObj, transaction, null, null, null }, this) as Task<bool>);
 
                             if (!queryResult)
                                 throw new ApplicationException("Could not update a ManyToOne object: " + oneObj);

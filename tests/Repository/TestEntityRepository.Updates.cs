@@ -83,6 +83,30 @@ namespace Extended.Dapper.Tests.Repository
         }
 
         /// <summary>
+        /// This test checks if multiple children in updates works correctly without an parameter
+        /// count mismatch
+        /// </summary>
+        [Test]
+        public void TestUpdateWithMultipleChildren() 
+        {
+            var book = this.BookRepository.Get(b => b.Name == "Brief Answers to the Big Questions").Result;
+            Assert.AreNotEqual(null, book, "Book was null");
+
+            var author = this.AuthorRepository.Get(a => a.Name == "Carl Sagan").Result;
+            Assert.AreNotEqual(null, author, "Author was null");
+
+            var category = this.CategoryRepository.Get(c => c.Name == "Science").Result;
+            Assert.AreNotEqual(null, category, "Category was null");
+
+            book.Author = author;
+            book.Category = category;
+
+            var updateResult = this.BookRepository.Update(book, b => b.Author, b => b.Category).Result;
+
+            Assert.AreEqual(true, updateResult, "Could not update book with multiple children");
+        }
+
+        /// <summary>
         /// This tests if updating children that already exists (i.e. have an id)
         /// works properly when mixed with new children that don't have an id
         /// </summary>

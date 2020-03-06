@@ -1,5 +1,8 @@
 # Changelog
 
+[0.3.10-beta]
+Fix bug where an update query with multiple children would fail in certain cases.
+
 [0.3.9-beta]
 Fix a bug where an object wouldn't get inserted if it had non-autovalue primary keys, that were filled on insert.
 
