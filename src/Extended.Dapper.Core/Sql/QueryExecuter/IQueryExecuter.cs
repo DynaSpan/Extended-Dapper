@@ -16,7 +16,8 @@ namespace Extended.Dapper.Sql.QueryExecuter
         /// and returns the results
         /// </summary>
         /// <param name="queryBuilder"></param>
-        Task<IEnumerable<T>> ExecuteQueryBuilder<T>(QueryBuilder<T> queryBuilder);
+        Task<IEnumerable<T>> ExecuteQueryBuilder<T>(QueryBuilder<T> queryBuilder)
+            where T : class;
         
         /// <summary>
         /// Executes a select query by id

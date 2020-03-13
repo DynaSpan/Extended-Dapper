@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using Extended.Dapper.Core.Sql.Query;
+using Extended.Dapper.Core.Sql.QueryBuilder;
 
 namespace Extended.Dapper.Core.Sql.Generator
 {
@@ -22,6 +23,13 @@ namespace Extended.Dapper.Core.Sql.Generator
         /// <param name="search"></param>
         /// <typeparam name="T"></typeparam>
         SelectSqlQuery Select<T>(Expression<Func<T, bool>> search = null, params Expression<Func<T, object>>[] includes)
+            where T : class;
+
+        /// <summary>
+        /// Generates a select query from a QueryBuilder
+        /// </summary>
+        /// <param name="queryBuilder"></param>
+        SelectSqlQuery Select<T>(QueryBuilder<T> queryBuilder)
             where T : class;
 
         /// <summary>

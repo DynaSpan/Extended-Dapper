@@ -13,6 +13,7 @@ Extends Dapper with a repository (CRUD & LINQ) and native `OneToMany` & `ManyToO
 ## Features
 
 - Implements repositories with `CRUD` actions such as `Insert`, `Update`, `Get`, `GetById`, `GetAll` & `Delete` on top of Dapper.
+- QueryBuilder for custom SQL select queries
 - LINQ queries/searches executed as native SQL queries (no client-side filtering).
 - Support for `OneToMany` and `ManyToOne` attributes on entity properties.
     - Choose per `Get(All)` which children you want to include

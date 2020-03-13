@@ -19,8 +19,11 @@ namespace Extended.Dapper.Sql.QueryExecuter
         /// </summary>
         /// <param name="queryBuilder"></param>
         public virtual Task<IEnumerable<T>> ExecuteQueryBuilder<T>(QueryBuilder<T> queryBuilder)
+            where T : class
         {
-            return null;
+            var query = this.SqlGenerator.Select(queryBuilder);
+
+            return this.ExecuteSelectQuery<T>(query, queryBuilder.IncludedChildren.ToArray());
         }
 
         /// <summary>

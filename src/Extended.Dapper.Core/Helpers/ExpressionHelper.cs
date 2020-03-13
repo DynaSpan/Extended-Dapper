@@ -19,6 +19,32 @@ namespace Extended.Dapper.Core.Helpers
     internal static class ExpressionHelper
     {
         /// <summary>
+        /// Combines multiple expressions into a single Expression by AndAlso
+        /// </summary>
+        /// <param name="expressions"></param>
+        public static Expression<Func<T, bool>> CombineExpressions<T>(IEnumerable<Expression<Func<T, bool>>> expressions)
+        {
+            Expression<Func<T, bool>> expr1;
+            Expression<Func<T, bool>> expr2;
+
+            if (expressions.Count() == 0)
+                return null;
+            else if (expressions.Count() == 1)
+                return expressions.First();
+            else if (expressions.Count() == 2)
+            {
+                expr1 = expressions.ElementAt(0);
+                expr2 = expressions.ElementAt(1);
+            } else {
+                expr1 = expressions.ElementAt(0);
+                expr2 = CombineExpressions<T>(expressions.TakeLast(expressions.Count() - 1));
+            }
+
+            var body = Expression.AndAlso(expr1.Body, expr2.Body);
+            return Expression.Lambda<Func<T,bool>>(body, expr1.Parameters[0]);
+        }
+
+        /// <summary>
         /// Gets the name of a property
         /// </summary>
         /// <param name="field"></param>

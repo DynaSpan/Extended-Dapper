@@ -1,5 +1,8 @@
 # Changelog
 
+[0.4.0-beta]
+First implementation of query builder, which can be used to generate custom select queries. Still requires some work. Also, some refactoring + upgrade to .NET Core 3.1.
+
 [0.3.10-beta]
 Fix bug where an update query with multiple children would fail in certain cases.
 

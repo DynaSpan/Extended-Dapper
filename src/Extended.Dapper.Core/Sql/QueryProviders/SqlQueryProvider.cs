@@ -14,6 +14,7 @@ using Extended.Dapper.Core.Sql.Metadata;
 using Extended.Dapper.Core.Sql.Query;
 using Extended.Dapper.Core.Sql.Query.Expression;
 using Extended.Dapper.Core.Sql.Query.Models;
+using Extended.Dapper.Core.Sql.QueryBuilder;
 
 namespace Extended.Dapper.Core.Sql.QueryProviders
 {
@@ -91,6 +92,9 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
 
             if (selectQuery.Where != null && !string.IsNullOrEmpty(selectQuery.Where.ToString()))
                 query.AppendFormat(" WHERE {0}", selectQuery.Where);
+
+            if (selectQuery.OrderBy != null && selectQuery.OrderBy.Count > 0)
+                query.AppendFormat(" ORDER BY {0}", this.MapOrderBy(selectQuery.OrderBy));
 
             if (selectQuery.Limit != null)
                 query.AppendFormat(" LIMIT {0}", selectQuery.Limit);
@@ -252,6 +256,33 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         #endregion
 
         #region Generic
+
+        /// <summary>
+        /// Maps an order by on a query
+        /// </summary>
+        /// <param name="orderBy"></param>
+        public virtual string MapOrderBy(Dictionary<SelectField, OrderBy> orderBy)
+        {
+            return string.Join(", ", 
+                orderBy.Select(o => string.Format("{0} {1}", this.MapAliasColumn(o.Key), this.MapOrderByEnum(o.Value))));
+        }
+
+        /// <summary>
+        /// Maps an order by enum to the correct SQL variant
+        /// </summary>
+        /// <param name="orderBy"></param>
+        public virtual string MapOrderByEnum(OrderBy orderBy)
+        {
+            switch (orderBy)
+            {
+                case OrderBy.Asc:
+                    return "ASC";
+                case OrderBy.Desc:
+                    return "DESC";
+            }
+
+            return "ASC";
+        }
 
         /// <summary>
         /// Projection function for mapping property
