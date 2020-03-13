@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using Extended.Dapper.Core.Sql.Query;
 
-namespace Extended.Dapper.Core.Sql
+namespace Extended.Dapper.Core.Sql.Generator
 {
     public interface ISqlGenerator
     {

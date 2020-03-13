@@ -1,10 +1,9 @@
 using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Linq.Expressions;
 using Extended.Dapper.Core.Database;
 using Extended.Dapper.Core.Mappers;
-using Extended.Dapper.Core.Sql.Metadata;
+using Extended.Dapper.Core.Sql.Generator;
 using Extended.Dapper.Core.Sql.Query;
 
 namespace Extended.Dapper.Core.Sql.QueryProviders

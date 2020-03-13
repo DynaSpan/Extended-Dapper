@@ -3,11 +3,17 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using Extended.Dapper.Core.Sql.QueryBuilder;
 
 namespace Extended.Dapper.Core.Repository
 {
     public interface IEntityRepository<T> where T : class
     {
+        /// <summary>
+        /// Gets a new instance of the QueryBuilder
+        /// </summary>
+        QueryBuilder<T> GetQueryBuilder();
+
         /// <summary>
         /// Gets all the entities
         /// </summary>

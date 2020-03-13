@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Text;
 using Extended.Dapper.Core.Sql.Query.Models;
+using Extended.Dapper.Core.Sql.QueryBuilder;
 using Extended.Dapper.Core.Sql.QueryProviders;
 
 namespace Extended.Dapper.Core.Sql.Query
@@ -16,6 +17,11 @@ namespace Extended.Dapper.Core.Sql.Query
         /// From which table the fields should be selected
         /// </summary>
         public string From { get; set; }
+
+        /// <summary>
+        /// On which fields the results should be ordered
+        /// </summary>
+        public Dictionary<SelectField, OrderBy> OrderBy { get; set; }
 
         public SelectSqlQuery() : base()
         {

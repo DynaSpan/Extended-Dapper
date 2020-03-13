@@ -5,8 +5,9 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Extended.Dapper.Core.Database;
-using Extended.Dapper.Core.Mappers;
-using Extended.Dapper.Core.Sql;
+using Extended.Dapper.Core.Sql.Generator;
+using Extended.Dapper.Core.Sql.QueryBuilder;
+using Extended.Dapper.Sql.QueryExecuter;
 
 namespace Extended.Dapper.Core.Repository
 {
@@ -26,6 +27,12 @@ namespace Extended.Dapper.Core.Repository
             else
                 this.QueryExecuter = queryExecuter;
         }
+
+        /// <summary>
+        /// Gets a new instance of the QueryBuilder
+        /// </summary>
+        public virtual QueryBuilder<T> GetQueryBuilder()
+            => new QueryBuilder<T>(this.QueryExecuter);
 
         /// <summary>
         /// Gets all the entities

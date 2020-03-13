@@ -9,7 +9,7 @@ using Extended.Dapper.Core.Database;
 using Extended.Dapper.Core.Database.Entities;
 using Extended.Dapper.Core.Helpers;
 using Extended.Dapper.Core.Mappers;
-using Extended.Dapper.Core.Reflection;
+using Extended.Dapper.Core.Sql.Generator;
 using Extended.Dapper.Core.Sql.Metadata;
 using Extended.Dapper.Core.Sql.Query;
 using Extended.Dapper.Core.Sql.Query.Expression;

@@ -5,11 +5,19 @@ using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Extended.Dapper.Core.Sql.Query;
 using Extended.Dapper.Core.Sql.Query.Models;
+using Extended.Dapper.Core.Sql.QueryBuilder;
 
-namespace Extended.Dapper.Core.Repository
+namespace Extended.Dapper.Sql.QueryExecuter
 {
     public interface IQueryExecuter
     {
+        /// <summary>
+        /// Executes a query built by the query builder
+        /// and returns the results
+        /// </summary>
+        /// <param name="queryBuilder"></param>
+        Task<IEnumerable<T>> ExecuteQueryBuilder<T>(QueryBuilder<T> queryBuilder);
+        
         /// <summary>
         /// Executes a select query by id
         /// </summary>
