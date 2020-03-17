@@ -14,6 +14,7 @@ namespace Extended.Dapper.Tests.Repository
         public override void FixtureSetUp()
         {
             base.FixtureSetUp();
+            DatabaseHelper.ClearDatabase();
             DatabaseHelper.PopulateDatabase().Wait();
         }
 

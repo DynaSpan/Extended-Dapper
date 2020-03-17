@@ -26,7 +26,8 @@ CREATE TABLE `Book` (
 CREATE TABLE `Category` (
     `Id` CHAR(36) PRIMARY KEY,
     `Name` VARCHAR(255),
-    `Description` VARCHAR(255)
+    `Description` VARCHAR(255),
+    `EditedBy` VARCHAR(255)
 );
 
 CREATE TABLE `Log` (

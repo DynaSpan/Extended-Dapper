@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Extended.Dapper.Core.Attributes.Entities;
 using Extended.Dapper.Core.Attributes.Entities.Relations;
 using Extended.Dapper.Core.Database.Entities;
 
@@ -13,5 +14,8 @@ namespace Extended.Dapper.Tests.Models
         public string Name { get; set; }
 
         public string Description { get; set; }
+
+        [IgnoreOnInsert]
+        public string EditedBy { get; set; }
     }
 }

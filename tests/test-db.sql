@@ -22,7 +22,8 @@ CREATE TABLE "Book" (
 CREATE TABLE "Category" (
     "Id" GUID PRIMARY KEY NOT NULL,
     "Name" VARCHAR,
-    "Description" VARCHAR
+    "Description" VARCHAR,
+    "EditedBy" VARCHAR
 );
 
 CREATE TABLE "Log" (

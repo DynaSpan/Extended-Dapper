@@ -29,6 +29,7 @@ Extends Dapper with a repository (CRUD & LINQ) and native `OneToMany` & `ManyToO
 ## TODO
 
 - Write unittests (working on it, most of the EntityRepository is covered)
+    - Execute unittests for each supported database instead of just SQLite
 - ~Setup CI/CD for automated deployment to NuGet~
 - Setup documentation
 - (Proper) support for more than 1 primary key

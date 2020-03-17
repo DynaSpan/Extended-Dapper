@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Reflection;
+using Extended.Dapper.Core.Attributes.Entities;
 using Extended.Dapper.Core.Attributes.Entities.Relations;
 using Extended.Dapper.Core.Mappers;
 using Extended.Dapper.Core.Sql.Query;
@@ -50,7 +51,8 @@ namespace Extended.Dapper.Core.Sql.Generator
 
             insertQuery.Insert
                 .AddRange(entityMap.MappedPropertiesMetadata
-                    .Where(x => !x.PropertyInfo.GetCustomAttributes<RelationAttributeBase>().Any())
+                    .Where(x => !x.PropertyInfo.GetCustomAttributes<RelationAttributeBase>().Any()
+                        && x.PropertyInfo.GetCustomAttribute<IgnoreOnInsertAttribute>() == null)
                     .Select(p => {
                         insertQuery.Params.Add("p_" + p.ColumnName, p.PropertyInfo.GetValue(entity));
 

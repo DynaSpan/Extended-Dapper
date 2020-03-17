@@ -1,5 +1,8 @@
 # Changelog
 
+[0.4.1-beta] 
+Add IgnoreOnInsert attribute.
+
 [0.4.0-beta]
 First implementation of query builder, which can be used to generate custom select queries. Still requires some work. Also, some refactoring + upgrade to .NET Core 3.1.
 
