@@ -10,7 +10,6 @@ using Dapper;
 using Extended.Dapper.Core.Attributes.Entities.Relations;
 using Extended.Dapper.Core.Mappers;
 using Extended.Dapper.Core.Reflection;
-using Extended.Dapper.Core.Sql;
 using Extended.Dapper.Core.Sql.Generator;
 using Extended.Dapper.Core.Sql.Query;
 using Extended.Dapper.Core.Sql.Query.Models;
@@ -165,7 +164,7 @@ namespace Extended.Dapper.Sql.QueryExecuter
                                 var queryParams = new Dictionary<string, object>();
                                 queryParams.Add("p_fk_" + attr.ForeignKey, foreignKey);
 
-                                var queryResult = await this.ExecuteInsertQuery(listItem, transaction, listType, queryField, queryParams);
+                                var queryResult = await this.ExecuteInsertQuery(listItem, transaction, listType, false, queryField, queryParams);
 
                                 objKey = EntityMapper.GetCompositeUniqueKey(listItem, listType);
 

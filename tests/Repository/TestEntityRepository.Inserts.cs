@@ -174,6 +174,36 @@ namespace Extended.Dapper.Tests.Repository
         }
 
         /// <summary>
+        /// Tests if an object with filled autovalue keys does not get inserted
+        /// </summary>
+        [Test]
+        public void TestInsertWithFilledAutovalues()
+        {
+            var paleBlueDotBook = ModelHelper.GetBookModel(BookModelType.PaleBlueDot);
+            paleBlueDotBook.Id = Guid.NewGuid();
+
+            var bookEntity = this.BookRepository.Insert(paleBlueDotBook).Result;
+
+            var numberOfBooks = this.BookRepository.GetAll().Result.Count();
+            Assert.AreEqual(0, numberOfBooks, "Object with filled autovalue got inserted");
+        }
+
+        /// <summary>
+        /// Tests if an object with the autovalue keys does get inserted when forced
+        /// </summary>
+        [Test]
+        public void TestForcedInsertWithFilledAutovalues()
+        {
+            var paleBlueDotBook = ModelHelper.GetBookModel(BookModelType.PaleBlueDot);
+            paleBlueDotBook.Id = Guid.NewGuid();
+
+            var bookEntity = this.BookRepository.Insert(paleBlueDotBook, true).Result;
+
+            var numberOfBooks = this.BookRepository.GetAll().Result.Count();
+            Assert.AreEqual(1, numberOfBooks, "Object with forced filled autovalue didn't insert");
+        }
+
+        /// <summary>
         /// This tests if inserting objects within a transaction works correctly
         /// </summary>
         [Test]

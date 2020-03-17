@@ -61,16 +61,19 @@ namespace Extended.Dapper.Sql.QueryExecuter
         /// </summary>
         /// <param name="entity"></param>
         /// <param name="transaction"></param>
+        /// <param name="typeOverride"></param>
+        /// <param name="forceInsert"></param>
         /// <returns>true when succesful; false otherwise</returns>
-        Task<bool> ExecuteInsertEntityQuery<T>(T entity, IDbTransaction transaction = null, Type typeOverride = null)
+        Task<bool> ExecuteInsertEntityQuery<T>(T entity, IDbTransaction transaction = null, Type typeOverride = null, bool forceInsert = false)
             where T : class;
 
         /// <summary>
         /// Executes an insert query
         /// </summary>
         /// <param name="entity"></param>
-        /// <param name="query"></param>
         /// <param name="transaction"></param>
+        /// <param name="typeOverride"></param>
+        /// <param name="forceInsert"></param>
         /// <param name="queryFields"></param>
         /// <param name="queryParams"></param>
         /// <returns>true when succesful; false otherwise</returns>
@@ -78,6 +81,7 @@ namespace Extended.Dapper.Sql.QueryExecuter
            T entity, 
             IDbTransaction transaction = null, 
             Type typeOverride = null,
+            bool forceInsert = false,
             IEnumerable<QueryField> queryFields = null,
             Dictionary<string, object> queryParams = null)
             where T : class;

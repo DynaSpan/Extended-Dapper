@@ -20,17 +20,20 @@ namespace Extended.Dapper.Sql.QueryExecuter
         /// </summary>
         /// <param name="entity"></param>
         /// <param name="transaction"></param>
+        /// <param name="typeOverride"></param>
+        /// <param name="forceInsert"></param>
         /// <returns>true when succesful; false otherwise</returns>
-        public virtual Task<bool> ExecuteInsertEntityQuery<T>(T entity, IDbTransaction transaction = null, Type typeOverride = null)
+        public virtual Task<bool> ExecuteInsertEntityQuery<T>(T entity, IDbTransaction transaction = null, Type typeOverride = null, bool forceInsert = false)
             where T : class
-            => this.ExecuteInsertQuery<T>(entity, transaction);
+            => this.ExecuteInsertQuery<T>(entity, transaction, typeOverride, forceInsert);
 
         /// <summary>
         /// Executes an insert query
         /// </summary>
         /// <param name="entity"></param>
-        /// <param name="query"></paran>
         /// <param name="transaction"></param>
+        /// <param name="typeOverride"></param>
+        /// <param name="forceInsert"></param>
         /// <param name="queryFields"></param>
         /// <param name="queryParams"></param>
         /// <returns>true when succesful; false otherwise</returns>
@@ -38,6 +41,7 @@ namespace Extended.Dapper.Sql.QueryExecuter
             T entity, 
             IDbTransaction transaction = null, 
             Type typeOverride = null,
+            bool forceInsert = false,
             IEnumerable<QueryField> queryFields = null,
             Dictionary<string, object> queryParams = null)
             where T : class
@@ -66,7 +70,7 @@ namespace Extended.Dapper.Sql.QueryExecuter
 
                 int insertResult = 0;
 
-                if (hasNoKey)
+                if (hasNoKey || forceInsert)
                 {
                     InsertSqlQuery insertQuery = this.SqlGenerator.Insert<T>(entity, typeOverride);
                     entityKey = EntityMapper.GetCompositeUniqueKey<T>(entity, typeOverride);
@@ -239,7 +243,7 @@ namespace Extended.Dapper.Sql.QueryExecuter
                         var queryParams = new Dictionary<string, object>();
                         queryParams.Add("p_fk_" + attr.ForeignKey, foreignKey);
 
-                        var queryResult = await this.ExecuteInsertQuery(obj, transaction, objType, queryField, queryParams);
+                        var queryResult = await this.ExecuteInsertQuery(obj, transaction, objType, false, queryField, queryParams);
 
                         if (!queryResult)
                             return false;

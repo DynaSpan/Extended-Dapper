@@ -1,5 +1,8 @@
 # Changelog
 
+[0.4.2-beta]
+Add option to force insert an object which has a filled autovalue key.
+
 [0.4.1-beta] 
 Add IgnoreOnInsert attribute.
 

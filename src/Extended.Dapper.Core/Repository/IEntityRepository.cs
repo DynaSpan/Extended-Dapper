@@ -96,6 +96,27 @@ namespace Extended.Dapper.Core.Repository
         Task<T> Insert(T entity, IDbTransaction transaction);
 
         /// <summary>
+        /// Inserts an entity into the database
+        /// Also inserts the children if no ID is set
+        /// on them
+        /// </summary>
+        /// <param name="entity">The entity to insert</param>
+        /// <param name="forceInsert">Forces Extended.Dapper to insert an item where autovalue key is filled</param>
+        /// <returns>The inserted entity</returns>
+        Task<T> Insert(T entity, bool forceInsert);
+
+        /// <summary>
+        /// Inserts an entity into the database
+        /// Also inserts the children if no ID is set
+        /// on them
+        /// </summary>
+        /// <param name="entity">The entity to insert</param>
+        /// <param name="transaction">Database transaction</param>
+        /// <param name="forceInsert">Forces Extended.Dapper to insert an item where autovalue key is filled</param>
+        /// <returns>The inserted entity</returns>
+        Task<T> Insert(T entity, IDbTransaction transaction, bool forceInsert);
+
+        /// <summary>
         /// Updates a given entity (but won't update any children info)
         /// </summary>
         /// <param name="entity">The entity to update</param>
