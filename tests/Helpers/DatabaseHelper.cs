@@ -110,7 +110,7 @@ namespace Extended.Dapper.Tests.Helpers
                 connection.Open();
 
                 var deleteQuery = connection.CreateCommand();
-                deleteQuery.CommandText = "DELETE FROM Book; DELETE FROM Author; DELETE FROM Category";
+                deleteQuery.CommandText = "DELETE FROM Book; DELETE FROM Author; DELETE FROM Category; DELETE FROM Log;";
                 deleteQuery.ExecuteNonQuery();
             }
 
@@ -189,6 +189,9 @@ namespace Extended.Dapper.Tests.Helpers
             var dbBackend = Environment.GetEnvironmentVariable("DBBACKEND");
             DatabaseSettings databaseSettings = null;
 
+            if (string.IsNullOrWhiteSpace(dbBackend))
+                dbBackend = "sqlite";
+
             switch (dbBackend)
             {
                 case "mysql":
@@ -221,6 +224,9 @@ namespace Extended.Dapper.Tests.Helpers
         public static IDatabaseFactory GetDatabaseFactory()
         {
             var dbBackend = Environment.GetEnvironmentVariable("DBBACKEND");
+
+            if (string.IsNullOrWhiteSpace(dbBackend))
+                dbBackend = "sqlite";
 
             if (DatabaseFactory == null)
             {
@@ -271,6 +277,9 @@ namespace Extended.Dapper.Tests.Helpers
         public static IDatabaseFactory GetLegacyDatabaseFactory()
         {
             var dbBackend = Environment.GetEnvironmentVariable("DBBACKEND");
+
+            if (string.IsNullOrWhiteSpace(dbBackend))
+                dbBackend = "sqlite";
 
             if (LegacyDatabaseFactory == null)
             {

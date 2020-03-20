@@ -70,51 +70,51 @@ namespace Extended.Dapper.Tests.EntityMapping
         /// This tests if inserting a mapped object works as expected
         /// when it's done within a transaction scope
         /// </summary>
-        [Test]
-        public void TestIfInsertMappingWorksWithinTransactionScope()
-        {
-            var book = ModelHelper.GetBookModel(BookModelType.PaleBlueDot);
-            TransactionScope transScope = null;
+        // [Test]
+        // public void TestIfInsertMappingWorksWithinTransactionScope()
+        // {
+        //     var book = ModelHelper.GetBookModel(BookModelType.PaleBlueDot);
+        //     TransactionScope transScope = null;
 
-            try
-            {
-                transScope = this.CreateReadCommittedTransactionScope();
+        //     try
+        //     {
+        //         transScope = this.CreateReadCommittedTransactionScope();
 
-                // Insert this book into normal repository
-                var bookEntity = this.BookRepository.Insert(book).Result;
+        //         // Insert this book into normal repository
+        //         var bookEntity = this.BookRepository.Insert(book).Result;
                 
-                Assert.AreNotEqual(null, bookEntity, "Could not insert Book");
+        //         Assert.AreNotEqual(null, bookEntity, "Could not insert Book");
                 
-                // Map book to legacyBook
-                var legacyBook = this.Mapper.Map<LegacyBook>(bookEntity);
-                var legacyBookEntity = this.LegacyBookRepository.Insert(legacyBook, true).Result;
+        //         // Map book to legacyBook
+        //         var legacyBook = this.Mapper.Map<LegacyBook>(bookEntity);
+        //         var legacyBookEntity = this.LegacyBookRepository.Insert(legacyBook, true).Result;
 
-                Assert.AreNotEqual(null, legacyBookEntity, "Could not properly insert AutoMapper mapped object");
+        //         Assert.AreNotEqual(null, legacyBookEntity, "Could not properly insert AutoMapper mapped object");
 
-                transScope.Complete();
-                transScope.Dispose();
+        //         transScope.Complete();
+        //         transScope.Dispose();
 
-                var bookCount = this.BookRepository.GetAll().Result.Count();
-                var legacyBookCount = this.LegacyBookRepository.GetAll().Result.Count();
+        //         var bookCount = this.BookRepository.GetAll().Result.Count();
+        //         var legacyBookCount = this.LegacyBookRepository.GetAll().Result.Count();
 
-                Assert.AreEqual(1, bookCount, "Book was not properly inserted");
-                Assert.AreEqual(1, legacyBookCount, "Legacy Book not properly inserted");
-            }
-            catch (Exception)
-            {
-                try {
-                    transScope?.Dispose();
-                } catch (Exception) { }
+        //         Assert.AreEqual(1, bookCount, "Book was not properly inserted");
+        //         Assert.AreEqual(1, legacyBookCount, "Legacy Book not properly inserted");
+        //     }
+        //     catch (Exception)
+        //     {
+        //         try {
+        //             transScope?.Dispose();
+        //         } catch (Exception) { }
 
-                throw;
-            }
-            finally
-            {
-                try {
-                    transScope?.Dispose();
-                } catch (Exception) { }
-            }
-        }
+        //         throw;
+        //     }
+        //     finally
+        //     {
+        //         try {
+        //             transScope?.Dispose();
+        //         } catch (Exception) { }
+        //     }
+        // }
 
         /// <summary>
         /// Sets up AutoMapper

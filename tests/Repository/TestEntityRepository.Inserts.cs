@@ -64,12 +64,15 @@ namespace Extended.Dapper.Tests.Repository
 
             this.TestIfAuthorIsValid(stephenHawkingEntity, AuthorModelType.StephenHawking);
 
-            this.TestIfBookIsValid(booksEntity.ElementAt(0), BookModelType.BriefAnswers);
-            this.TestIfBookIsValid(booksEntity.ElementAt(1), BookModelType.BriefHistoryOfTime);
+            var briefAnswersBook = booksEntity.First(b => b.Name == "Brief Answers to the Big Questions");
+            var briefHistoryBook = booksEntity.First(b => b.Name == "A Brief History of Time");
+
+            this.TestIfBookIsValid(briefAnswersBook, BookModelType.BriefAnswers);
+            this.TestIfBookIsValid(briefHistoryBook, BookModelType.BriefHistoryOfTime);
 
             // Test if both books have the same author entity
-            Assert.AreEqual(stephenHawkingEntity.Id, booksEntity.ElementAt(0).Author.Id, "Parent Author Id is not equal; a new parent has been created");
-            Assert.AreEqual(stephenHawkingEntity.Id, booksEntity.ElementAt(1).Author.Id, "Parent Author Id is not equal; a new parent has been created");
+            Assert.AreEqual(stephenHawkingEntity.Id, briefAnswersBook.Author.Id, "Parent Author Id is not equal; a new parent has been created");
+            Assert.AreEqual(stephenHawkingEntity.Id, briefHistoryBook.Author.Id, "Parent Author Id is not equal; a new parent has been created");
         }
 
         /// <summary>
