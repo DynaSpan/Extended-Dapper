@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Text;
 using Dapper;
+using Extended.Dapper.Core.Sql.ConnectionProviders;
 using Extended.Dapper.Core.Sql.QueryProviders;
 
 namespace Extended.Dapper.Core.Database 
@@ -11,6 +12,7 @@ namespace Extended.Dapper.Core.Database
     {
         public DatabaseProvider DatabaseProvider { get; }
         public ISqlQueryProvider SqlProvider { get; set; }
+        public IConnectionProvider SqlConnectionProvider { get; set; }
 
         /// <summary>
         /// Constructor for the factory
@@ -18,10 +20,9 @@ namespace Extended.Dapper.Core.Database
         /// <param name="databaseSettings"></param>
         public DatabaseFactory(DatabaseSettings databaseSettings)
         {
-            SqlQueryProviderHelper.SetProvider(databaseSettings.DatabaseProvider, databaseSettings);
-
-            this.DatabaseProvider = databaseSettings.DatabaseProvider;
-            this.SqlProvider      = SqlQueryProviderHelper.GetProvider();
+            this.DatabaseProvider       = databaseSettings.DatabaseProvider;
+            this.SqlProvider            = SqlQueryProviderHelper.GetProvider(databaseSettings.DatabaseProvider);
+            this.SqlConnectionProvider  = ConnectionProvider.GetConnectionProvider(databaseSettings);
         }
 
         /// <summary>
@@ -31,18 +32,15 @@ namespace Extended.Dapper.Core.Database
         /// <param name="databaseProvider"></param>
         public DatabaseFactory(string connectionString, DatabaseProvider databaseProvider)
         {
-            SqlQueryProviderHelper.SetProvider(databaseProvider, connectionString);
-
-            this.DatabaseProvider = databaseProvider;
-            this.SqlProvider      = SqlQueryProviderHelper.GetProvider();      
+            this.DatabaseProvider       = databaseProvider;
+            this.SqlProvider            = SqlQueryProviderHelper.GetProvider(databaseProvider);   
+            this.SqlConnectionProvider  = ConnectionProvider.GetConnectionProvider(databaseProvider, connectionString);   
         }
 
         /// <summary>
         /// Creates a new database connection
         /// </summary>
         public IDbConnection GetDatabaseConnection()
-        {
-            return this.SqlProvider.GetConnection();
-        }
+            => this.SqlConnectionProvider.GetConnection();
     }
 }

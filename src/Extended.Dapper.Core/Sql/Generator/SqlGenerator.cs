@@ -24,7 +24,7 @@ namespace Extended.Dapper.Core.Sql.Generator
         public SqlGenerator(DatabaseProvider databaseProvider = DatabaseProvider.MSSQL)
         {
             this.databaseProvider = databaseProvider;
-            this.sqlProvider      = SqlQueryProviderHelper.GetProvider();
+            this.sqlProvider      = SqlQueryProviderHelper.GetProvider(databaseProvider);
 
             // Check if it is implemented
             if (this.sqlProvider == null)

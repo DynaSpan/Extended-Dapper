@@ -33,10 +33,5 @@ namespace Extended.Dapper.Core.Sql.Query
             this.Insert = new List<QueryField>();
             this.InsertParams = new StringBuilder();
         }
-
-        public override string ToString()
-        {
-            return SqlQueryProviderHelper.GetProvider().BuildInsertQuery(this);
-        }
     }
 }

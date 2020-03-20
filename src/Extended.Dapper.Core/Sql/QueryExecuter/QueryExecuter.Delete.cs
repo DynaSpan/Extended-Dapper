@@ -4,6 +4,7 @@ using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Dapper;
 using Extended.Dapper.Core.Mappers;
+using Extended.Dapper.Core.Sql.Query;
 
 namespace Extended.Dapper.Sql.QueryExecuter
 {
@@ -48,7 +49,8 @@ namespace Extended.Dapper.Sql.QueryExecuter
 
             try
             {
-                var result = await transaction.Connection.ExecuteAsync(query.ToString(), query.Params, transaction);
+                string deleteQuery = this.DatabaseFactory.SqlProvider.BuildDeleteQuery(query as DeleteSqlQuery);
+                var result = await transaction.Connection.ExecuteAsync(deleteQuery, query.Params, transaction);
 
                 if (shouldCommit)
                     transaction.Commit();

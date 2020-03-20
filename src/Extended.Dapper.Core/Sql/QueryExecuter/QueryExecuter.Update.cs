@@ -69,7 +69,8 @@ namespace Extended.Dapper.Sql.QueryExecuter
 
             try
             {
-                var updateResult = await transaction.Connection.ExecuteAsync(query.ToString(), query.Params, transaction);
+                string updateQuery = this.DatabaseFactory.SqlProvider.BuildUpdateQuery(query);
+                var updateResult = await transaction.Connection.ExecuteAsync(updateQuery, query.Params, transaction);
 
                 if (shouldCommit)
                     transaction.Commit();
@@ -199,7 +200,8 @@ namespace Extended.Dapper.Sql.QueryExecuter
                         
                         try
                         {
-                            await transaction.Connection.QueryAsync(deleteQuery.ToString(), deleteQuery.Params, transaction);
+                            string query = this.DatabaseFactory.SqlProvider.BuildDeleteQuery(deleteQuery as DeleteSqlQuery);
+                            await transaction.Connection.QueryAsync(query, deleteQuery.Params, transaction);
                         }
                         catch (Exception)
                         {

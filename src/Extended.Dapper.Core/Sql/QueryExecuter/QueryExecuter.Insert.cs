@@ -88,7 +88,8 @@ namespace Extended.Dapper.Sql.QueryExecuter
                         if (!insertQuery.Params.ContainsKey(param.Key))
                             insertQuery.Params.Add(param.Key, param.Value);
                 
-                    insertResult = await transaction.Connection.ExecuteAsync(insertQuery.ToString(), insertQuery.Params, transaction);
+                    string query = this.DatabaseFactory.SqlProvider.BuildInsertQuery(insertQuery);
+                    insertResult = await transaction.Connection.ExecuteAsync(query, insertQuery.Params, transaction);
                 }
 
                 if (insertResult == 1 || !hasNoKey)

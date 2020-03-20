@@ -20,30 +20,11 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
 {
     public abstract class SqlQueryProvider : ISqlQueryProvider
     {
-        protected string ConnectionString { get; set; }
+        public DatabaseProvider DatabaseProvider { get; set; }
 
-        /// <summary>
-        /// Empty constructor
-        /// </summary>
-        public SqlQueryProvider()
-        {}
-
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        /// <param name="databaseSettings"></param>
-        public SqlQueryProvider(DatabaseSettings databaseSettings)
+        public SqlQueryProvider(DatabaseProvider dbProvider)
         {
-            this.ConnectionString = this.BuildConnectionString(databaseSettings);
-        }
-
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        /// <param name="connectionString"></param>
-        public SqlQueryProvider(string connectionString)
-        {
-            this.ConnectionString = connectionString;
+            this.DatabaseProvider = dbProvider;
         }
 
         /// <summary>
@@ -62,17 +43,6 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// The char used for parameters
         /// </summary>
         public abstract string ParameterChar { get; }
-
-        /// <summary>
-        /// Builds a connection string
-        /// </summary>
-        /// <param name="databaseSettings"></param>
-        public abstract string BuildConnectionString(DatabaseSettings databaseSettings);
-
-        /// <summary>
-        /// Returns a new IDbConnection
-        /// </summary>
-        public abstract IDbConnection GetConnection();
 
         #region Select
 
@@ -502,7 +472,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
             if (predicate != null)
             {
                 // WHERE
-                var queryProperties = ExpressionHelper.GetQueryProperties(predicate.Body, entityMap);
+                var queryProperties = ExpressionHelper.GetQueryProperties(predicate.Body, entityMap, this.DatabaseProvider);
 
                 var qLevel = 0;
                 var sqlBuilder = new StringBuilder();

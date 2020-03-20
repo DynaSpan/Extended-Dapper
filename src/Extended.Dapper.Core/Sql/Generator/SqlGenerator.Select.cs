@@ -171,12 +171,13 @@ namespace Extended.Dapper.Core.Sql.Generator
 
             var selectRootExpr = this.CreateByIdExpression<T>(EntityMapper.GetCompositeUniqueKey<T>(entity));
             var selectRootQuery = this.SelectForeignKey<T>(selectRootExpr, relationAttr.ForeignKey);
+            string rootQuery = this.sqlProvider.BuildSelectQuery(selectRootQuery);
 
             sqlQuery.Where.AppendFormat("{0}{1}.{2} = ({3})", 
                 sqlQuery.Where.ToString() == string.Empty ? "" : " AND ",
                 this.sqlProvider.EscapeTable(oneEntityMap.TableName),
                 this.sqlProvider.EscapeColumn(relationAttr.LocalKey),
-                selectRootQuery.ToString());
+                rootQuery);
             
             foreach (var param in selectRootQuery.Params)
                 sqlQuery.Params.Add(param.Key, param.Value);

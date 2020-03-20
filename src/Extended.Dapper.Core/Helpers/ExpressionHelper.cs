@@ -4,6 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
+using Extended.Dapper.Core.Database;
 using Extended.Dapper.Core.Extensions;
 using Extended.Dapper.Core.Mappers;
 using Extended.Dapper.Core.Sql.Query;
@@ -224,9 +225,9 @@ namespace Extended.Dapper.Core.Helpers
         /// </summary>
         /// <param name="expr">The expression.</param>
         /// <param name="entityMap"></param>
-        public static IList<QueryExpression> GetQueryProperties(Expression expr, EntityMap entityMap)
+        public static IList<QueryExpression> GetQueryProperties(Expression expr, EntityMap entityMap, DatabaseProvider dbProvider)
         {
-            var queryNode = GetQueryProperties(expr, ExpressionType.Default, entityMap);
+            var queryNode = GetQueryProperties(expr, ExpressionType.Default, entityMap, dbProvider);
 
             switch (queryNode)
             {
@@ -247,7 +248,7 @@ namespace Extended.Dapper.Core.Helpers
         /// <param name="expr">The expression.</param>
         /// <param name="linkingType">Type of the linking.</param>
         /// <param name="entityMap"></param>
-        private static QueryExpression GetQueryProperties(Expression expr, ExpressionType linkingType, EntityMap entityMap)
+        private static QueryExpression GetQueryProperties(Expression expr, ExpressionType linkingType, EntityMap entityMap, DatabaseProvider dbProvider)
         {
             var isNotUnary = false;
 
@@ -262,15 +263,15 @@ namespace Extended.Dapper.Core.Helpers
 
             if (expr is MethodCallExpression methodCallExpression)
             {
-                return GetMethodCallExpressionProperties(methodCallExpression, linkingType, entityMap, isNotUnary);
+                return GetMethodCallExpressionProperties(methodCallExpression, linkingType, entityMap, dbProvider, isNotUnary);
             }
 
             if (expr is BinaryExpression binaryExpression)
             {
-                return GetBinaryExpressionProperties(binaryExpression, linkingType, entityMap);
+                return GetBinaryExpressionProperties(binaryExpression, linkingType, entityMap, dbProvider);
             }
 
-            return GetQueryProperties(ExpressionHelper.GetBinaryExpression(expr), linkingType, entityMap);
+            return GetQueryProperties(ExpressionHelper.GetBinaryExpression(expr), linkingType, entityMap, dbProvider);
         }
 
         /// <summary>
@@ -285,6 +286,7 @@ namespace Extended.Dapper.Core.Helpers
             MethodCallExpression methodCallExpression, 
             ExpressionType linkingType,
             EntityMap entityMap, 
+            DatabaseProvider dbProvider,
             bool isNotUnary = false, 
             string methodName = null)
         {
@@ -292,7 +294,7 @@ namespace Extended.Dapper.Core.Helpers
                 methodName = methodCallExpression.Method.Name;
                 
             var exprObj = methodCallExpression.Object;
-            var sqlQueryProvider = SqlQueryProviderHelper.GetProvider();
+            var sqlQueryProvider = SqlQueryProviderHelper.GetProvider(dbProvider);
 
             switch (methodName)
             {
@@ -302,7 +304,7 @@ namespace Extended.Dapper.Core.Helpers
                         && exprObj.NodeType == ExpressionType.MemberAccess
                         && exprObj.Type == typeof(string))
                     {
-                        return GetMethodCallExpressionProperties(methodCallExpression, linkingType, entityMap, isNotUnary, "StringContains");
+                        return GetMethodCallExpressionProperties(methodCallExpression, linkingType, entityMap, dbProvider, isNotUnary, "StringContains");
                     }
 
                     var propertyName = ExpressionHelper.GetPropertyNamePath(methodCallExpression, out var isNested);
@@ -355,9 +357,10 @@ namespace Extended.Dapper.Core.Helpers
         internal static QueryExpression GetBinaryExpressionProperties(
             BinaryExpression binaryExpression,
             ExpressionType linkingType,
-            EntityMap entityMap)
+            EntityMap entityMap,
+            DatabaseProvider dbProvider)
         {
-            var sqlQueryProvider = SqlQueryProviderHelper.GetProvider();
+            var sqlQueryProvider = SqlQueryProviderHelper.GetProvider(dbProvider);
 
             if (binaryExpression.NodeType != ExpressionType.AndAlso && binaryExpression.NodeType != ExpressionType.OrElse)
             {
@@ -379,8 +382,8 @@ namespace Extended.Dapper.Core.Helpers
                 return new QueryParameterExpression(link, propertyName, propertyValue, opr, isNested);
             }
 
-            var leftExpr = GetQueryProperties(binaryExpression.Left, ExpressionType.Default, entityMap);
-            var rightExpr = GetQueryProperties(binaryExpression.Right, binaryExpression.NodeType, entityMap);
+            var leftExpr = GetQueryProperties(binaryExpression.Left, ExpressionType.Default, entityMap, dbProvider);
+            var rightExpr = GetQueryProperties(binaryExpression.Right, binaryExpression.NodeType, entityMap, dbProvider);
 
             switch (leftExpr)
             {

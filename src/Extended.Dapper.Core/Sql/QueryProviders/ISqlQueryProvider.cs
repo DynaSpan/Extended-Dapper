@@ -1,7 +1,6 @@
 using System;
 using System.Data;
 using System.Linq.Expressions;
-using Extended.Dapper.Core.Database;
 using Extended.Dapper.Core.Mappers;
 using Extended.Dapper.Core.Sql.Generator;
 using Extended.Dapper.Core.Sql.Query;
@@ -26,12 +25,6 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// The char used for parameters
         /// </summary>
         string ParameterChar { get; }
-
-        /// <summary>
-        /// Builds a connection string
-        /// </summary>
-        /// <param name="databaseSettings"></param>
-        string BuildConnectionString(DatabaseSettings databaseSettings);
         
         /// <summary>
         /// Build a select query
@@ -90,10 +83,5 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// <param name="entityMap"></param>
         /// <param name="includes"></param>
         void AppendWherePredicateQuery<T>(SqlQuery sqlQuery, Expression<Func<T, bool>> predicate, QueryType queryType, EntityMap entityMap, params Expression<Func<T, object>>[] includes);
-
-        /// <summary>
-        /// Returns a new IDbConnection
-        /// </summary>
-        IDbConnection GetConnection();
     }
 }

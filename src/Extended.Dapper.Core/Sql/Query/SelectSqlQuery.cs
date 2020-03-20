@@ -27,10 +27,5 @@ namespace Extended.Dapper.Core.Sql.Query
         {
             this.Select = new List<SelectField>();
         }
-
-        public override string ToString()
-        {
-            return SqlQueryProviderHelper.GetProvider().BuildSelectQuery(this);
-        }
     }
 }

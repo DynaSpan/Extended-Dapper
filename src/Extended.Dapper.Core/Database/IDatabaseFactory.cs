@@ -1,4 +1,5 @@
 using System.Data;
+using Extended.Dapper.Core.Sql.QueryProviders;
 
 namespace Extended.Dapper.Core.Database 
 {
@@ -13,5 +14,10 @@ namespace Extended.Dapper.Core.Database
         /// The type of database
         /// </summary>
         DatabaseProvider DatabaseProvider { get; }
+
+        /// <summary>
+        /// The correct SQL provider for the connection
+        /// </summary>
+        ISqlQueryProvider SqlProvider { get; }
     }
 }

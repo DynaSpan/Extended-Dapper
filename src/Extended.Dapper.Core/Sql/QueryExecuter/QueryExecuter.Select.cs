@@ -92,6 +92,7 @@ namespace Extended.Dapper.Sql.QueryExecuter
             where T : class
         {
             var typeArr = ReflectionHelper.GetTypeListFromIncludes<T>(includes).ToArray();
+            string selectQuery = this.DatabaseFactory.SqlProvider.BuildSelectQuery(query);
             
             // Grab keys
             var keys = query.Select.Where(x => x.IsMainKey).ToList();
@@ -107,7 +108,7 @@ namespace Extended.Dapper.Sql.QueryExecuter
             {
                 this.OpenConnection(connection);
 
-                await connection.QueryAsync<T>(query.ToString(), typeArr, DapperMapper.MapDapperEntity<T>(typeArr, entityLookup, includes), query.Params, null, true, splitOn);
+                await connection.QueryAsync<T>(selectQuery, typeArr, DapperMapper.MapDapperEntity<T>(typeArr, entityLookup, includes), query.Params, null, true, splitOn);
             }
             catch (Exception)
             {

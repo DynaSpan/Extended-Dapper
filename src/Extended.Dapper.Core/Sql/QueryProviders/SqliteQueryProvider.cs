@@ -1,34 +1,16 @@
 using System;
 using System.Data;
-using System.Data.SqlClient;
-using System.Data.SQLite;
 using System.Linq;
 using System.Text;
 using Extended.Dapper.Core.Database;
-using Extended.Dapper.Core.Mappers;
 using Extended.Dapper.Core.Sql.Query;
 
 namespace Extended.Dapper.Core.Sql.QueryProviders
 {
     public class SqliteQueryProvider : SqlQueryProvider
     {
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        /// <param name="dataSource">Location of the .db file</param>
-        public SqliteQueryProvider(string dataSource)
-        {
-            this.ConnectionString = new SQLiteConnectionStringBuilder() { DataSource = dataSource, BinaryGUID = true }.ToString();
-        }
-
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        /// <param name="dbSettings">Use the "database" field to locate the .db file</param>
-        public SqliteQueryProvider(DatabaseSettings dbSettings)
-        {
-            this.ConnectionString = new SQLiteConnectionStringBuilder() { DataSource = dbSettings.Database, BinaryGUID = true }.ToString();
-        }
+        public SqliteQueryProvider(DatabaseProvider dbProvider) : base(dbProvider)
+        { }
 
         /// <summary>
         /// The char used for parameters
@@ -51,22 +33,6 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         public override string EscapeColumn(string columnName)
         {
             return "\"" + columnName + "\"";
-        }
-
-        /// <summary>
-        /// Returns a new IDbConnection
-        /// </summary>
-        public override IDbConnection GetConnection()
-        {
-            return new SQLiteConnection(this.ConnectionString, true);
-        }
-
-        /// <summary>
-        /// - NOT IMPLEMENTED FOR SQLite -
-        /// </summary>
-        public override string BuildConnectionString(DatabaseSettings databaseSettings)
-        {
-            throw new NotImplementedException();
         }
 
         /// <summary>

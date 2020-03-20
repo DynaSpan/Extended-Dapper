@@ -57,10 +57,5 @@ namespace Extended.Dapper.Core.Sql.Query
         {
             
         }
-
-        public override string ToString()
-        {
-            return SqlQueryProviderHelper.GetProvider().BuildDeleteQuery(this);
-        }
     }
 }

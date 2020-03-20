@@ -21,10 +21,5 @@ namespace Extended.Dapper.Core.Sql.Query
         {
             this.Updates = new List<QueryField>();
         }
-
-        public override string ToString()
-        {
-            return SqlQueryProviderHelper.GetProvider().BuildUpdateQuery(this);
-        }
     }
 }
