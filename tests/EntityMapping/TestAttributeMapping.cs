@@ -1,14 +1,12 @@
 using System;
 using System.Linq;
 using NUnit.Framework;
-using System.Collections.Generic;
 using Extended.Dapper.Tests.Models;
-using Extended.Dapper.Core.Mappers;
 using Extended.Dapper.Tests.Helpers;
 using Extended.Dapper.Core.Sql.QueryProviders;
 using Extended.Dapper.Core.Repository;
 
-namespace Extended.Dapper.Tests.Query
+namespace Extended.Dapper.Tests.EntityMapping
 {
     /// <summary>
     /// This class tests if the mapping of model atrributes works correctly

@@ -1,4 +1,4 @@
-CREATE TABLE "Author" (
+CREATE TABLE IF NOT EXISTS "Author" (
     "Id" GUID PRIMARY KEY NOT NULL,
     "Name" VARCHAR,
     "BirthYear" INT,
@@ -7,7 +7,7 @@ CREATE TABLE "Author" (
     "Deleted" BOOLEAN
 );
 
-CREATE TABLE "Book" (
+CREATE TABLE IF NOT EXISTS "Book" (
     "Id" GUID PRIMARY KEY NOT NULL,
     "AuthorId" GUID NOT NULL,
     "CoAuthorId" GUID,
@@ -19,14 +19,14 @@ CREATE TABLE "Book" (
     "Deleted" BOOLEAN
 );
 
-CREATE TABLE "Category" (
+CREATE TABLE IF NOT EXISTS "Category" (
     "Id" GUID PRIMARY KEY NOT NULL,
     "Name" VARCHAR,
     "Description" VARCHAR,
     "EditedBy" VARCHAR
 );
 
-CREATE TABLE "Log" (
+CREATE TABLE IF NOT EXISTS "Log" (
     "Date" DATETIME NOT NULL,
     "SubjectId" VARCHAR NOT NULL,
     "UserId" GUID,

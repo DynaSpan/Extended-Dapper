@@ -71,7 +71,9 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
             if (databaseSettings.Port != null)
                 connStringBuilder.AppendFormat("Port={0};", databaseSettings.Port);
 
-            connStringBuilder.AppendFormat("Database={0};", databaseSettings.Database);
+            if (databaseSettings.Database != null)
+                connStringBuilder.AppendFormat("Database={0};", databaseSettings.Database);
+
             connStringBuilder.AppendFormat("Uid={0};", databaseSettings.User);
             connStringBuilder.AppendFormat("Pwd={0};", databaseSettings.Password);
 

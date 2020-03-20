@@ -1,5 +1,7 @@
+using System;
 using System.Data;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
 using Extended.Dapper.Core.Database;
@@ -8,42 +10,94 @@ using Extended.Dapper.Tests.Models;
 
 namespace Extended.Dapper.Tests.Helpers
 {
-    public class DatabaseHelper
+    public static class DatabaseHelper
     {
-        private static bool DbCleared { get; set; } = false;
+        private static bool DbCreated { get; set; } = false;
         private static IDatabaseFactory DatabaseFactory { get; set; }
+        private static IDatabaseFactory LegacyDatabaseFactory { get; set; }
 
         /// <summary>
         /// Creates the database in the SQLite file
         /// </summary>
         public static void CreateDatabase()
         {
-            // Delete database first
-            if (DbCleared)
-                return;
+            var dbProvider = GetDatabaseFactory().DatabaseProvider;
 
-            File.Delete("./test-db.db");
-            DbCleared = true;
+            // Delete database first
+            if (DbCreated && dbProvider == DatabaseProvider.SQLite)
+            {
+                File.Delete("./test-db.db");
+                File.Delete("./test-legacy-db.db"); 
+            } 
+
+            if (!DbCreated && dbProvider != DatabaseProvider.SQLite)
+            {
+                using (var connection = GetCreationConnection())
+                {
+                    connection.Open();
+
+                    var createDbQuery = connection.CreateCommand();
+
+                    if (dbProvider == DatabaseProvider.MySQL)
+                        createDbQuery.CommandText = "CREATE DATABASE IF NOT EXISTS testing; CREATE DATABASE IF NOT EXISTS legacytesting;";
+                    else
+                    {
+                        createDbQuery.CommandText = @"
+                            DROP DATABASE IF EXISTS testing;
+                            CREATE DATABASE testing; 
+
+                            DROP DATABASE IF EXISTS legacytesting; 
+                            CREATE DATABASE legacytesting;";
+                    }
+                    
+                    createDbQuery.ExecuteNonQuery(); 
+                }
+
+                //Thread.Sleep(250);
+            }
+
+            string tableQuery;
+            string legacyTableQuery;
+
+            switch (dbProvider)
+            {
+                case DatabaseProvider.MSSQL:
+                    tableQuery = File.ReadAllText("./test-db.mssql"); 
+                    legacyTableQuery = File.ReadAllText("./test-legacy-db.mssql");
+                    break;
+
+                case DatabaseProvider.MySQL:
+                    tableQuery = File.ReadAllText("./test-db.mysql"); 
+                    legacyTableQuery = File.ReadAllText("./test-legacy-db.mysql");
+                    break;
+
+                default:
+                    tableQuery = File.ReadAllText("./test-db.sql"); 
+                    legacyTableQuery = File.ReadAllText("./test-legacy-db.sql");
+                    break;
+            }
 
             using (var connection = GetConnection())
             {
                 connection.Open();
 
-                var createQuery = connection.CreateCommand();
+                var createTableQuery = connection.CreateCommand();
 
-                switch (GetDatabaseFactory().DatabaseProvider)
-                {
-                    case DatabaseProvider.MSSQL:
-                        createQuery.CommandText = File.ReadAllText("./test-db.mssql"); break;
-                    case DatabaseProvider.MySQL:
-                        createQuery.CommandText = File.ReadAllText("./test-db.mysql"); break;
-                    default:
-                        createQuery.CommandText = File.ReadAllText("./test-db.sql"); break;
-                }
-
-                
-                createQuery.ExecuteNonQuery();
+                createTableQuery.CommandText = tableQuery;
+                createTableQuery.ExecuteNonQuery();
             }
+
+            using (var connection = GetLegacyConnection())
+            {
+                connection.Open();
+
+                var createTableQuery = connection.CreateCommand();
+
+                createTableQuery.CommandText = legacyTableQuery;
+                createTableQuery.ExecuteNonQuery();
+            }
+
+            DbCreated = true;
         }
 
         /// <summary>
@@ -59,7 +113,40 @@ namespace Extended.Dapper.Tests.Helpers
                 deleteQuery.CommandText = "DELETE FROM Book; DELETE FROM Author; DELETE FROM Category";
                 deleteQuery.ExecuteNonQuery();
             }
+
+            using (var connection = GetLegacyConnection())
+            {
+                connection.Open();
+
+                var deleteQuery = connection.CreateCommand();
+                deleteQuery.CommandText = "DELETE FROM LegacyBook;";
+                deleteQuery.ExecuteNonQuery();
+            }
         }
+
+        /// <summary>
+        /// Clears the database from any items
+        /// </summary>
+        // public static void RemoveDatabase()
+        // {
+        //     using (var connection = GetConnection())
+        //     {
+        //         connection.Open();
+
+        //         var deleteQuery = connection.CreateCommand();
+        //         deleteQuery.CommandText = "DROP DATABASE testing;";
+        //         deleteQuery.ExecuteNonQuery();
+        //     }
+
+        //     using (var connection = GetLegacyConnection())
+        //     {
+        //         connection.Open();
+
+        //         var deleteQuery = connection.CreateCommand();
+        //         deleteQuery.CommandText = "DROP DATABASE legacytesting;";
+        //         deleteQuery.ExecuteNonQuery();
+        //     }
+        // }
 
         /// <summary>
         /// Inserts a few test objects into the database
@@ -97,15 +184,83 @@ namespace Extended.Dapper.Tests.Helpers
             return true;
         }
 
+        public static IDatabaseFactory GetCreationDatabaseFactory()
+        {
+            var dbBackend = Environment.GetEnvironmentVariable("DBBACKEND");
+            DatabaseSettings databaseSettings = null;
+
+            switch (dbBackend)
+            {
+                case "mysql":
+                    databaseSettings = new DatabaseSettings()
+                    {
+                        Host = "extendeddappermysqltesting",
+                        User = "root",
+                        Password = "TestingPassword!",
+                        DatabaseProvider = DatabaseProvider.MySQL
+                    };
+                    break;
+
+                case "mssql":
+                    databaseSettings = new DatabaseSettings()
+                    {
+                        Host = "extendeddappermssqltesting",
+                        User = "SA",
+                        Password = "TestingPassword!",
+                        DatabaseProvider = DatabaseProvider.MSSQL
+                    };
+                    break;
+
+                default:
+                    throw new NotImplementedException($"Database backend {dbBackend} is not implemented");
+            }
+
+            return new DatabaseFactory(databaseSettings);
+        }
+
         public static IDatabaseFactory GetDatabaseFactory()
         {
+            var dbBackend = Environment.GetEnvironmentVariable("DBBACKEND");
+
             if (DatabaseFactory == null)
             {
-                var databaseSettings = new DatabaseSettings()
+                DatabaseSettings databaseSettings = null;
+
+                switch (dbBackend)
                 {
-                    Database = "./test-db.db",
-                    DatabaseProvider = DatabaseProvider.SQLite
-                };
+                    case "sqlite":
+                        databaseSettings = new DatabaseSettings()
+                        {
+                            Database = "./test-db.db",
+                            DatabaseProvider = DatabaseProvider.SQLite
+                        };
+                        break;
+
+                    case "mysql":
+                        databaseSettings = new DatabaseSettings()
+                        {
+                            Host = "extendeddappermysqltesting",
+                            User = "root",
+                            Password = "TestingPassword!",
+                            Database = "testing",
+                            DatabaseProvider = DatabaseProvider.MySQL
+                        };
+                        break;
+
+                    case "mssql":
+                        databaseSettings = new DatabaseSettings()
+                        {
+                            Host = "extendeddappermssqltesting",
+                            User = "SA",
+                            Password = "TestingPassword!",
+                            Database = "testing",
+                            DatabaseProvider = DatabaseProvider.MSSQL
+                        };
+                        break;
+
+                    default:
+                        throw new NotImplementedException($"Database backend {dbBackend} is not implemented");
+                }
 
                 DatabaseFactory = new DatabaseFactory(databaseSettings);
             }
@@ -113,9 +268,63 @@ namespace Extended.Dapper.Tests.Helpers
             return DatabaseFactory;
         }
 
-        private static IDbConnection GetConnection()
+        public static IDatabaseFactory GetLegacyDatabaseFactory()
         {
-            return GetDatabaseFactory().GetDatabaseConnection();
+            var dbBackend = Environment.GetEnvironmentVariable("DBBACKEND");
+
+            if (LegacyDatabaseFactory == null)
+            {
+                DatabaseSettings databaseSettings = null;
+
+                switch (dbBackend)
+                {
+                    case "sqlite":
+                        databaseSettings = new DatabaseSettings()
+                        {
+                            Database = "./test-legacy-db.db",
+                            DatabaseProvider = DatabaseProvider.SQLite
+                        };
+                        break;
+
+                    case "mysql":
+                        databaseSettings = new DatabaseSettings()
+                        {
+                            Host = "extendeddappermysqltesting",
+                            User = "root",
+                            Password = "TestingPassword!",
+                            Database = "legacytesting",
+                            DatabaseProvider = DatabaseProvider.MySQL
+                        };
+                        break;
+
+                    case "mssql":
+                        databaseSettings = new DatabaseSettings()
+                        {
+                            Host = "extendeddappermssqltesting",
+                            User = "SA",
+                            Password = "TestingPassword!",
+                            Database = "legacytesting",
+                            DatabaseProvider = DatabaseProvider.MSSQL
+                        };
+                        break;
+
+                    default:
+                        throw new NotImplementedException($"Legacy database backend {dbBackend} is not implemented");
+                }
+
+                LegacyDatabaseFactory = new DatabaseFactory(databaseSettings);
+            }
+            
+            return LegacyDatabaseFactory;
         }
+
+        private static IDbConnection GetConnection()
+            => GetDatabaseFactory().GetDatabaseConnection();
+
+        private static IDbConnection GetLegacyConnection()
+            => GetLegacyDatabaseFactory().GetDatabaseConnection();
+
+        private static IDbConnection GetCreationConnection()
+            => GetCreationDatabaseFactory().GetDatabaseConnection();
     }
 }

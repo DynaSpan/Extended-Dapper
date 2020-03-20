@@ -1,0 +1,11 @@
+DROP TABLE IF EXISTS `LegacyBook`;
+
+CREATE TABLE IF NOT EXISTS `LegacyBook` (
+    `Id` CHAR(36) PRIMARY KEY,
+    `AuthorId` CHAR(36) NOT NULL,
+    `CategoryId` CHAR(36),
+    `Name` VARCHAR(255),
+    `ReleaseYear` INT,
+    `UpdatedAt` DATETIME,
+    `Deleted` BOOLEAN
+);

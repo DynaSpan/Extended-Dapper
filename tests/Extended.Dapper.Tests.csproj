@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="9.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.9.0" />
     <PackageReference Include="NUnit" Version="3.11.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.13.0" />
@@ -17,6 +18,9 @@
     <None Update="test-db.sql" CopyToOutputDirectory="PreserveNewest" />
     <None Update="test-db.mysql" CopyToOutputDirectory="PreserveNewest" />
     <None Update="test-db.mssql" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="test-legacy-db.sql" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="test-legacy-db.mysql" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="test-legacy-db.mssql" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

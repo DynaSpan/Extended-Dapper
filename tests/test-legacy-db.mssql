@@ -1,0 +1,11 @@
+DROP TABLE IF EXISTS [LegacyBook];
+
+CREATE TABLE [LegacyBook] (
+    [Id] UNIQUEIDENTIFIER PRIMARY KEY,
+    [AuthorId] UNIQUEIDENTIFIER NOT NULL,
+    [CategoryId] UNIQUEIDENTIFIER,
+    [Name] VARCHAR(255),
+    [ReleaseYear] INT,
+    [UpdatedAt] DATETIME,
+    [Deleted] BIT
+);

@@ -1,0 +1,30 @@
+version: '3.4'
+
+services:
+  tests:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      WAIT_HOSTS: extendeddappermssqltesting:1433, extendeddappermysqltesting:3306
+      WAIT_AFTER_HOSTS: 5
+    volumes:
+        - ./TestResults:/var/temp
+
+  mssql:
+    hostname: "extendeddappermssqltesting"
+    container_name: "extendeddappermssqltesting"
+    image: mcr.microsoft.com/mssql/server:2017-CU8-ubuntu
+    environment:
+        SA_PASSWORD: "TestingPassword!"
+        ACCEPT_EULA: "Y"
+        MSSQL_RPC_PORT: 135
+        MSSQL_DTC_TCP_PORT: 51000
+
+  mysql:
+    hostname: "extendeddappermysqltesting"
+    container_name: "extendeddappermysqltesting"
+    image: mariadb
+    environment:
+        MYSQL_ROOT_PASSWORD: "TestingPassword!"
+        MYSQL_ROOT_HOST: "%"

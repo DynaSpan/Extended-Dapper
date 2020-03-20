@@ -2,7 +2,7 @@ DROP TABLE IF EXISTS `Author`;
 DROP TABLE IF EXISTS `Book`;
 DROP TABLE IF EXISTS `Category`;
 
-CREATE TABLE `Author` (
+CREATE TABLE IF NOT EXISTS `Author` (
     `Id` CHAR(36) PRIMARY KEY,
     `Name` VARCHAR(255),
     `BirthYear` INT(4),
@@ -11,7 +11,7 @@ CREATE TABLE `Author` (
     `Deleted` BOOLEAN
 );
 
-CREATE TABLE `Book` (
+CREATE TABLE IF NOT EXISTS `Book` (
     `Id` CHAR(36) PRIMARY KEY,
     `AuthorId` CHAR(36) NOT NULL,
     `CoAuthorId` CHAR(36),
@@ -23,16 +23,17 @@ CREATE TABLE `Book` (
     `Deleted` BOOLEAN
 );
 
-CREATE TABLE `Category` (
+CREATE TABLE IF NOT EXISTS `Category` (
     `Id` CHAR(36) PRIMARY KEY,
     `Name` VARCHAR(255),
     `Description` VARCHAR(255),
     `EditedBy` VARCHAR(255)
 );
 
-CREATE TABLE `Log` (
-    `Date` DATETIME PRIMARY KEY NOT NULL,
-    `SubjectId` VARCHAR(255) PRIMARY KEY NOT NULL,
+CREATE TABLE IF NOT EXISTS `Log` (
+    `Date` DATETIME NOT NULL,
+    `SubjectId` VARCHAR(255) NOT NULL,
     `UserId` CHAR(36),
-    `Action` VARCHAR(255)
+    `Action` VARCHAR(255),
+    PRIMARY KEY (`Date`, `SubjectId`)
 );

@@ -73,7 +73,9 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
             else
                 connStringBuilder.AppendFormat("Server={0};", databaseSettings.Host);
             
-            connStringBuilder.AppendFormat("Database={0};", databaseSettings.Database);
+            if (databaseSettings.Database != null)
+                connStringBuilder.AppendFormat("Database={0};", databaseSettings.Database);
+                
             connStringBuilder.AppendFormat("User Id={0};", databaseSettings.User);
             connStringBuilder.AppendFormat("Password={0};", databaseSettings.Password);
 
