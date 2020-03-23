@@ -62,8 +62,9 @@ namespace Extended.Dapper.Tests.EntityMapping
         {
             // Author
             var authorRelations = this.AuthorMap.RelationProperties;
-            Assert.AreEqual(1, authorRelations.Count, "Author does not have 1 relation property mapped");
+            Assert.AreEqual(2, authorRelations.Count, "Author does not have 2 relation properties mapped");
             var bookRelation = authorRelations.Single(kv => kv.Key.Name == "Books");
+            var carRelation  = authorRelations.Single(kv => kv.Key.Name == "Spaceships");
 
             // Books
             var booksRelations      = this.BookMap.RelationProperties;

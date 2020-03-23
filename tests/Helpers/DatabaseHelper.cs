@@ -1,9 +1,7 @@
 using System;
 using System.Data;
 using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
-using Dapper;
 using Extended.Dapper.Core.Database;
 using Extended.Dapper.Core.Repository;
 using Extended.Dapper.Tests.Models;
@@ -110,7 +108,7 @@ namespace Extended.Dapper.Tests.Helpers
                 connection.Open();
 
                 var deleteQuery = connection.CreateCommand();
-                deleteQuery.CommandText = "DELETE FROM Book; DELETE FROM Author; DELETE FROM Category; DELETE FROM Log;";
+                deleteQuery.CommandText = "DELETE FROM Book; DELETE FROM Author; DELETE FROM Category; DELETE FROM Log; DELETE FROM Spaceship;";
                 deleteQuery.ExecuteNonQuery();
             }
 
@@ -125,36 +123,13 @@ namespace Extended.Dapper.Tests.Helpers
         }
 
         /// <summary>
-        /// Clears the database from any items
-        /// </summary>
-        // public static void RemoveDatabase()
-        // {
-        //     using (var connection = GetConnection())
-        //     {
-        //         connection.Open();
-
-        //         var deleteQuery = connection.CreateCommand();
-        //         deleteQuery.CommandText = "DROP DATABASE testing;";
-        //         deleteQuery.ExecuteNonQuery();
-        //     }
-
-        //     using (var connection = GetLegacyConnection())
-        //     {
-        //         connection.Open();
-
-        //         var deleteQuery = connection.CreateCommand();
-        //         deleteQuery.CommandText = "DROP DATABASE legacytesting;";
-        //         deleteQuery.ExecuteNonQuery();
-        //     }
-        // }
-
-        /// <summary>
         /// Inserts a few test objects into the database
         /// </summary>
         public static async Task<bool> PopulateDatabase()
         {
-            var bookRepository = new EntityRepository<Book>(GetDatabaseFactory());
-            var authorRepository = new EntityRepository<Author>(GetDatabaseFactory());
+            var bookRepository      = new EntityRepository<Book>(GetDatabaseFactory());
+            var authorRepository    = new EntityRepository<Author>(GetDatabaseFactory());
+            var shipRepository      = new EntityRepository<Spaceship>(GetDatabaseFactory());
 
             var authorHawking   = ModelHelper.GetAuthorModel(AuthorModelType.StephenHawking);
             var authorSagan     = ModelHelper.GetAuthorModel(AuthorModelType.CarlSagan);
@@ -164,12 +139,14 @@ namespace Extended.Dapper.Tests.Helpers
 
             var briefAnswersBook = ModelHelper.GetBookModel(BookModelType.BriefAnswers, scienceCategory, authorHawking);
             var briefHistoryBook = ModelHelper.GetBookModel(BookModelType.BriefHistoryOfTime, scienceCategory, authorHawking);
-            
 
             var cosmosBook      = ModelHelper.GetBookModel(BookModelType.Cosmos, null, authorSagan);
             var paleBlueDotBook = ModelHelper.GetBookModel(BookModelType.PaleBlueDot, scienceCategory, authorSagan);
 
             var coBook = ModelHelper.GetBookModel(BookModelType.ScienceAnswered, scienceCategory, authorHawking, authorSagan);
+
+            var andromedaShip = ModelHelper.GetSpaceshipModel(SpaceshipModelType.AndromedaLink);
+            var galaxyShip    = ModelHelper.GetSpaceshipModel(SpaceshipModelType.GalaxyTraveller);
 
             await bookRepository.Insert(briefHistoryBook);
             await bookRepository.Insert(briefAnswersBook);
@@ -180,6 +157,9 @@ namespace Extended.Dapper.Tests.Helpers
             await bookRepository.Insert(coBook);
 
             await authorRepository.Insert(authorWithoutBooks);
+
+            await shipRepository.Insert(andromedaShip);
+            await shipRepository.Insert(galaxyShip);
 
             return true;
         }

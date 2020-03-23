@@ -1,10 +1,10 @@
-# Extended Dapper (BETA)
+# Extended Dapper (preview)
 
 [![Nuget (with prereleases)](https://img.shields.io/nuget/vpre/Extended.Dapper)](https://www.nuget.org/packages/Extended.Dapper)
 
-Extends Dapper with a repository (CRUD & LINQ) and native `OneToMany` & `ManyToOne` mappings.
+Extends Dapper with a repository (CRUD) and native LINQ 2 SQL and `OneToMany` & `ManyToOne` mappings.
 
-**This is still a WIP and not ready for production use!** Though it has been been tested in various (non-critical) production environments.
+**This is a preview and might contain bugs** Though it has been been tested in various (non-critical) production environments and the EntityRepository is almost 100% covered by tests
 
 ## Getting started
 
@@ -18,7 +18,7 @@ Extends Dapper with a repository (CRUD & LINQ) and native `OneToMany` & `ManyToO
 - Support for `OneToMany` and `ManyToOne` attributes on entity properties.
     - Choose per `Get(All)` which children you want to include
     - Lazy loading with dedicated methods
-- Support for SQLite, MSSQL and MySQL/MariaDB. More planned.
+- Support for SQLite, MSSQL and MySQL/MariaDB. More planned in the near future.
 
 ## Changelog
 [View here](CHANGELOG.md)
@@ -28,13 +28,12 @@ Extends Dapper with a repository (CRUD & LINQ) and native `OneToMany` & `ManyToO
 
 ## TODO
 
-- Write unittests (working on it, most of the EntityRepository is covered)
-    - Execute unittests for each supported database instead of just SQLite
+- Write more unittests (working on it, EntityRepository is covered)
 - ~Setup CI/CD for automated deployment to NuGet~
 - Setup documentation
-- (Proper) support for more than 1 primary key
-- Support for autovalues other than guid/uuid
-- Optimize reflection calls
+- ~(Proper) support for more than 1 primary key~
+- ~Support for autovalues other than guid/uuid~
+- ~Optimize reflection calls~
 - Optimize relation mapping (should be able to better implement it with Dapper)
 - Implement more `SqlProviders`
 - Lazy loading of `OneToMany` and `ManyToOne` (semi-implemented; loading must be done manually)

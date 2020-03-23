@@ -19,6 +19,7 @@ namespace Extended.Dapper.Tests.Repository
         protected EntityRepository<Author> AuthorRepository { get; set; }
         protected EntityRepository<Category> CategoryRepository { get; set; }
         protected EntityRepository<Log> LogRepository { get; set; }
+        protected EntityRepository<Spaceship> SpaceshipRepository { get; set; }
 
         [OneTimeSetUp]
         public virtual void FixtureSetUp()
@@ -26,10 +27,11 @@ namespace Extended.Dapper.Tests.Repository
             SqlQueryProviderHelper.Verbose = true;
             DatabaseHelper.CreateDatabase();
 
-            BookRepository = new EntityRepository<Book>(DatabaseHelper.GetDatabaseFactory());
-            AuthorRepository = new EntityRepository<Author>(DatabaseHelper.GetDatabaseFactory());
-            CategoryRepository = new EntityRepository<Category>(DatabaseHelper.GetDatabaseFactory());
-            LogRepository = new EntityRepository<Log>(DatabaseHelper.GetDatabaseFactory());
+            BookRepository      = new EntityRepository<Book>(DatabaseHelper.GetDatabaseFactory());
+            AuthorRepository    = new EntityRepository<Author>(DatabaseHelper.GetDatabaseFactory());
+            CategoryRepository  = new EntityRepository<Category>(DatabaseHelper.GetDatabaseFactory());
+            LogRepository       = new EntityRepository<Log>(DatabaseHelper.GetDatabaseFactory());
+            SpaceshipRepository = new EntityRepository<Spaceship>(DatabaseHelper.GetDatabaseFactory());
         }
 
         /// <summary>

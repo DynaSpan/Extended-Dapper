@@ -20,11 +20,11 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
 {
     public abstract class SqlQueryProvider : ISqlQueryProvider
     {
-        public DatabaseProvider DatabaseProvider { get; set; }
+        public DatabaseProvider ProviderType { get; set; }
 
         public SqlQueryProvider(DatabaseProvider dbProvider)
         {
-            this.DatabaseProvider = dbProvider;
+            this.ProviderType = dbProvider;
         }
 
         /// <summary>
@@ -472,7 +472,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
             if (predicate != null && predicate.Body != null)
             {
                 // WHERE
-                var queryProperties = ExpressionHelper.GetQueryProperties(predicate.Body, entityMap, this.DatabaseProvider);
+                var queryProperties = ExpressionHelper.GetQueryProperties(predicate.Body, entityMap, this.ProviderType);
 
                 var qLevel = 0;
                 var sqlBuilder = new StringBuilder();

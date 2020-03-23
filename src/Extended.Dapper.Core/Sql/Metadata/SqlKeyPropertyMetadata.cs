@@ -21,8 +21,8 @@ namespace Extended.Dapper.Core.Sql.Metadata
             if (attribute != null)
             {
                 // Check if type is correct
-                if (propertyInfo.PropertyType != typeof(Guid))
-                    throw new NotImplementedException($"Type {propertyInfo.GetType()} is not supported as AutoValue");
+                if (propertyInfo.PropertyType != typeof(Guid) && propertyInfo.PropertyType != typeof(int))
+                    throw new NotImplementedException($"Type {propertyInfo.PropertyType} is not supported as AutoValue");
 
                 this.AutoValue = true;
             }

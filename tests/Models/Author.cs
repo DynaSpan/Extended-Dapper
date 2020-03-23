@@ -18,6 +18,9 @@ namespace Extended.Dapper.Tests.Models
         [OneToMany(typeof(Book), "AuthorId")]
         public ICollection<Book> Books { get; set; }
 
+        [OneToMany(typeof(Spaceship), "OwnerId", true)]
+        public ICollection<Spaceship> Spaceships { get; set; }
+
         public override string ToString()
         {
             var returnString = string.Format("{0} ({1}), {2}", Name, BirthYear, Country);

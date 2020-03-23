@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -89,7 +90,21 @@ namespace Extended.Dapper.Sql.QueryExecuter
                             insertQuery.Params.Add(param.Key, param.Value);
                 
                     string query = this.DatabaseFactory.SqlProvider.BuildInsertQuery(insertQuery);
-                    insertResult = await transaction.Connection.ExecuteAsync(query, insertQuery.Params, transaction);
+
+                    if (insertQuery.AutoIncrementKey)
+                    {
+                        int incrementedKey = await transaction.Connection.QuerySingleAsync<int>(query, insertQuery.Params, transaction);
+
+                        if (incrementedKey != default(int))
+                            insertResult = 1;
+
+                        Console.WriteLine("Incremented key: " + incrementedKey);
+                        Debug.Print("Incremented key: " + incrementedKey);
+
+                        insertQuery.AutoIncrementField.PropertyInfo.SetValue(entity, incrementedKey);
+                    }
+                    else
+                        insertResult = await transaction.Connection.ExecuteAsync(query, insertQuery.Params, transaction);
                 }
 
                 if (insertResult == 1 || !hasNoKey)

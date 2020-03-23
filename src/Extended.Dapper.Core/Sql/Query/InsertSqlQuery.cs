@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Text;
+using Extended.Dapper.Core.Sql.Metadata;
 using Extended.Dapper.Core.Sql.Query.Models;
 using Extended.Dapper.Core.Sql.QueryProviders;
 
@@ -27,6 +28,17 @@ namespace Extended.Dapper.Core.Sql.Query
         /// meaning this object has been inserted already
         /// </summary>
         public bool IdAlreadyPresent { get; set; }
+
+        /// <summary>
+        /// Boolean indicating if there is a AutoIncrement key,
+        /// indicating we should grab the result from the insert query
+        /// </summary>
+        public bool AutoIncrementKey { get; set; } = false;
+
+        /// <summary>
+        /// The field that have auto increments
+        /// </summary>
+        public SqlKeyPropertyMetadata AutoIncrementField { get; set; }
 
         public InsertSqlQuery() : base()
         {

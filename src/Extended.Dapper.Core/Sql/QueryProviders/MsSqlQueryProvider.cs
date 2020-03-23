@@ -65,5 +65,28 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
 
             return query.ToString();
         }
+
+        /// <summary>
+        /// Builds an insert query
+        /// </summary>
+        /// <param name="insertQuery"></param>
+        public override string BuildInsertQuery(InsertSqlQuery insertQuery)
+        {
+            var insertFields = string.Join(", ", insertQuery.Insert.Select(this.MapInsertAliasColumn));
+            var insertParams = string.Join(", ", insertQuery.Insert.Select(i => this.ParameterChar + i.ParameterName));
+
+            var queryBuilder = new StringBuilder();
+            queryBuilder.AppendFormat("INSERT INTO {0} ({1}) ", this.EscapeTable(insertQuery.Table), insertFields);
+
+            if (insertQuery.AutoIncrementKey)
+                queryBuilder.AppendFormat(" OUTPUT INSERTED.{0} ", this.EscapeColumn(insertQuery.AutoIncrementField.ColumnName));
+
+            queryBuilder.AppendFormat("VALUES ({0})", insertParams);
+
+            if (SqlQueryProviderHelper.Verbose)
+                Console.WriteLine(queryBuilder.ToString());
+
+            return queryBuilder.ToString();
+        }
     }
 }

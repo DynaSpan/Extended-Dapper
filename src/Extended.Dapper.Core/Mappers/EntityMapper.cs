@@ -134,7 +134,8 @@ namespace Extended.Dapper.Core.Mappers
         {
             return value == null 
                 || value.ToString() == Guid.Empty.ToString()
-                || value.ToString() == string.Empty;
+                || value.ToString() == string.Empty
+                || value.ToString() == default(int).ToString();
         }
 
         /// <summary>

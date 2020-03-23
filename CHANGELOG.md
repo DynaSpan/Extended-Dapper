@@ -1,5 +1,13 @@
 # Changelog
 
+[0.5.0-preview]
+- Add testing for all supported db backends
+- Remove/optimize some reflection
+- Seperate connection logic from QueryProviders and move them to ConnectionProviders
+    - Also refactored some static database info which could lead to problems in runtime when multiple database connections are active
+- Update System.Data.SqlClient to 4.8.1
+- Add support for integer primary keys with auto increment
+
 [0.4.2-beta]
 Add option to force insert an object which has a filled autovalue key.
 

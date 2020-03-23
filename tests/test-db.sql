@@ -1,3 +1,9 @@
+DROP TABLE IF EXISTS "Author";
+DROP TABLE IF EXISTS "Book";
+DROP TABLE IF EXISTS "Category";
+DROP TABLE IF EXISTS "Log";
+DROP TABLE IF EXISTS "Spaceship";
+
 CREATE TABLE IF NOT EXISTS "Author" (
     "Id" GUID PRIMARY KEY NOT NULL,
     "Name" VARCHAR,
@@ -32,4 +38,11 @@ CREATE TABLE IF NOT EXISTS "Log" (
     "UserId" GUID,
     "Action" VARCHAR,
     PRIMARY KEY ("Date", "SubjectId")
+);
+
+CREATE TABLE IF NOT EXISTS "Spaceship" (
+    "Id" INTEGER PRIMARY KEY,
+    "OwnerId" GUID,
+    "Name" VARCHAR NOT NULL,
+    "BuildYear" INT
 );

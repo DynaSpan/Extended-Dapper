@@ -48,15 +48,27 @@ namespace Extended.Dapper.Tests.Repository
             stephenHawking.Books.Add(ModelHelper.GetBookModel(BookModelType.BriefAnswers, scienceCategory, null, null, false, true));
             stephenHawking.Books.Add(ModelHelper.GetBookModel(BookModelType.BriefHistoryOfTime, scienceCategory, null, null, false, true));
 
+            var galaxyShip = ModelHelper.GetSpaceshipModel(SpaceshipModelType.GalaxyTraveller);
+            var andromedaShip = ModelHelper.GetSpaceshipModel(SpaceshipModelType.AndromedaLink);
+
+            stephenHawking.Spaceships = new List<Spaceship>();
+            stephenHawking.Spaceships.Add(galaxyShip);
+            stephenHawking.Spaceships.Add(andromedaShip);
+
             var stephenHawkingEntity = this.AuthorRepository.Insert(stephenHawking).Result;
 
-            var authorCount = this.AuthorRepository.GetAll().Result.Count();
-            var categoryCount = this.CategoryRepository.GetAll().Result.Count();
-            var bookCount = this.BookRepository.GetAll().Result.Count();
+            var authorCount     = this.AuthorRepository.GetAll().Result.Count();
+            var categoryCount   = this.CategoryRepository.GetAll().Result.Count();
+            var bookCount       = this.BookRepository.GetAll().Result.Count();
+            var shipCount       = this.SpaceshipRepository.GetAll().Result.Count();
 
             Assert.AreEqual(1, authorCount, "Author was not correctly inserted into database");
             Assert.AreEqual(1, categoryCount, "Category was not correctly inserted into database");
             Assert.AreEqual(2, bookCount, "Books were not correctly inserted into database");
+            Assert.AreEqual(2, shipCount, "Spaceships were not correctly inserted into database");
+
+            Assert.AreNotEqual(default(int), galaxyShip.Id, "Integer autovalue was not filled");
+            Assert.AreNotEqual(default(int), andromedaShip.Id, "Integer autovalue was not filled");
 
             var booksEntity = this.AuthorRepository.GetMany<Book>(stephenHawkingEntity, a => a.Books, b => b.Author).Result;
 
@@ -207,32 +219,71 @@ namespace Extended.Dapper.Tests.Repository
         }
 
         /// <summary>
+        /// This test checks if integer autovalues works properly
+        /// </summary>
+        [Test]
+        public void TestIntegerAutoValues()
+        {
+            var ship1 = ModelHelper.GetSpaceshipModel(SpaceshipModelType.AndromedaLink);
+            var ship2 = ModelHelper.GetSpaceshipModel(SpaceshipModelType.GalaxyTraveller);
+            var ship3 = ModelHelper.GetSpaceshipModel(SpaceshipModelType.NewHorizons);
+
+            var ship1Entity = this.SpaceshipRepository.Insert(ship1).Result;
+            var ship2Entity = this.SpaceshipRepository.Insert(ship2).Result;
+            var ship3Entity = this.SpaceshipRepository.Insert(ship3).Result;
+
+            Assert.AreNotEqual(null, ship1Entity, "Could not insert object with integer autovalue");
+            Assert.AreNotEqual(null, ship2Entity, "Could not insert object with integer autovalue");
+            Assert.AreNotEqual(null, ship3Entity, "Could not insert object with integer autovalue");
+
+            Assert.AreNotEqual(default(int), ship1Entity.Id, "Integer autovalue ID was not properly inserted");
+            Assert.AreNotEqual(default(int), ship2Entity.Id, "Integer autovalue ID was not properly inserted");
+            Assert.AreNotEqual(default(int), ship3Entity.Id, "Integer autovalue ID was not properly inserted");
+        }
+
+        /// <summary>
         /// This tests if inserting objects within a transaction works correctly
         /// </summary>
         [Test]
         public void TestInsertWithTransaction()
         {
-            IDbConnection connection = DatabaseHelper.GetDatabaseFactory().GetDatabaseConnection();
-            connection.Open();
+            using (IDbConnection connection = DatabaseHelper.GetDatabaseFactory().GetDatabaseConnection())
+            {
+                connection.Open();
 
-            IDbTransaction transaction = connection.BeginTransaction();
+                using (IDbTransaction transaction = connection.BeginTransaction())
+                {
+                    int numberOfAuthors;
+                    int numberOfBooks;
 
-            var carlSagan = ModelHelper.GetAuthorModel(AuthorModelType.CarlSagan);
-            var insertEntity = this.AuthorRepository.Insert(carlSagan, transaction).Result;
+                    try
+                    {
+                        var carlSagan = ModelHelper.GetAuthorModel(AuthorModelType.CarlSagan);
+                        var insertEntity = this.AuthorRepository.Insert(carlSagan, transaction).Result;
 
-            this.TestIfAuthorIsValid(insertEntity, AuthorModelType.CarlSagan);
+                        this.TestIfAuthorIsValid(insertEntity, AuthorModelType.CarlSagan);
 
-            var paleBlueDotBook = ModelHelper.GetBookModel(BookModelType.PaleBlueDot, null, insertEntity, null, true);
-            var insertedBook = this.BookRepository.Insert(paleBlueDotBook, transaction);
+                        var paleBlueDotBook = ModelHelper.GetBookModel(BookModelType.PaleBlueDot, null, insertEntity, null, true);
+                        var insertedBook = this.BookRepository.Insert(paleBlueDotBook, transaction).Result;
 
-            transaction.Commit();
-            connection.Close();
+                        transaction.Commit();
+                        connection.Close();
 
-            var numberOfAuthors = this.AuthorRepository.GetAll().Result.Count();
-            var numberOfBooks = this.BookRepository.GetAll().Result.Count();
+                        numberOfAuthors = this.AuthorRepository.GetAll().Result.Count();
+                        numberOfBooks = this.BookRepository.GetAll().Result.Count();
+                    }
+                    catch (Exception)
+                    {
+                        transaction?.Rollback();
+                        connection?.Close();
 
-            Assert.AreEqual(1, numberOfAuthors, "Number of authors is not equal to 1");
-            Assert.AreEqual(1, numberOfBooks, "Number of books are not equal to 1");
+                        throw;
+                    }
+
+                    Assert.AreEqual(1, numberOfAuthors, "Number of authors is not equal to 1");
+                    Assert.AreEqual(1, numberOfBooks, "Number of books are not equal to 1");
+                }
+            }
         }
     }
 }

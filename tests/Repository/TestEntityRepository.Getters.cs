@@ -221,6 +221,40 @@ namespace Extended.Dapper.Tests.Repository
             this.TestIfBookIsValid(scienceAnswersBook, BookModelType.ScienceAnswered);
         }
 
+        /// <summary>
+        /// This tests if getting by int id works properly
+        /// </summary>
+        [Test]
+        public void TestGetByIntegerId()
+        {
+            var ships = this.SpaceshipRepository.GetAll().Result;
+            var andromedaShipId = ships.Single(s => s.Name == "Andromeda Link").Id;
+
+            Assert.AreNotEqual(default(int), andromedaShipId, "ID was not properly set on object");
+
+            var andromedaShip = this.SpaceshipRepository.GetById(andromedaShipId).Result;
+
+            Assert.AreNotEqual(null, andromedaShipId, "Could not get by integer id");
+            Assert.AreEqual("Andromeda Link", andromedaShip.Name);
+            Assert.AreEqual(2009, andromedaShip.BuildYear);
+        }
+
+        /// <summary>
+        /// This tests if getting by GUID works properly
+        /// </summary>
+        [Test]
+        public void TestGetByGuidId()
+        {
+            var books = this.BookRepository.GetAll().Result;
+            var briefAnswerId = books.Single(b => b.Name == "Brief Answers to the Big Questions").Id;
+
+            Assert.AreNotEqual(default(Guid), briefAnswerId, "ID was not properly set on object");
+
+            var briefBook = this.BookRepository.GetById(briefAnswerId).Result;
+
+            this.TestIfBookIsValid(briefBook, BookModelType.BriefAnswers);
+        }
+
         #endregion
 
         #region Multiple items

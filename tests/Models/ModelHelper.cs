@@ -96,6 +96,35 @@ namespace Extended.Dapper.Tests.Models
             Description = "All kinds of books with science"
         };
 
+        public static Spaceship GetSpaceshipModel(SpaceshipModelType modelType)
+        {
+            switch (modelType)
+            {
+                case SpaceshipModelType.AndromedaLink:
+                    return new Spaceship() {
+                        Name = "Andromeda Link",
+                        BuildYear = 2009
+                    };
+                case SpaceshipModelType.GalaxyTraveller:
+                    return new Spaceship() {
+                        Name = "Galaxy Traveller",
+                        BuildYear = 2000
+                    };
+                case SpaceshipModelType.NewHorizons:
+                    return new Spaceship() {
+                        Name = "New Horizons",
+                        BuildYear = 2018
+                    };
+                case SpaceshipModelType.PortalShip:
+                    return new Spaceship() {
+                        Name = "Portal Ship",
+                        BuildYear = 2067
+                    };
+                default:
+                    throw new NotImplementedException();
+            }
+        }
+
         /// <summary>
         /// Gets the author from a book model
         /// </summary>
@@ -128,5 +157,13 @@ namespace Extended.Dapper.Tests.Models
         Cosmos,
         PaleBlueDot,
         ScienceAnswered
+    }
+
+    public enum SpaceshipModelType
+    {
+        GalaxyTraveller,
+        NewHorizons,
+        AndromedaLink,
+        PortalShip
     }
 }
