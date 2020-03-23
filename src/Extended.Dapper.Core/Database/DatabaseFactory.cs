@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Text;
-using Dapper;
 using Extended.Dapper.Core.Sql.ConnectionProviders;
 using Extended.Dapper.Core.Sql.QueryProviders;
 

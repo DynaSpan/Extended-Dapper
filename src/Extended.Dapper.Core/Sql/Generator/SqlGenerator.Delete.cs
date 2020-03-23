@@ -56,10 +56,22 @@ namespace Extended.Dapper.Core.Sql.Generator
         /// <param name="parentKeyField"></param>
         /// <param name="localKeyField"></param>
         /// <param name="doNotErases"></param>
-        public DeleteSqlQuery DeleteChildren<T>(string parentTable, object parentKey, string parentKeyField, string localKeyField, List<object> doNotErases)
+        /// <param name="typeOverride"></param>
+        public DeleteSqlQuery DeleteChildren<T>(
+            string parentTable, 
+            object parentKey, 
+            string parentKeyField, 
+            string localKeyField, 
+            List<object> doNotErases, 
+            Type typeOverride = null)
             where T : class
         {
-            var entityMap = EntityMapper.GetEntityMap(typeof(T));
+            EntityMap entityMap;
+
+            if (typeOverride == null)
+                entityMap = EntityMapper.GetEntityMap(typeof(T));
+            else
+                entityMap = EntityMapper.GetEntityMap(typeOverride);
 
             var query               = new DeleteSqlQuery();
             query.Table             = entityMap.TableName;

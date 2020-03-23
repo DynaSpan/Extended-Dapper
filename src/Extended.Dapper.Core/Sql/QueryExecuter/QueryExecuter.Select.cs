@@ -113,11 +113,13 @@ namespace Extended.Dapper.Sql.QueryExecuter
             catch (Exception)
             {
                 connection.Close();
+                connection?.Dispose();
                 throw;
             }
             finally
             {
                 connection.Close();
+                connection?.Dispose();
             }
 
             return entityLookup.Values;

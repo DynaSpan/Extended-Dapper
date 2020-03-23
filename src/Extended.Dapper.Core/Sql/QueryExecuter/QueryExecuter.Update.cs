@@ -24,18 +24,27 @@ namespace Extended.Dapper.Sql.QueryExecuter
         /// <param name="entity"></param>
         /// <param name="transaction"></param>
         /// <param name="includes"></param>
-        /// <param name="queryFields"></param>
+        /// <param name="queryField"></param>
         /// <param name="queryParams"></param>
+        /// <param name="typeOverride"></param>
         /// <returns>True when succesfull; false otherwise</returns>
         public virtual async Task<bool> ExecuteUpdateQuery<T>(
             T entity, 
             IDbTransaction transaction = null, 
             Expression<Func<T, object>>[] includes = null,
             IEnumerable<QueryField> queryFields = null,
-            Dictionary<string, object> queryParams = null)
+            Dictionary<string, object> queryParams = null,
+            Type typeOverride = null)
             where T : class
         {
-            var query = this.SqlGenerator.Update<T>(entity);
+            UpdateSqlQuery query;
+            
+            if (typeOverride == null)
+                query = this.SqlGenerator.Update<T>(entity);
+            else {
+                query = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "Update", typeOverride, new[] { entity }, this.SqlGenerator) as UpdateSqlQuery;
+            }
+
             var shouldCommit = false;
             IDbConnection connection = null;
 
@@ -58,7 +67,12 @@ namespace Extended.Dapper.Sql.QueryExecuter
             // Update all children
             if (includes != null)
             {
-                var updateQuery = await this.UpdateChildren<T>(entity, transaction, includes);
+                UpdateSqlQuery updateQuery;
+
+                if (typeOverride == null)
+                    updateQuery = await this.UpdateChildren<T>(entity, transaction, typeOverride, includes);
+                else
+                    updateQuery = await this.UpdateChildren(entity, transaction, typeOverride, includes);
 
                 updateQuery.Updates.AddRange(updateQuery.Updates);
 
@@ -95,15 +109,24 @@ namespace Extended.Dapper.Sql.QueryExecuter
             }
         }
         
-        protected virtual async Task<UpdateSqlQuery> UpdateChildren<T>(T entity, IDbTransaction transaction, params Expression<Func<T, object>>[] includes)
+        protected virtual async Task<UpdateSqlQuery> UpdateChildren<T>(T entity, IDbTransaction transaction, Type typeOverride = null, params Expression<Func<T, object>>[] includes)
             where T : class
         {
             UpdateSqlQuery updateQuery = new UpdateSqlQuery();
             updateQuery.Updates = new List<QueryField>();
             updateQuery.Params = new Dictionary<string, object>();
 
-            var entityMap = EntityMapper.GetEntityMap(typeof(T));
-            var foreignKey = EntityMapper.GetCompositeUniqueKey<T>(entity);
+            EntityMap entityMap;
+            object foreignKey;
+
+            if (typeOverride == null)
+            {
+                entityMap = EntityMapper.GetEntityMap(typeof(T));
+                foreignKey = EntityMapper.GetCompositeUniqueKey<T>(entity);
+            } else {
+                entityMap = EntityMapper.GetEntityMap(typeOverride);
+                foreignKey = EntityMapper.GetCompositeUniqueKey(entity, typeOverride);
+            }
 
             foreach (var incl in includes)
             {
@@ -135,7 +158,7 @@ namespace Extended.Dapper.Sql.QueryExecuter
                         {
                             // Update the entity
                             var query = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "Update", objType, new[] { oneObj }, this.SqlGenerator) as UpdateSqlQuery;
-                            var queryResult = await (ReflectionHelper.CallGenericMethod(typeof(QueryExecuter), "ExecuteUpdateQuery", oneObj.GetType(), new[] { oneObj, transaction, null, null, null }, this) as Task<bool>);
+                            var queryResult = await this.ExecuteUpdateQuery(oneObj, transaction, null, null, null, objType);
 
                             if (!queryResult)
                                 throw new ApplicationException("Could not update a ManyToOne object: " + oneObj);
@@ -181,7 +204,7 @@ namespace Extended.Dapper.Sql.QueryExecuter
                                 var queryParams = new Dictionary<string, object>();
                                 queryParams.Add("p_fk_" + attr.ForeignKey, foreignKey);
 
-                                var queryResult = await (ReflectionHelper.CallGenericMethod(typeof(QueryExecuter), "ExecuteUpdateQuery", listType, new[] { listItem, transaction, null, queryField, queryParams }, this) as Task<bool>);
+                                var queryResult = await this.ExecuteUpdateQuery(listItem, transaction, null, queryField, queryParams, listType);
 
                                 if (!queryResult)
                                     throw new ApplicationException("Could not update a OneToMany object: " + listItem);
@@ -196,11 +219,11 @@ namespace Extended.Dapper.Sql.QueryExecuter
                         }
 
                         // Delete children not in list anymore
-                        var deleteQuery = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "DeleteChildren", listType, new object[] { attr.TableName, foreignKey, attr.ForeignKey, attr.LocalKey, currentChildrenIds }, this.SqlGenerator) as SqlQuery;
+                        var deleteQuery = this.SqlGenerator.DeleteChildren<object>(attr.TableName, foreignKey, attr.ForeignKey, attr.LocalKey, currentChildrenIds, listType);
                         
                         try
                         {
-                            string query = this.DatabaseFactory.SqlProvider.BuildDeleteQuery(deleteQuery as DeleteSqlQuery);
+                            string query = this.DatabaseFactory.SqlProvider.BuildDeleteQuery(deleteQuery);
                             await transaction.Connection.QueryAsync(query, deleteQuery.Params, transaction);
                         }
                         catch (Exception)

@@ -73,6 +73,24 @@ namespace Extended.Dapper.Core.Sql.Generator
             where T : class;
 
         /// <summary>
+        /// Generates a query for deleting the children of an entity
+        /// </summary>
+        /// <param name="parentTable"></param>
+        /// <param name="parentKey"></param>
+        /// <param name="parentKeyField"></param>
+        /// <param name="localKeyField"></param>
+        /// <param name="doNotErases"></param>
+        /// <param name="typeOverride"></param>
+        DeleteSqlQuery DeleteChildren<T>(
+            string parentTable, 
+            object parentKey, 
+            string parentKeyField, 
+            string localKeyField, 
+            List<object> doNotErases, 
+            Type typeOverride = null)
+            where T : class;
+
+        /// <summary>
         /// Creates an search expression for the ID
         /// </summary>
         /// <param name="id">The id that is wanted</param>

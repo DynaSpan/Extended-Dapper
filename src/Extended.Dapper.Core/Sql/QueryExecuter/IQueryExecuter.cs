@@ -90,15 +90,19 @@ namespace Extended.Dapper.Sql.QueryExecuter
         /// Executes an update query
         /// </summary>
         /// <param name="entity"></param>
-        /// <param name="connection"></param>
+        /// <param name="transaction"></param>
         /// <param name="includes"></param>
+        /// <param name="queryField"></param>
+        /// <param name="queryParams"></param>
+        /// <param name="typeOverride"></param>
         /// <returns>True when succesfull; false otherwise</returns>
         Task<bool> ExecuteUpdateQuery<T>(
             T entity, 
             IDbTransaction transaction = null, 
             Expression<Func<T, object>>[] includes = null,
             IEnumerable<QueryField> queryFields = null,
-            Dictionary<string, object> queryParams = null)
+            Dictionary<string, object> queryParams = null,
+            Type typeOverride = null)
             where T : class;
 
         /// <summary>

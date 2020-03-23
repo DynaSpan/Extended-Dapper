@@ -31,7 +31,7 @@ namespace Extended.Dapper.Core.Sql.Generator
                 throw new ArgumentException(databaseProvider.ToString() + " is currently not implemented");
         }
 
-        /// <summary>
+                /// <summary>
         /// Creates an search expression for the ID
         /// </summary>
         /// <param name="id">The id that is wanted</param>

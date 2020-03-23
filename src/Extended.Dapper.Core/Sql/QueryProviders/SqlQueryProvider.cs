@@ -469,7 +469,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// TODO: refactor
         public virtual void AppendWherePredicateQuery<T>(SqlQuery sqlQuery, Expression<Func<T, bool>> predicate, QueryType queryType, EntityMap entityMap, params Expression<Func<T, object>>[] includes)
         {
-            if (predicate != null)
+            if (predicate != null && predicate.Body != null)
             {
                 // WHERE
                 var queryProperties = ExpressionHelper.GetQueryProperties(predicate.Body, entityMap, this.DatabaseProvider);

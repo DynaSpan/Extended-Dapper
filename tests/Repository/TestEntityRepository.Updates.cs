@@ -139,6 +139,26 @@ namespace Extended.Dapper.Tests.Repository
         }
 
         /// <summary>
+        /// This tests if updating children when a child is removed
+        /// indeeds remove the child from the database
+        /// </summary>
+        [Test]
+        public void TestUpdateWithRemovingChildren()
+        {
+            var stephenAuthor = this.AuthorRepository.Get(a => a.Name == "Stephen Hawking", a => a.Books).Result;
+            var briefHistoryBook = stephenAuthor.Books.Single(b => b.Name == "A Brief History of Time");
+            
+            // Remove book
+            stephenAuthor.Books.Remove(briefHistoryBook);
+
+            this.AuthorRepository.Update(stephenAuthor, a => a.Books).Wait();
+
+            // Check if books still exists
+            var stephenWithBooks = this.AuthorRepository.Get(a => a.Name == "Stephen Hawking", a => a.Books).Result;
+            Assert.AreEqual(2, stephenWithBooks.Books.Count, "Books have not been saved properly through update");
+        }
+
+        /// <summary>
         /// Tests if the IgnoreOnUpdate property works as intended
         /// </summary>
         [Test]

@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using Extended.Dapper.Core.Attributes.Entities;
 using Extended.Dapper.Core.Mappers;
