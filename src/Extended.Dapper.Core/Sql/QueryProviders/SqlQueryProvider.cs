@@ -14,7 +14,7 @@ using Extended.Dapper.Core.Sql.Metadata;
 using Extended.Dapper.Core.Sql.Query;
 using Extended.Dapper.Core.Sql.Query.Expression;
 using Extended.Dapper.Core.Sql.Query.Models;
-using Extended.Dapper.Core.Sql.QueryBuilder;
+using Extended.Dapper.Core.Sql.QueryBuilders;
 
 namespace Extended.Dapper.Core.Sql.QueryProviders
 {

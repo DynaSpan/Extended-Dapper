@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using Extended.Dapper.Core.Sql.Query;
-using Extended.Dapper.Core.Sql.QueryBuilder;
+using Extended.Dapper.Core.Sql.QueryBuilders;
 
 namespace Extended.Dapper.Core.Sql.Generator
 {

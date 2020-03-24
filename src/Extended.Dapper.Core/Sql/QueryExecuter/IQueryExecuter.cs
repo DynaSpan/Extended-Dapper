@@ -3,11 +3,10 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
-using Extended.Dapper.Core.Sql.Query;
 using Extended.Dapper.Core.Sql.Query.Models;
-using Extended.Dapper.Core.Sql.QueryBuilder;
+using Extended.Dapper.Core.Sql.QueryBuilders;
 
-namespace Extended.Dapper.Sql.QueryExecuter
+namespace Extended.Dapper.Core.Sql.QueryExecuter
 {
     public interface IQueryExecuter
     {

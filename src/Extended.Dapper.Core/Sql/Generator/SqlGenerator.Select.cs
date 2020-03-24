@@ -6,10 +6,11 @@ using System.Text;
 using Extended.Dapper.Core.Attributes.Entities.Relations;
 using Extended.Dapper.Core.Helpers;
 using Extended.Dapper.Core.Mappers;
+using Extended.Dapper.Core.Reflection;
 using Extended.Dapper.Core.Sql.Metadata;
 using Extended.Dapper.Core.Sql.Query;
 using Extended.Dapper.Core.Sql.Query.Models;
-using Extended.Dapper.Core.Sql.QueryBuilder;
+using Extended.Dapper.Core.Sql.QueryBuilders;
 
 namespace Extended.Dapper.Core.Sql.Generator
 {
@@ -49,15 +50,17 @@ namespace Extended.Dapper.Core.Sql.Generator
             var sqlQuery  = new SelectSqlQuery();
             sqlQuery.Limit = queryBuilder.LimitResults;
 
-            sqlQuery.Select.AddRange(this.GenerateSelectFields(entityMap.TableName, entityMap.MappedPropertiesMetadata));
+            sqlQuery.Select.AddRange(this.GenerateSelectFields<T>(entityMap, queryBuilder));
 
-            this.MapIncludes<T>(sqlQuery, entityMap, queryBuilder.IncludedChildren.ToArray());
+            this.MapIncludes<T>(sqlQuery, entityMap, queryBuilder);
             this.MapOrderBy<T>(sqlQuery, queryBuilder, entityMap);
 
             var search = ExpressionHelper.CombineExpressions<T>(queryBuilder.Wheres);
 
             // Append where
-            this.sqlProvider.AppendWherePredicateQuery(sqlQuery, search, QueryType.Select, entityMap, queryBuilder.IncludedChildren.ToArray());
+            var includes = queryBuilder.IncludedChildren.Select(s => s.Child).ToArray();
+
+            this.sqlProvider.AppendWherePredicateQuery<T>(sqlQuery, search, QueryType.Select, entityMap, includes);
 
             sqlQuery.From = entityMap.TableName;
 
@@ -208,6 +211,77 @@ namespace Extended.Dapper.Core.Sql.Generator
             return selectList;
         }
 
+        private ICollection<SelectField> GenerateSelectFields<T>(EntityMap entityMap, QueryBuilder<T> queryBuilder)
+            where T : class
+        {
+            var selectList = new List<SelectField>();
+            
+            selectList.Add(new SelectField(){
+                IsMainKey = true,
+                Table = entityMap.TableName,
+                Field = "Split_" + entityMap.TableName
+            });
+
+            List<SqlPropertyMetadata> mappedSelects = entityMap.MappedPropertiesMetadata.ToList();
+
+            if (queryBuilder.Selects != null && queryBuilder.Selects.Count > 0)
+            {
+                mappedSelects = entityMap.MappedPropertiesMetadata
+                    .Where(p => queryBuilder.Selects
+                        .Where(f => ExpressionHelper.GetPropertyName(f) == p.PropertyName).Any()).ToList();
+
+                mappedSelects.AddRange(entityMap.PrimaryKeyPropertiesMetadata);
+            }
+
+            selectList.AddRange(mappedSelects.Select(k =>
+                new SelectField(){
+                    IsMainKey = false,
+                    Table = entityMap.TableName,
+                    Field = k.ColumnName,
+                    FieldAlias = k.ColumnAlias
+                }
+            ));
+
+            return selectList;
+        }
+
+        private ICollection<SelectField> GenerateSelectFields<T, TChild>(EntityMap entityMap, ICollection<SqlRelationPropertyMetadata> metadata, QueryBuilder<T>.IIncludedChild child)
+            where T : class
+            where TChild : class
+        {
+            var selectList = new List<SelectField>();
+            
+            selectList.Add(new SelectField(){
+                IsMainKey = true,
+                Table = entityMap.TableName,
+                Field = "Split_" + entityMap.TableName
+            });
+
+            List<SqlPropertyMetadata> mappedSelects = metadata.Cast<SqlPropertyMetadata>().ToList();
+            
+            var includeChild = child as QueryBuilder<T>.IncludedChild<TChild>;
+
+            if (includeChild.IncludedProperties != null && includeChild.IncludedProperties.Count() > 0)
+            {
+                mappedSelects = mappedSelects
+                    .Where(p => includeChild.IncludedProperties
+                        .Where(f => ExpressionHelper.GetPropertyName(f) == p.PropertyName).Any()).ToList();
+
+                mappedSelects.AddRange(entityMap.PrimaryKeyPropertiesMetadata);
+            }
+
+            selectList.AddRange(mappedSelects.Select(k =>
+                new SelectField(){
+                    IsMainKey = false,
+                    Table = entityMap.TableName,
+                    Field = k.ColumnName,
+                    FieldAlias = k.ColumnAlias
+                }
+            ));
+
+            return selectList;
+        }
+
         /// <summary>
         /// Maps the includes on a select query
         /// </summary>
@@ -219,6 +293,7 @@ namespace Extended.Dapper.Core.Sql.Generator
             var relationTables = new Dictionary<string, int>();
 
             if (includes != null)
+            {
                 foreach (var include in includes)
                 {
                     var includeMemberName = ((MemberExpression)include.Body).Member.Name.ToLower();
@@ -278,6 +353,85 @@ namespace Extended.Dapper.Core.Sql.Generator
 
                     sqlQuery.Joins.Add(join);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Maps the includes on a select query
+        /// </summary>
+        /// <param name="sqlQuery"></param>
+        /// <param name="entityMap"></param>
+        /// <param name="includes"></param>
+        public void MapIncludes<T>(SelectSqlQuery sqlQuery, EntityMap entityMap, QueryBuilder<T> queryBuilder)
+            where T : class
+        {
+            var relationTables = new Dictionary<string, int>();
+
+            if (queryBuilder.IncludedChildren != null && queryBuilder.IncludedChildren.Count > 0)
+            {
+                foreach (var include in queryBuilder.IncludedChildren)
+                {
+                    var includeMemberName = include.GetMemberName().ToLower();
+                    var kvpProperty       = entityMap.RelationProperties.Single(x => x.Key.Name.ToLower() == includeMemberName);
+
+                    var property = kvpProperty.Key;
+                    var metadata = kvpProperty.Value;
+                    var childEntityMap = EntityMapper.GetEntityMap(include.ChildType);
+
+                    var relationAttr = System.Attribute.GetCustomAttributes(property, typeof(RelationAttributeBase), true).FirstOrDefault() as RelationAttributeBase;
+
+                    var tableName = relationAttr.TableName;
+                    var typeStr = relationAttr.Type.ToString();
+
+                    if (relationTables.ContainsKey(typeStr))
+                        tableName = tableName + "_" + relationTables[typeStr];
+
+                    var fields = include.GetSelectFields(childEntityMap, metadata, tableName);
+
+                    sqlQuery.Select.AddRange(fields);
+
+                    var join = new Join();
+                    join.EntityType = relationAttr.Type;
+
+                    // Check the type of relation
+                    if (relationAttr is ManyToOneAttribute)
+                    {
+                        join.JoinType = JoinType.INNER;
+                        
+                        join.ExternalTable = entityMap.TableName;
+                        join.LocalTable = relationAttr.TableName;
+
+                        if (relationTables.ContainsKey(typeStr))
+                        {
+                            join.TableAlias = relationAttr.TableName + "_" + relationTables[typeStr];
+                            relationTables[typeStr]++;
+                        }
+                        else
+                            relationTables.Add(typeStr, 0);
+                    }
+                    else if (relationAttr is OneToManyAttribute)
+                    {
+                        join.JoinType = JoinType.LEFT;
+
+                        join.ExternalTable = relationAttr.TableName;
+                        join.LocalTable = entityMap.TableName;
+
+                        if (relationTables.ContainsKey(typeStr))
+                        {
+                            join.TableAlias = entityMap.TableName + "_" + relationTables[typeStr];
+                            relationTables[typeStr]++;
+                        }
+                        else
+                            relationTables.Add(typeStr, 0);
+                    }
+
+                    join.ExternalKey = relationAttr.ForeignKey;
+                    join.LocalKey    = relationAttr.LocalKey;
+                    join.Nullable    = relationAttr.Nullable;
+
+                    sqlQuery.Joins.Add(join);
+                }
+            }
         }
     }
 }

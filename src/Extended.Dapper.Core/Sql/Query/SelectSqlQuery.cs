@@ -1,8 +1,6 @@
 using System.Collections.Generic;
-using System.Text;
 using Extended.Dapper.Core.Sql.Query.Models;
-using Extended.Dapper.Core.Sql.QueryBuilder;
-using Extended.Dapper.Core.Sql.QueryProviders;
+using Extended.Dapper.Core.Sql.QueryBuilders;
 
 namespace Extended.Dapper.Core.Sql.Query
 {

@@ -12,7 +12,7 @@ using Extended.Dapper.Core.Mappers;
 using Extended.Dapper.Core.Sql.Query;
 using Extended.Dapper.Core.Sql.Query.Models;
 
-namespace Extended.Dapper.Sql.QueryExecuter
+namespace Extended.Dapper.Core.Sql.QueryExecuter
 {
     public partial class QueryExecuter : IQueryExecuter
     {

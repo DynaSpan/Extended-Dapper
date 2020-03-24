@@ -39,3 +39,15 @@ Extends Dapper with a repository (CRUD) and native LINQ 2 SQL and `OneToMany` & 
 - Lazy loading of `OneToMany` and `ManyToOne` (semi-implemented; loading must be done manually)
 - Implement `ManyToMany` attribute
 - Do benchmarks
+
+## Example
+
+An example of retrieving an entity from the database:
+
+    var scienceAnswersBook = (await this.BookRepository.GetQueryBuilder()
+        .Select(b => b.Name, b => b.ReleaseYear)
+        .IncludeChild<Author>(b => b.Author, a => a.Name, a => a.Country)
+        .IncludeChild<Author>(b => b.CoAuthor, a => a.Name, a => a.Country)
+        .IncludeChild<Category>(b => b.Category, c => c.Name)
+        .Where(b => b.Name == "Science questions answered")
+        .GetResults()).First();

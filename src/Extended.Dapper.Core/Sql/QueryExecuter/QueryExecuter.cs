@@ -3,7 +3,7 @@ using System.Data;
 using Extended.Dapper.Core.Database;
 using Extended.Dapper.Core.Sql.Generator;
 
-namespace Extended.Dapper.Sql.QueryExecuter
+namespace Extended.Dapper.Core.Sql.QueryExecuter
 {
     public partial class QueryExecuter : IQueryExecuter
     {

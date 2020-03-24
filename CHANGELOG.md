@@ -1,5 +1,10 @@
 # Changelog
 
+[0.5.0-preview-3]
+- Allow specific fields to be updated
+- Allow specific fields to be selected in the query builder
+- Allow specific fields of children to be selected in the query builder
+
 [0.5.0-preview-2]
 - Update Mysql.Data to 8.0.19
 - Fix bug in MsSql where getting the autoincrement key does not work if the table has a trigger

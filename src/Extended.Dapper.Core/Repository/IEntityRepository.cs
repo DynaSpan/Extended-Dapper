@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
-using Extended.Dapper.Core.Sql.QueryBuilder;
+using Extended.Dapper.Core.Sql.QueryBuilders;
 
 namespace Extended.Dapper.Core.Repository
 {

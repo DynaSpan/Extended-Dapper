@@ -6,8 +6,8 @@ using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Extended.Dapper.Core.Database;
 using Extended.Dapper.Core.Sql.Generator;
-using Extended.Dapper.Core.Sql.QueryBuilder;
-using Extended.Dapper.Sql.QueryExecuter;
+using Extended.Dapper.Core.Sql.QueryBuilders;
+using Extended.Dapper.Core.Sql.QueryExecuter;
 
 namespace Extended.Dapper.Core.Repository
 {

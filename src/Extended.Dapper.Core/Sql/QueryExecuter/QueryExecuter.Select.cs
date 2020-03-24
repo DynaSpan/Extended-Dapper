@@ -7,9 +7,9 @@ using Dapper;
 using Extended.Dapper.Core.Mappers;
 using Extended.Dapper.Core.Reflection;
 using Extended.Dapper.Core.Sql.Query;
-using Extended.Dapper.Core.Sql.QueryBuilder;
+using Extended.Dapper.Core.Sql.QueryBuilders;
 
-namespace Extended.Dapper.Sql.QueryExecuter
+namespace Extended.Dapper.Core.Sql.QueryExecuter
 {
     public partial class QueryExecuter : IQueryExecuter
     {
@@ -21,9 +21,9 @@ namespace Extended.Dapper.Sql.QueryExecuter
         public virtual Task<IEnumerable<T>> ExecuteQueryBuilder<T>(QueryBuilder<T> queryBuilder)
             where T : class
         {
-            var query = this.SqlGenerator.Select(queryBuilder);
+            var query = this.SqlGenerator.Select<T>(queryBuilder);
 
-            return this.ExecuteSelectQuery<T>(query, queryBuilder.IncludedChildren.ToArray());
+            return this.ExecuteSelectQuery<T>(query, queryBuilder.IncludedChildren.Select(s => s.Child).ToArray());
         }
 
         /// <summary>
@@ -98,7 +98,7 @@ namespace Extended.Dapper.Sql.QueryExecuter
             var keys = query.Select.Where(x => x.IsMainKey).ToList();
             keys.Remove(keys.First()); // remove first key as it is from entity itself
 
-            string splitOn = string.Join(",", keys.Select(k => k.Field));
+            string splitOn = string.Join(",", keys.Select(k => k.Field)).Trim();
 
             var entityLookup = new Dictionary<string, T>();
 
