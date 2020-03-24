@@ -76,12 +76,19 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
             var insertParams = string.Join(", ", insertQuery.Insert.Select(i => this.ParameterChar + i.ParameterName));
 
             var queryBuilder = new StringBuilder();
+
+            if (insertQuery.AutoIncrementKey)
+                queryBuilder.Append("DECLARE @IDs TABLE(Id INT);");
+
             queryBuilder.AppendFormat("INSERT INTO {0} ({1}) ", this.EscapeTable(insertQuery.Table), insertFields);
 
             if (insertQuery.AutoIncrementKey)
-                queryBuilder.AppendFormat(" OUTPUT INSERTED.{0} ", this.EscapeColumn(insertQuery.AutoIncrementField.ColumnName));
+                queryBuilder.AppendFormat(" OUTPUT INSERTED.{0} INTO @IDs(Id) ", this.EscapeColumn(insertQuery.AutoIncrementField.ColumnName));
 
-            queryBuilder.AppendFormat("VALUES ({0})", insertParams);
+            queryBuilder.AppendFormat("VALUES ({0});", insertParams);
+
+            if (insertQuery.AutoIncrementKey)
+                queryBuilder.Append("SELECT Id FROM @IDs;");
 
             if (SqlQueryProviderHelper.Verbose)
                 Console.WriteLine(queryBuilder.ToString());

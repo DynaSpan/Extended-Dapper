@@ -1,5 +1,9 @@
 # Changelog
 
+[0.5.0-preview-2]
+- Update Mysql.Data to 8.0.19
+- Fix bug in MsSql where getting the autoincrement key does not work if the table has a trigger
+
 [0.5.0-preview]
 - Add testing for all supported db backends
 - Remove/optimize some reflection
