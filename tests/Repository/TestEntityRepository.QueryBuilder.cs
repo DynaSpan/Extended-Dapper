@@ -115,27 +115,26 @@ namespace Extended.Dapper.Tests.Repository
         /// Tests if limiting with an order by and search
         /// works as expected
         /// </summary>
-        // [Test]
-        // public void TestSearchLimitedWithOrderByAndChildren()
-        // {
-        //     var twoAuthors = this.AuthorRepository.GetQueryBuilder()
-        //         .Where(a => a.BirthYear > 1910) // exclude Author w/o Books
-        //         .IncludeChildren(a => a.Books)
-        //         .OrderBy(a => a.Name)
-        //         .Limit(2)
-        //         .GetResults()
-        //         .Result;
+        [Test]
+        public void TestSearchWithOrderByAndChildren()
+        {
+            var twoAuthors = this.AuthorRepository.GetQueryBuilder()
+                .Where(a => a.BirthYear > 1910) // exclude Author w/o Books
+                .IncludeChildren(a => a.Books)
+                .OrderBy(a => a.Name)
+                .GetResults()
+                .Result;
 
-        //     Assert.AreEqual(2, twoAuthors.Count(), "Query was not limited correctly");
+            Assert.AreEqual(2, twoAuthors.Count(), "Query was not filtered correctly");
 
-        //     var carlSagan = twoAuthors.ElementAt(0);
-        //     var stephenHawking = twoAuthors.ElementAt(1);
+            var carlSagan = twoAuthors.Single(a => a.Name == "Carl Sagan");
+            var stephenHawking = twoAuthors.Single(a => a.Name == "Stephen Hawking");
 
-        //     Assert.AreEqual(2, carlSagan.Books.Count, "Children count is incorrect");
-        //     Assert.AreEqual(3, stephenHawking.Books, "Children count is incorrect");
+            Assert.AreEqual(2, carlSagan.Books.Count, "Children count is incorrect");
+            Assert.AreEqual(3, stephenHawking.Books.Count, "Children count is incorrect");
 
-        //     this.TestIfAuthorIsValid(stephenHawking, AuthorModelType.StephenHawking);
-        //     this.TestIfAuthorIsValid(carlSagan, AuthorModelType.CarlSagan);
-        // }
+            this.TestIfAuthorIsValid(stephenHawking, AuthorModelType.StephenHawking);
+            this.TestIfAuthorIsValid(carlSagan, AuthorModelType.CarlSagan);
+        }
     }
 }
