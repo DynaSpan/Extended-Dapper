@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Dapper;
 using Extended.Dapper.Core.Attributes.Entities.Relations;
+using Extended.Dapper.Core.Helpers;
 using Extended.Dapper.Core.Mappers;
 using Extended.Dapper.Core.Reflection;
 using Extended.Dapper.Core.Sql.Generator;
@@ -40,11 +41,15 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
             where T : class
         {
             UpdateSqlQuery query;
+            EntityMap entityMap;
             
             if (typeOverride == null)
+            {
                 query = this.SqlGenerator.Update<T>(entity, updateFields);
-            else {
+                entityMap = EntityMapper.GetEntityMap(typeof(T));
+            } else {
                 query = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "Update", typeOverride, new object[] { entity, updateFields }, this.SqlGenerator) as UpdateSqlQuery;
+                entityMap = EntityMapper.GetEntityMap(typeOverride);
             }
 
             var shouldCommit = false;
@@ -65,6 +70,9 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
             if (queryParams != null)
                 foreach (var param in queryParams)
                     query.Params.Add(param.Key, param.Value);
+
+            if (includes == null && updateFields != null)
+                includes = updateFields.Where(f => entityMap.RelationProperties.Where(r => r.Key.Name == ExpressionHelper.GetMemberExpression(f).Member.Name).Any()).ToArray();
 
             // Update all children
             if (includes != null)

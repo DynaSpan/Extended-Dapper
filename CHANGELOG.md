@@ -1,5 +1,8 @@
 # Changelog
 
+[0.5.0-preview-4]
+- Fix parameters of EntityRepository.UpdateOnly
+
 [0.5.0-preview-3]
 - Allow specific fields to be updated
 - Allow specific fields to be selected in the query builder
