@@ -36,6 +36,24 @@ namespace Extended.Dapper.Tests.Repository
         }
 
         /// <summary>
+        /// Tests if executing the QueryBuilder with a search works
+        /// as expected
+        /// </summary>
+        [Test]
+        public void TestMultipleWhere()
+        {
+            var carlSagan = this.AuthorRepository.GetQueryBuilder()
+                .Where(a => a.BirthYear == 1934)
+                .Where(a => a.Name == "Carl Sagan")
+                .GetResults()
+                .Result;
+
+            Assert.AreEqual(1, carlSagan.Count(), "Search was not executed correctly");
+
+            this.TestIfAuthorIsValid(carlSagan.First(), AuthorModelType.CarlSagan);
+        }
+
+        /// <summary>
         /// Tests if limiting works correctly
         /// </summary>
         [Test]
@@ -86,8 +104,8 @@ namespace Extended.Dapper.Tests.Repository
 
             Assert.AreEqual(2, twoAuthors.Count(), "Query was not limited correctly");
 
-            var carlSagan = twoAuthors.ElementAt(0);
-            var stephenHawking = twoAuthors.ElementAt(1);
+            var carlSagan = twoAuthors.Single(a => a.Name == "Carl Sagan");
+            var stephenHawking = twoAuthors.Single(a => a.Name == "Stephen Hawking");
 
             this.TestIfAuthorIsValid(stephenHawking, AuthorModelType.StephenHawking);
             this.TestIfAuthorIsValid(carlSagan, AuthorModelType.CarlSagan);
