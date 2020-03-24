@@ -61,7 +61,8 @@ namespace Extended.Dapper.Core.Sql.Generator
         /// Generates an update query for an entity
         /// </summary>
         /// <param name="entity"></param>
-        UpdateSqlQuery Update<T>(T entity)
+        /// <param name="updateFields"></param>
+        UpdateSqlQuery Update<T>(T entity, Expression<Func<T, object>>[] updateFields = null)
             where T : class;
 
         /// <summary>

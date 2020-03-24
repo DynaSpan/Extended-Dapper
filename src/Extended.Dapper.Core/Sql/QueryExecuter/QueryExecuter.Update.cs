@@ -23,6 +23,7 @@ namespace Extended.Dapper.Sql.QueryExecuter
         /// </summary>
         /// <param name="entity"></param>
         /// <param name="transaction"></param>
+        /// <param name="updateFields"></param>
         /// <param name="includes"></param>
         /// <param name="queryField"></param>
         /// <param name="queryParams"></param>
@@ -31,6 +32,7 @@ namespace Extended.Dapper.Sql.QueryExecuter
         public virtual async Task<bool> ExecuteUpdateQuery<T>(
             T entity, 
             IDbTransaction transaction = null, 
+            Expression<Func<T, object>>[] updateFields = null,
             Expression<Func<T, object>>[] includes = null,
             IEnumerable<QueryField> queryFields = null,
             Dictionary<string, object> queryParams = null,
@@ -40,9 +42,9 @@ namespace Extended.Dapper.Sql.QueryExecuter
             UpdateSqlQuery query;
             
             if (typeOverride == null)
-                query = this.SqlGenerator.Update<T>(entity);
+                query = this.SqlGenerator.Update<T>(entity, updateFields);
             else {
-                query = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "Update", typeOverride, new[] { entity }, this.SqlGenerator) as UpdateSqlQuery;
+                query = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "Update", typeOverride, new object[] { entity, updateFields }, this.SqlGenerator) as UpdateSqlQuery;
             }
 
             var shouldCommit = false;
@@ -157,8 +159,8 @@ namespace Extended.Dapper.Sql.QueryExecuter
                         else
                         {
                             // Update the entity
-                            var query = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "Update", objType, new[] { oneObj }, this.SqlGenerator) as UpdateSqlQuery;
-                            var queryResult = await this.ExecuteUpdateQuery(oneObj, transaction, null, null, null, objType);
+                            var query = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "Update", objType, new[] { oneObj, null }, this.SqlGenerator) as UpdateSqlQuery;
+                            var queryResult = await this.ExecuteUpdateQuery(oneObj, transaction, null, null, null, null, objType);
 
                             if (!queryResult)
                                 throw new ApplicationException("Could not update a ManyToOne object: " + oneObj);
@@ -204,7 +206,7 @@ namespace Extended.Dapper.Sql.QueryExecuter
                                 var queryParams = new Dictionary<string, object>();
                                 queryParams.Add("p_fk_" + attr.ForeignKey, foreignKey);
 
-                                var queryResult = await this.ExecuteUpdateQuery(listItem, transaction, null, queryField, queryParams, listType);
+                                var queryResult = await this.ExecuteUpdateQuery(listItem, transaction, null, null, queryField, queryParams, listType);
 
                                 if (!queryResult)
                                     throw new ApplicationException("Could not update a OneToMany object: " + listItem);

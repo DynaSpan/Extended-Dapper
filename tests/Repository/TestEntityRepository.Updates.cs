@@ -186,6 +186,29 @@ namespace Extended.Dapper.Tests.Repository
         }
 
         /// <summary>
+        /// Tests if the UpdateOnly method works as intended
+        /// </summary>
+        [Test]
+        public void TestUpdateOnly()
+        {
+            var stephenAuthor = this.AuthorRepository.Get(a => a.Name == "Stephen Hawking", a => a.Books).Result;
+
+            stephenAuthor.Name = "Stephen Birding";
+            stephenAuthor.BirthYear = 9999;
+            stephenAuthor.Country = "USA";
+
+            var updateResult = this.AuthorRepository.UpdateOnly(stephenAuthor, a => a.Name, a => a.BirthYear).Result;
+
+            Assert.AreEqual(true, updateResult, "Could not update some properties on Author");
+
+            var newStephen = this.AuthorRepository.Get(a => a.Name == "Stephen Birding").Result;
+
+            Assert.AreNotEqual(null, newStephen, "Could not find updated Author");
+            Assert.AreEqual(9999, newStephen.BirthYear, "Could not update property");
+            Assert.AreNotEqual("USA", newStephen.Country, "Property was updated even though it was excluded");
+        }
+
+        /// <summary>
         /// Tests if updating with transactions is working properly
         /// </summary>
         [Test]

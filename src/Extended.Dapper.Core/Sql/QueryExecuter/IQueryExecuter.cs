@@ -91,6 +91,7 @@ namespace Extended.Dapper.Sql.QueryExecuter
         /// </summary>
         /// <param name="entity"></param>
         /// <param name="transaction"></param>
+        /// <param name="updateFields"></param>
         /// <param name="includes"></param>
         /// <param name="queryField"></param>
         /// <param name="queryParams"></param>
@@ -99,6 +100,7 @@ namespace Extended.Dapper.Sql.QueryExecuter
         Task<bool> ExecuteUpdateQuery<T>(
             T entity, 
             IDbTransaction transaction = null, 
+            Expression<Func<T, object>>[] updateFields = null,
             Expression<Func<T, object>>[] includes = null,
             IEnumerable<QueryField> queryFields = null,
             Dictionary<string, object> queryParams = null,

@@ -151,6 +151,24 @@ namespace Extended.Dapper.Core.Repository
         Task<bool> Update(T entity, IDbTransaction transaction, params Expression<Func<T, object>>[] includes);
 
         /// <summary>
+        /// Updates only the provided fields on an entity
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <param name="updateFields"></param>
+        /// <returns>True when succesful; false otherwise</returns>
+        Task<bool> UpdateOnly(T entity, params Expression<Func<T, object>>[] updateFields);
+
+        /// <summary>
+        /// Updates only the provided fields on an entity
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <param name="updateFields"></param>
+        /// <param name="transaction"></param>
+        /// <param name="includes"></param>
+        /// <returns>True when succesful; false otherwise</returns>
+        Task<bool> UpdateOnly(T entity, Expression<Func<T, object>>[] updateFields, IDbTransaction transaction, params Expression<Func<T, object>>[] includes);
+
+        /// <summary>
         /// Deletes the given entity
         /// </summary>
         /// <param name="entity">The entity to delete</param>

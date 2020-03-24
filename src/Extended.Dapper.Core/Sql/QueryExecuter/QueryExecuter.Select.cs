@@ -109,17 +109,17 @@ namespace Extended.Dapper.Sql.QueryExecuter
                 this.OpenConnection(connection);
 
                 await connection.QueryAsync<T>(selectQuery, typeArr, DapperMapper.MapDapperEntity<T>(typeArr, entityLookup, includes), query.Params, null, true, splitOn);
+            
+                connection?.Close();
             }
             catch (Exception)
             {
-                connection.Close();
-                connection?.Dispose();
+                connection?.Close();
                 throw;
             }
             finally
             {
-                connection.Close();
-                connection?.Dispose();
+                connection?.Close();
             }
 
             return entityLookup.Values;

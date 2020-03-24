@@ -196,7 +196,27 @@ namespace Extended.Dapper.Core.Repository
         /// (erases them if they don't exist in the list anymore)</param>
         /// <returns>True when succesful; false otherwise</returns>
         protected virtual Task<bool> Update(IDbTransaction transaction, Expression<Func<T, object>>[] includes, T entity)
-            => this.QueryExecuter.ExecuteUpdateQuery<T>(entity, transaction, includes);
+            => this.QueryExecuter.ExecuteUpdateQuery<T>(entity, transaction, null, includes);
+
+        /// <summary>
+        /// Updates only the provided fields on an entity
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <param name="updateFields"></param>
+        /// <returns>True when succesful; false otherwise</returns>
+        public virtual Task<bool> UpdateOnly(T entity, params Expression<Func<T, object>>[] updateFields)
+            => this.UpdateOnly(entity, updateFields, null, null);
+
+        /// <summary>
+        /// Updates only the provided fields on an entity
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <param name="updateFields"></param>
+        /// <param name="transaction"></param>
+        /// <param name="includes"></param>
+        /// <returns>True when succesful; false otherwise</returns>
+        public virtual Task<bool> UpdateOnly(T entity, Expression<Func<T, object>>[] updateFields, IDbTransaction transaction, params Expression<Func<T, object>>[] includes)
+            => this.QueryExecuter.ExecuteUpdateQuery<T>(entity, transaction, updateFields, includes);
 
         /// <summary>
         /// Deletes the given entity
