@@ -98,9 +98,6 @@ namespace Extended.Dapper.Sql.QueryExecuter
                         if (incrementedKey != default(int))
                             insertResult = 1;
 
-                        Console.WriteLine("Incremented key: " + incrementedKey);
-                        Debug.Print("Incremented key: " + incrementedKey);
-
                         insertQuery.AutoIncrementField.PropertyInfo.SetValue(entity, incrementedKey);
                     }
                     else
