@@ -5,7 +5,7 @@ DROP TABLE IF EXISTS [Log];
 DROP TABLE IF EXISTS [Spaceship];
 
 CREATE TABLE [Author] (
-    [Id] UNIQUEIDENTIFIER PRIMARY KEY,
+    [Id] INT IDENTITY(1,1) PRIMARY KEY,
     [Name] VARCHAR(255),
     [BirthYear] INT,
     [Country] VARCHAR(255),
@@ -14,10 +14,10 @@ CREATE TABLE [Author] (
 );
 
 CREATE TABLE [Book] (
-    [Id] UNIQUEIDENTIFIER PRIMARY KEY,
-    [AuthorId] UNIQUEIDENTIFIER NOT NULL,
-    [CoAuthorId] UNIQUEIDENTIFIER,
-    [CategoryId] UNIQUEIDENTIFIER,
+    [Id] INT IDENTITY(1,1) PRIMARY KEY,
+    [AuthorId] INT NOT NULL,
+    [CoAuthorId] INT,
+    [CategoryId] INT,
     [Name] VARCHAR(255),
     [OriginalName] VARCHAR(255),
     [ReleaseYear] INT,
@@ -26,7 +26,7 @@ CREATE TABLE [Book] (
 );
 
 CREATE TABLE [Category] (
-    [Id] UNIQUEIDENTIFIER PRIMARY KEY,
+    [Id] INT IDENTITY(1,1) PRIMARY KEY,
     [Name] VARCHAR(255),
     [Description] VARCHAR(255),
     [EditedBy] VARCHAR(255)
@@ -35,14 +35,14 @@ CREATE TABLE [Category] (
 CREATE TABLE [Log] (
     [Date] DATETIME NOT NULL,
     [SubjectId] VARCHAR(255) NOT NULL,
-    [UserId] UNIQUEIDENTIFIER,
+    [UserId] INT,
     [Action] VARCHAR(255),
     PRIMARY KEY ([Date], [SubjectId])
 );
 
 CREATE TABLE [Spaceship] (
     [Id] INT IDENTITY(1,1) PRIMARY KEY,
-    [OwnerId] UNIQUEIDENTIFIER,
+    [OwnerId] INT,
     [Name] VARCHAR(255) NOT NULL,
     [BuildYear] INT
 );

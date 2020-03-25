@@ -97,7 +97,7 @@ namespace Extended.Dapper.Tests.Repository
         public Task<Log> Log<T>(T obj, string action, IDbTransaction transaction = null)
             where T : BaseEntity
         {
-            var userId = Guid.NewGuid();
+            var userId = new Random().Next(1, 100);
 
             var logEntry = new Log()
             {

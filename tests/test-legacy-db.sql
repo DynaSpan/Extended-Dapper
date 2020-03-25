@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS "LegacyBook" (
     "Id" GUID PRIMARY KEY NOT NULL,
-    "AuthorId" GUID NOT NULL,
-    "CategoryId" GUID,
+    "AuthorId" INT NOT NULL,
+    "CategoryId" INT,
     "Name" VARCHAR,
     "ReleaseYear" INT,
     "UpdatedAt" DATETIME,

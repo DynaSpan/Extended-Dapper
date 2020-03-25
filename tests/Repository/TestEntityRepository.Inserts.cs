@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using Extended.Dapper.Core.Database;
 using Extended.Dapper.Tests.Helpers;
 using Extended.Dapper.Tests.Models;
 using NUnit.Framework;
@@ -143,7 +144,7 @@ namespace Extended.Dapper.Tests.Repository
 
             // Check if book has the same parent entity
             Assert.AreEqual(carlSaganEntity.Id, paleBlueDotBookEntity.Author.Id, "Author ID is not equal; a new Author has been generated");
-            Assert.AreNotEqual(Guid.Empty, paleBlueDotBookEntity.Category.Id, "Category has not been inserted properly as it doesn't have an ID");
+            Assert.AreNotEqual(default(int), paleBlueDotBookEntity.Category.Id, "Category has not been inserted properly as it doesn't have an ID");
         }
 
         /// <summary>
@@ -195,7 +196,7 @@ namespace Extended.Dapper.Tests.Repository
         public void TestInsertWithFilledAutovalues()
         {
             var paleBlueDotBook = ModelHelper.GetBookModel(BookModelType.PaleBlueDot);
-            paleBlueDotBook.Id = Guid.NewGuid();
+            paleBlueDotBook.Id = 287;
 
             var bookEntity = this.BookRepository.Insert(paleBlueDotBook).Result;
 
@@ -209,8 +210,12 @@ namespace Extended.Dapper.Tests.Repository
         [Test]
         public void TestForcedInsertWithFilledAutovalues()
         {
+            // This is not possible on MSSQl
+            if (DatabaseHelper.GetDatabaseFactory().DatabaseProvider == DatabaseProvider.MSSQL)
+                Assert.Pass();
+
             var paleBlueDotBook = ModelHelper.GetBookModel(BookModelType.PaleBlueDot);
-            paleBlueDotBook.Id = Guid.NewGuid();
+            paleBlueDotBook.Id = 287;
 
             var bookEntity = this.BookRepository.Insert(paleBlueDotBook, true).Result;
 

@@ -13,7 +13,7 @@ namespace Extended.Dapper.Tests.Models
         [Key]
         public string SubjectId { get; set; }
 
-        public Guid UserId { get; set; }
+        public int UserId { get; set; }
 
         public string Action { get; set; }
     }

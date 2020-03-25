@@ -27,7 +27,7 @@ namespace Extended.Dapper.Tests.EntityMapping
         /// This tests if all native properties get correctly mapped
         /// </summary>
         [Test]
-        [TestCase("Id", typeof(Guid))]
+        [TestCase("Id", typeof(int))]
         [TestCase("Name", typeof(string))]
         [TestCase("ReleaseYear", typeof(int))]
         [TestCase("OriginalName", typeof(string))]
@@ -50,7 +50,7 @@ namespace Extended.Dapper.Tests.EntityMapping
             Assert.AreEqual(1, authorPrimaryKeys.Count());
             Assert.AreEqual("Id", authorPrimaryKey.ColumnName);
             Assert.AreEqual("Id", authorPrimaryKey.PropertyName);
-            Assert.AreEqual(typeof(Guid), authorPrimaryKey.PropertyInfo.PropertyType);
+            Assert.AreEqual(typeof(int), authorPrimaryKey.PropertyInfo.PropertyType);
             Assert.AreEqual(true, authorPrimaryKey.AutoValue);
         }
 

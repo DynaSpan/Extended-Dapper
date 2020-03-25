@@ -1,5 +1,9 @@
 # Changelog
 
+[0.5.0-preview-6]
+**BREAKING CHANGE**: default BaseEntity key converted from GUID to INT
+    - In the process also fix some bugs with int keys :)
+
 [0.5.0-preview-5]
 - Make Insert & Update return true if updated records are higher than 0 instead of equal to 1
     - If a table has triggers, it could update more records than just the one were updating. Therefore, queries could

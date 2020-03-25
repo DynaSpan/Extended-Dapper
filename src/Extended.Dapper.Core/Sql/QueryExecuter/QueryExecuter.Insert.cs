@@ -93,12 +93,12 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
 
                     if (insertQuery.AutoIncrementKey)
                     {
-                        int incrementedKey = await transaction.Connection.QuerySingleAsync<int>(query, insertQuery.Params, transaction);
+                        entityKey = await transaction.Connection.QuerySingleAsync<int>(query, insertQuery.Params, transaction);
 
-                        if (incrementedKey != default(int))
+                        if ((int)entityKey != default(int))
                             insertResult = 1;
 
-                        insertQuery.AutoIncrementField.PropertyInfo.SetValue(entity, incrementedKey);
+                        insertQuery.AutoIncrementField.PropertyInfo.SetValue(entity, entityKey);
                     }
                     else
                         insertResult = await transaction.Connection.ExecuteAsync(query, insertQuery.Params, transaction);

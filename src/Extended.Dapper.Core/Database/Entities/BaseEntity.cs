@@ -8,7 +8,7 @@ namespace Extended.Dapper.Core.Database.Entities
     {
         [Key]
         [AutoValue]
-        public Guid Id { get; set; }
+        public int Id { get; set; }
 
         public bool Equals(BaseEntity other)
         {
@@ -25,8 +25,6 @@ namespace Extended.Dapper.Core.Database.Entities
         }
 
         public override int GetHashCode()
-        {
-            return Id.GetHashCode();
-        }
+            => this.Id.GetHashCode();
     }
 }
