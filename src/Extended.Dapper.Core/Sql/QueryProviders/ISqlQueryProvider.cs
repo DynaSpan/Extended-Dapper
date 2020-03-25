@@ -54,7 +54,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// Builds a delete query
         /// </summary>
         /// <param name="deleteQuery"></param>
-        string BuildDeleteQuery(DeleteSqlQuery deleteQuery);
+        string BuildDeleteQuery(DeleteSqlQuery deleteQuery, EntityMap entityMap);
 
         /// <summary>
         /// Converts an ExpressionType to a SQL operator

@@ -22,7 +22,7 @@ Properties with this attribute will not be mapped by Extended Dapper.
 
 ## UpdatedAt
 
-Can be applied to a DateTime property, and will automatically place the current UTC timestamp on update.
+Can be applied to a DateTime property, and will automatically place the current UTC timestamp on update. You can choose to use local time by using `[UpdatedAt(false)]`.
 
 ## Deleted
 

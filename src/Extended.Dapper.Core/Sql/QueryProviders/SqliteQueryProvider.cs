@@ -1,8 +1,11 @@
 using System;
 using System.Data;
 using System.Linq;
+using System.Reflection;
 using System.Text;
+using Extended.Dapper.Core.Attributes.Entities;
 using Extended.Dapper.Core.Database;
+using Extended.Dapper.Core.Mappers;
 using Extended.Dapper.Core.Sql.Query;
 
 namespace Extended.Dapper.Core.Sql.QueryProviders
@@ -72,7 +75,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// </summary>
         /// <param name="deleteQuery"></param>
         /// <param name="queryBuilder"></param>
-        public override void MapLogicalDelete(DeleteSqlQuery deleteQuery, StringBuilder queryBuilder)
+        public override void MapLogicalDelete(DeleteSqlQuery deleteQuery, StringBuilder queryBuilder, EntityMap entityMap)
         {
             queryBuilder.AppendFormat("UPDATE {0} SET {1} = 1",
                 this.EscapeTable(deleteQuery.Table),
@@ -85,7 +88,12 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
                     this.ParameterChar);
 
                 if (!deleteQuery.Params.ContainsKey("p_updatedat"))
-                    deleteQuery.Params.Add(this.ParameterChar + "p_updatedat", DateTime.UtcNow);
+                {
+                    if (entityMap.UpdatedAtUTC)
+                        deleteQuery.Params.Add(this.ParameterChar + "p_updatedat", DateTime.UtcNow);
+                    else
+                        deleteQuery.Params.Add(this.ParameterChar + "p_updatedat", DateTime.Now);
+                }
             }
         }
     }

@@ -76,6 +76,7 @@ namespace Extended.Dapper.Core.Mappers
             {
                 entityMap.UpdatedAtProperty         = updatedAtProperty;
                 entityMap.UpdatedAtPropertyMetadata = new SqlPropertyMetadata(updatedAtProperty);
+                entityMap.UpdatedAtUTC              = updatedAtProperty.GetCustomAttribute<UpdatedAtAttribute>().UseUTC;
             }
 
             var logicalDeleteProperty = props.Where(p => p.GetCustomAttributes<DeletedAttribute>().Any()).FirstOrDefault();

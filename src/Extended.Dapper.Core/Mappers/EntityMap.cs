@@ -63,6 +63,12 @@ namespace Extended.Dapper.Core.Mappers
         public SqlPropertyMetadata UpdatedAtPropertyMetadata { get; set; }
 
         /// <summary>
+        /// Whether we should use the UTC time for updated at timestamps
+        /// or local time
+        /// </summary>
+        public bool UpdatedAtUTC { get; set; }
+
+        /// <summary>
         /// Indicates if this entity implements a logical
         /// delete system
         /// </summary>

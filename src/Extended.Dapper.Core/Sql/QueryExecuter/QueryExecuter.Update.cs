@@ -148,12 +148,15 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                 var oneObj   = property.Key.GetValue(entity);
                 var attr     = property.Key.GetCustomAttribute<RelationAttributeBase>();
 
+                EntityMap inclEntityMap;
+
                 if (oneObj != null)
                 {
                     if (attr is ManyToOneAttribute)
                     {
                         var objType = oneObj.GetType();
                         var oneObjKey = EntityMapper.GetCompositeUniqueKey(oneObj, objType);
+                        inclEntityMap = EntityMapper.GetEntityMap(objType);
                         
                         // If it has no key, we can assume it is a new entity
                         if (EntityMapper.IsKeyEmpty(oneObjKey))
@@ -183,7 +186,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
 
                         var listObj = oneObj as IList;
                         var listType = listObj.GetType().GetGenericArguments()[0];
-                        var listEntityMap = EntityMapper.GetEntityMap(listType);
+                        inclEntityMap = EntityMapper.GetEntityMap(listType);
 
                         foreach (var listItem in listObj)
                         {
@@ -233,7 +236,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                         
                         try
                         {
-                            string query = this.DatabaseFactory.SqlProvider.BuildDeleteQuery(deleteQuery);
+                            string query = this.DatabaseFactory.SqlProvider.BuildDeleteQuery(deleteQuery, inclEntityMap);
                             await transaction.Connection.QueryAsync(query, deleteQuery.Params, transaction);
                         }
                         catch (Exception)

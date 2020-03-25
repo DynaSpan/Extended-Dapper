@@ -49,7 +49,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
 
             try
             {
-                string deleteQuery = this.DatabaseFactory.SqlProvider.BuildDeleteQuery(query as DeleteSqlQuery);
+                string deleteQuery = this.DatabaseFactory.SqlProvider.BuildDeleteQuery(query as DeleteSqlQuery, EntityMapper.GetEntityMap(typeof(T)));
                 var result = await transaction.Connection.ExecuteAsync(deleteQuery, query.Params, transaction);
 
                 if (shouldCommit)

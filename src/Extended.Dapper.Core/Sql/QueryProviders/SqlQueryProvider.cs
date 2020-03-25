@@ -5,6 +5,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
+using Extended.Dapper.Core.Attributes.Entities;
 using Extended.Dapper.Core.Database;
 using Extended.Dapper.Core.Database.Entities;
 using Extended.Dapper.Core.Helpers;
@@ -146,27 +147,19 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// Builds a delete query
         /// </summary>
         /// <param name="deleteQuery"></param>
-        public virtual string BuildDeleteQuery(DeleteSqlQuery deleteQuery)
+        public virtual string BuildDeleteQuery(DeleteSqlQuery deleteQuery, EntityMap entityMap)
         {
             var queryBuilder = new StringBuilder();
 
             if (deleteQuery.LogicalDelete)
-            {
-                this.MapLogicalDelete(deleteQuery, queryBuilder);
-            }
+                this.MapLogicalDelete(deleteQuery, queryBuilder, entityMap);
             else
-            {
                 queryBuilder.AppendFormat("DELETE FROM {0} ", this.EscapeTable(deleteQuery.Table));
-            }
 
             if (deleteQuery.DoNotErase != null && !EntityMapper.IsKeyEmpty(deleteQuery.ParentKey))
-            {
                 this.LogicalDeleteAppendParentWhere(deleteQuery, queryBuilder);
-            }
             else
-            {
                 queryBuilder.AppendFormat(" WHERE ({0})", deleteQuery.Where);
-            }
 
             if (deleteQuery.LogicalDelete)
                 queryBuilder.AppendFormat(" AND {0}.{1} != 1",
@@ -184,7 +177,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// </summary>
         /// <param name="deleteQuery"></param>
         /// <param name="queryBuilder"></param>
-        public virtual void MapLogicalDelete(DeleteSqlQuery deleteQuery, StringBuilder queryBuilder)
+        public virtual void MapLogicalDelete(DeleteSqlQuery deleteQuery, StringBuilder queryBuilder, EntityMap entityMap)
         {
             queryBuilder.AppendFormat("UPDATE {0} SET {0}.{1} = 1",
                 this.EscapeTable(deleteQuery.Table),
@@ -198,7 +191,12 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
                     this.ParameterChar);
 
                 if (!deleteQuery.Params.ContainsKey("p_updatedat"))
-                    deleteQuery.Params.Add(this.ParameterChar + "p_updatedat", DateTime.UtcNow);
+                {
+                    if (entityMap.UpdatedAtUTC)
+                        deleteQuery.Params.Add(this.ParameterChar + "p_updatedat", DateTime.UtcNow);
+                    else
+                        deleteQuery.Params.Add(this.ParameterChar + "p_updatedat", DateTime.Now);
+                }   
             }
         }
 
@@ -509,7 +507,12 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
             }
 
             if (entityMap.LogicalDelete && entityMap.UpdatedAtProperty != null && queryType == QueryType.Delete)
-                sqlQuery.Params.Add(entityMap.UpdatedAtPropertyMetadata.ColumnName, DateTime.UtcNow);
+            {
+                if (entityMap.UpdatedAtUTC)
+                    sqlQuery.Params.Add(entityMap.UpdatedAtPropertyMetadata.ColumnName, DateTime.UtcNow);
+                else
+                    sqlQuery.Params.Add(entityMap.UpdatedAtPropertyMetadata.ColumnName, DateTime.Now);
+            }
         }
 
         /// <summary>

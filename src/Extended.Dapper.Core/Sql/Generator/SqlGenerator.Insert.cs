@@ -29,7 +29,12 @@ namespace Extended.Dapper.Core.Sql.Generator
                 entityMap = EntityMapper.GetEntityMap(typeof(T));
 
             if (entityMap.UpdatedAtProperty != null)
-                entityMap.UpdatedAtProperty.SetValue(entity, DateTime.UtcNow);
+            {
+                if (entityMap.UpdatedAtUTC)
+                    entityMap.UpdatedAtProperty.SetValue(entity, DateTime.UtcNow);
+                else
+                    entityMap.UpdatedAtProperty.SetValue(entity, DateTime.Now);
+            }
 
             var insertQuery = new InsertSqlQuery();
             insertQuery.Table = entityMap.TableName;

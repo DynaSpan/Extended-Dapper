@@ -31,7 +31,12 @@ namespace Extended.Dapper.Core.Sql.Generator
                      && x.PropertyInfo.GetCustomAttribute<AutoValueAttribute>() == null).ToList();
 
             if (entityMap.UpdatedAtProperty != null)
-                entityMap.UpdatedAtProperty.SetValue(entity, DateTime.UtcNow);
+            {
+                if (entityMap.UpdatedAtUTC)
+                    entityMap.UpdatedAtProperty.SetValue(entity, DateTime.UtcNow);
+                else
+                    entityMap.UpdatedAtProperty.SetValue(entity, DateTime.Now);
+            }
 
             if (updateFields != null)
             {
