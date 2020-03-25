@@ -1,5 +1,9 @@
 # Changelog
 
+[0.5.0-preview-7]
+- Change library type back to netstandard2.1
+- Allow local time for UpdatedAt property
+
 [0.5.0-preview-6]
 **BREAKING CHANGE**: default BaseEntity key converted from GUID to INT
     - In the process also fix some bugs with int keys :)
