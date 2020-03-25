@@ -58,6 +58,10 @@ namespace Extended.Dapper.Core.Mappers
             entityMap.PrimaryKeyProperties          = primaryKeyProperties.ToArray();
             entityMap.PrimaryKeyPropertiesMetadata  = primaryKeyProperties.Select(p => new SqlKeyPropertyMetadata(p));
 
+            // A maximum of 1 integer autovalue key can be given to an entity
+            if (entityMap.PrimaryKeyProperties.Where(p => p.PropertyType == typeof(int) && p.GetCustomAttribute<AutoValueAttribute>() != null).Count() > 1)
+                throw new NotSupportedException("Multiple integer primary keys with auto value is not supported");
+
             // Grab all properties
             var properties = props.Where(p => !p.GetCustomAttributes<NotMappedAttribute>().Any());
 
