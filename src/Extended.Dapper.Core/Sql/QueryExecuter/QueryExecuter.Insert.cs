@@ -104,7 +104,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                         insertResult = await transaction.Connection.ExecuteAsync(query, insertQuery.Params, transaction);
                 }
 
-                if (insertResult == 1 || !hasNoKey)
+                if (insertResult > 0 || !hasNoKey)
                 {
                     // Insert the OneToManys
                     if (!await this.InsertOneToManys<T>(entity, entityKey, transaction, typeOverride))
@@ -116,7 +116,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
 
                 connection?.Close();
 
-                return insertResult == 1 || (insertResult == 0 && !hasNoKey);
+                return insertResult > 0 || (insertResult == 0 && !hasNoKey);
             }
             catch (Exception)
             {

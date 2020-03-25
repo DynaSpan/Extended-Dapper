@@ -101,7 +101,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
 
                 connection?.Close();
 
-                return updateResult == 1;
+                return updateResult > 0;
             }
             catch (Exception)
             {

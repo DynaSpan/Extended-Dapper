@@ -1,5 +1,10 @@
 # Changelog
 
+[0.5.0-preview-5]
+- Make Insert & Update return true if updated records are higher than 0 instead of equal to 1
+    - If a table has triggers, it could update more records than just the one were updating. Therefore, queries could
+    return a failed status when it was actually successfull
+
 [0.5.0-preview-4]
 - Fix parameters of EntityRepository.UpdateOnly
 
