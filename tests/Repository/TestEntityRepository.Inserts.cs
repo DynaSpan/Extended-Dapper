@@ -22,6 +22,48 @@ namespace Extended.Dapper.Tests.Repository
         }
 
         /// <summary>
+        /// This tests if populating the database works as expected
+        /// </summary>
+        [Test]
+        public void TestDatabasePopulation()
+        {
+            DatabaseHelper.PopulateDatabase().Wait();
+
+            var authors = AuthorRepository.GetAll(a => a.Books).Result;
+            Assert.AreNotEqual(null, authors, "Could not retrieve Authors");
+            Assert.AreEqual(3, authors.Count(), "Incorrect number of Authors retrieved");
+
+            var carlAuthor = authors.SingleOrDefault(a => a.Name == "Carl Sagan");
+            var stephenAuthor = authors.SingleOrDefault(a => a.Name == "Stephen Hawking");
+            var noBooksAuthor = authors.SingleOrDefault(a => a.Name == "Author w/o Books");
+
+            this.TestIfAuthorIsValid(carlAuthor, AuthorModelType.CarlSagan);
+            this.TestIfAuthorIsValid(stephenAuthor, AuthorModelType.StephenHawking);
+            this.TestIfAuthorIsValid(noBooksAuthor, AuthorModelType.AuthorWithoutBooks);
+
+            Assert.AreNotEqual(null, carlAuthor.Books, "Could not retrieve Books of Author Carl Sagan");
+            Assert.AreEqual(2, carlAuthor.Books.Count(), "Did not retrieve the correct books for Carl Sagan");
+
+            Assert.AreNotEqual(null, stephenAuthor.Books, "Could not retrieve Books of Author Stephen Hawking");
+            Assert.AreEqual(3, stephenAuthor.Books.Count(), "Did not retrieve the correct books for Stephen Hawking");
+
+            Assert.AreNotEqual(null, noBooksAuthor.Books, "Could not retrieve Books of Author Author w/o Books");
+            Assert.AreEqual(0, noBooksAuthor.Books.Count(), "Did not retrieve the correct books for Author w/o Books");
+
+            var cosmosVoyageBook = carlAuthor.Books.SingleOrDefault(b => b.Name == "Cosmos: A Personal Voyage");
+            var paleBlueDotBook  = carlAuthor.Books.SingleOrDefault(b => b.ReleaseYear == 1994);
+
+            this.TestIfBookIsValid(cosmosVoyageBook, BookModelType.Cosmos);
+            this.TestIfBookIsValid(paleBlueDotBook, BookModelType.PaleBlueDot);
+
+            var briefHistoryBook = stephenAuthor.Books.SingleOrDefault(b => b.Name == "A Brief History of Time");
+            var briefAnswersBook = stephenAuthor.Books.SingleOrDefault(b => b.ReleaseYear == 2018);
+
+            this.TestIfBookIsValid(briefHistoryBook, BookModelType.BriefHistoryOfTime);
+            this.TestIfBookIsValid(briefAnswersBook, BookModelType.BriefAnswers);
+        }
+
+        /// <summary>
         /// This tests if inserting a single item without children works correctly
         /// </summary>
         [Test]
@@ -30,11 +72,12 @@ namespace Extended.Dapper.Tests.Repository
             var stephenHawking = ModelHelper.GetAuthorModel(AuthorModelType.StephenHawking);
 
             var stephenHawkingEntity = this.AuthorRepository.Insert(stephenHawking).Result;
-            var authorCount = this.AuthorRepository.GetAll().Result.Count();
+            var authors = this.AuthorRepository.GetAll().Result;
+            var author = authors.FirstOrDefault();
 
-            Assert.AreEqual(1, authorCount, "Author was not correctly inserted into database");
+            Assert.AreEqual(1, authors.Count(), "Author was not correctly inserted into database");
 
-            this.TestIfAuthorIsValid(stephenHawkingEntity, AuthorModelType.StephenHawking);
+            this.TestIfAuthorIsValid(author, AuthorModelType.StephenHawking);
         }
 
         /// <summary>
@@ -70,6 +113,9 @@ namespace Extended.Dapper.Tests.Repository
 
             Assert.AreNotEqual(default(int), galaxyShip.Id, "Integer autovalue was not filled");
             Assert.AreNotEqual(default(int), andromedaShip.Id, "Integer autovalue was not filled");
+
+            Assert.AreNotEqual(Guid.Empty, galaxyShip.ExternalId, "AutoValue GUID was not filled");
+            Assert.AreNotEqual(Guid.Empty, andromedaShip.ExternalId, "AutoValue GUID was not filled");
 
             var booksEntity = this.AuthorRepository.GetMany<Book>(stephenHawkingEntity, a => a.Books, b => b.Author).Result;
 
@@ -210,7 +256,7 @@ namespace Extended.Dapper.Tests.Repository
         [Test]
         public void TestForcedInsertWithFilledAutovalues()
         {
-            // This is not possible on MSSQl
+            // This is not possible on MSSQL
             if (DatabaseHelper.GetDatabaseFactory().DatabaseProvider == DatabaseProvider.MSSQL)
                 Assert.Pass();
 
@@ -244,6 +290,10 @@ namespace Extended.Dapper.Tests.Repository
             Assert.AreNotEqual(default(int), ship1Entity.Id, "Integer autovalue ID was not properly inserted");
             Assert.AreNotEqual(default(int), ship2Entity.Id, "Integer autovalue ID was not properly inserted");
             Assert.AreNotEqual(default(int), ship3Entity.Id, "Integer autovalue ID was not properly inserted");
+
+            Assert.AreNotEqual(Guid.Empty, ship1Entity.ExternalId, "GUID autovalue was not properly inserted");
+            Assert.AreNotEqual(Guid.Empty, ship2Entity.ExternalId, "GUID autovalue was not properly inserted");
+            Assert.AreNotEqual(Guid.Empty, ship3Entity.ExternalId, "GUID autovalue was not properly inserted");
         }
 
         /// <summary>

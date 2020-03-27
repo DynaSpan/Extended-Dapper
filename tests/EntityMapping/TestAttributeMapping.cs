@@ -79,5 +79,38 @@ namespace Extended.Dapper.Tests.EntityMapping
 
             Assert.AreEqual(null, romanceCategory.EditedBy, "Inserted a [IgnoreOnInsert] property");
         }
+
+        /// <summary>
+        /// Tests if AutoValues work if they're not a key
+        /// </summary>
+        [Test]
+        public void TestIfNonKeyAutoValueWorks()
+        {
+            var cosmosBook       = ModelHelper.GetBookModel(BookModelType.Cosmos, null);
+            var cosmosBookEntity = this.BookRepository.Insert(cosmosBook).Result;
+
+            var answersBook       = ModelHelper.GetBookModel(BookModelType.BriefHistoryOfTime, null);
+            var answersBookEntity = this.BookRepository.Insert(answersBook).Result;
+
+            Assert.AreNotEqual(null, cosmosBookEntity.ExternalId, "Did not fill non-key AutoValue");
+            Assert.AreNotEqual(Guid.Empty, cosmosBookEntity.ExternalId, "Did not fill non-key AutoValue");
+
+            Assert.AreNotEqual(null, answersBook.ExternalId, "Did not fill non-key AutoValue");
+            Assert.AreNotEqual(Guid.Empty, answersBookEntity.ExternalId, "Did not fill non-key AutoValue");
+
+            Assert.AreNotEqual(cosmosBookEntity.ExternalId, answersBookEntity.ExternalId, "Did not fill non-key AutoValue");
+
+            var cosmosBookByExternalId = this.BookRepository.Get(b => b.ExternalId == cosmosBookEntity.ExternalId).Result;
+            var answersBookByExternalid = this.BookRepository.Get(b => b.ExternalId == answersBookEntity.ExternalId).Result;
+
+            Assert.AreNotEqual(null, cosmosBookByExternalId, "Could not retrieve child by auto value");
+            Assert.AreNotEqual(null, answersBookByExternalid, "Could not retrieve child by auto value");
+
+            Assert.AreNotEqual(null, cosmosBookByExternalId.ExternalId, "Did not fill non-key AutoValue");
+            Assert.AreNotEqual(Guid.Empty, cosmosBookByExternalId.ExternalId, "Did not fill non-key AutoValue");
+
+            Assert.AreNotEqual(null, answersBookByExternalid.ExternalId, "Did not fill non-key AutoValue");
+            Assert.AreNotEqual(Guid.Empty, answersBookByExternalid.ExternalId, "Did not fill non-key AutoValue");
+        }
     }
 }

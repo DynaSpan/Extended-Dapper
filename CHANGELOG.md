@@ -1,5 +1,13 @@
 # Changelog
 
+[0.5.0]
+- Add some more tests
+- Make BaseEntity and Entity fields virtual
+- All the changes of the previews
+
+[0.5.0-preview-8]
+- AutoValues don't have to be specifically Keys
+
 [0.5.0-preview-7]
 - Change library type back to netstandard2.1
 - Allow local time for UpdatedAt property

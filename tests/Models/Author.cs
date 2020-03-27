@@ -2,20 +2,19 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using Extended.Dapper.Core.Attributes.Entities.Relations;
-using Extended.Dapper.Core.Database.Entities;
 
 namespace Extended.Dapper.Tests.Models
 {
     [Table("Author")]
-    public class Author : Entity
-    {
+    public class Author : ExternalIdEntity
+    {   
         public string Name { get; set; }
 
         public int BirthYear { get; set; }
 
         public string Country { get; set; }
 
-        [OneToMany(typeof(Book), "AuthorId")]
+        [OneToMany(typeof(Book), "AuthorId", true)]
         public ICollection<Book> Books { get; set; }
 
         [OneToMany(typeof(Spaceship), "OwnerId", true)]

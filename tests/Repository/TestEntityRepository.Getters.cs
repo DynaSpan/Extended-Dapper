@@ -273,6 +273,7 @@ namespace Extended.Dapper.Tests.Repository
             var carlAuthor = authors.SingleOrDefault(a => a.Name == "Carl Sagan");
             this.TestIfAuthorIsValid(carlAuthor, AuthorModelType.CarlSagan);
             Assert.AreNotEqual(null, carlAuthor.Books, "Could not retrieve Books of Author Carl Sagan");
+            Assert.AreEqual(2, carlAuthor.Books.Count(), "Did not retrieve the correct books for Carl Sagan");
 
             var cosmosVoyageBook = carlAuthor.Books.SingleOrDefault(b => b.Name == "Cosmos: A Personal Voyage");
             var paleBlueDotBook  = carlAuthor.Books.SingleOrDefault(b => b.ReleaseYear == 1994);

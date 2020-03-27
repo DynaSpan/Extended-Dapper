@@ -6,6 +6,7 @@ DROP TABLE IF EXISTS "Spaceship";
 
 CREATE TABLE IF NOT EXISTS "Author" (
     "Id" INTEGER PRIMARY KEY,
+    "ExternalId" GUID UNIQUE NOT NULL,
     "Name" VARCHAR,
     "BirthYear" INT,
     "Country" VARCHAR,
@@ -15,6 +16,7 @@ CREATE TABLE IF NOT EXISTS "Author" (
 
 CREATE TABLE IF NOT EXISTS "Book" (
     "Id" INTEGER PRIMARY KEY,
+    "ExternalId" GUID UNIQUE NOT NULL,
     "AuthorId" INTEGER NOT NULL,
     "CoAuthorId" INTEGER,
     "CategoryId" INTEGER,
@@ -42,6 +44,7 @@ CREATE TABLE IF NOT EXISTS "Log" (
 
 CREATE TABLE IF NOT EXISTS "Spaceship" (
     "Id" INTEGER PRIMARY KEY,
+    "ExternalId" GUID UNIQUE NOT NULL,
     "OwnerId" INTEGER,
     "Name" VARCHAR NOT NULL,
     "BuildYear" INT

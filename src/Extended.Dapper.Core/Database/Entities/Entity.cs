@@ -6,9 +6,9 @@ namespace Extended.Dapper.Core.Database.Entities
     public abstract class Entity : BaseEntity
     {
         [UpdatedAt]
-        public DateTime? UpdatedAt { get; set; }
+        public virtual DateTime? UpdatedAt { get; set; }
 
         [Deleted]
-        public bool Deleted { get; set; }
+        public virtual bool Deleted { get; set; }
     }
 }

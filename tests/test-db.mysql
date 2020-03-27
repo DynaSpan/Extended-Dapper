@@ -6,6 +6,7 @@ DROP TABLE IF EXISTS `Spaceship`;
 
 CREATE TABLE IF NOT EXISTS `Author` (
     `Id` INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    `ExternalId` CHAR(36) UNIQUE NOT NULL,
     `Name` VARCHAR(255),
     `BirthYear` INT(4),
     `Country` VARCHAR(255),
@@ -15,6 +16,7 @@ CREATE TABLE IF NOT EXISTS `Author` (
 
 CREATE TABLE IF NOT EXISTS `Book` (
     `Id` INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    `ExternalId` CHAR(36) UNIQUE NOT NULL,
     `AuthorId` INT NOT NULL,
     `CoAuthorId` INT,
     `CategoryId` INT,
@@ -42,6 +44,7 @@ CREATE TABLE IF NOT EXISTS `Log` (
 
 CREATE TABLE IF NOT EXISTS `Spaceship` (
     `Id` INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    `ExternalId` CHAR(36) UNIQUE NOT NULL,
     `OwnerId` INT,
     `Name` VARCHAR(255) NOT NULL,
     `BuildYear` INT

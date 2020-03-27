@@ -3,12 +3,11 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
 using Extended.Dapper.Core.Attributes.Entities;
 using Extended.Dapper.Core.Attributes.Entities.Relations;
-using Extended.Dapper.Core.Database.Entities;
 
 namespace Extended.Dapper.Tests.Models
 {
     [Table("Book")]
-    public class Book : Entity
+    public class Book : ExternalIdEntity
     {
         public string Name { get; set; }
 

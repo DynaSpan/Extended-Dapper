@@ -42,7 +42,9 @@ namespace Extended.Dapper.Tests.Repository
         protected void TestIfAuthorIsValid(Author author, AuthorModelType authorType)
         {
             Assert.AreNotEqual(null, author, "Could not retrieve the Author");
-            Assert.AreNotEqual(Guid.Empty, author.Id, "Author has invalid ID");
+            Assert.AreNotEqual(default(int), author.Id, "Author has invalid ID");
+            Assert.AreNotEqual(null, author.ExternalId, "Author has invalid autovalue guid");
+            Assert.AreNotEqual(Guid.Empty, author.ExternalId, "Author has invalid autovalue guid");
 
             Author testAuthor = ModelHelper.GetAuthorModel(authorType);
             
@@ -63,7 +65,9 @@ namespace Extended.Dapper.Tests.Repository
             bool includeAuthor = false, bool includeCoAuthor = false)
         {
             Assert.AreNotEqual(null, book, "Could not retrieve the Book");
-            Assert.AreNotEqual(Guid.Empty, book.Id, "Book has invalid ID");
+            Assert.AreNotEqual(default(int), book.Id, "Book has invalid ID");
+            Assert.AreNotEqual(null, book.ExternalId, "Book has invalid autovalue guid");
+            Assert.AreNotEqual(Guid.Empty, book.ExternalId, "Book has invalid autovalue guid");
 
             Category scienceCategory = null;
 
@@ -80,7 +84,7 @@ namespace Extended.Dapper.Tests.Repository
                 if (book.Category == null || testBook.Category == null)
                     Assert.AreEqual(testBook.Category, book.Category);
 
-                Assert.AreNotEqual(Guid.Empty, book.Category.Id);
+                Assert.AreNotEqual(default(int), book.Category.Id);
                 Assert.AreEqual(testBook.Category.Name, book.Category.Name);
                 Assert.AreEqual(testBook.Category.Description, book.Category.Description);
             }

@@ -62,6 +62,13 @@ namespace Extended.Dapper.Core.Mappers
             if (entityMap.PrimaryKeyProperties.Where(p => p.PropertyType == typeof(int) && p.GetCustomAttribute<AutoValueAttribute>() != null).Count() > 1)
                 throw new NotSupportedException("Multiple integer primary keys with auto value is not supported");
 
+            // Grab all autovalue properties
+            var autoValueProperties = props.Where(p => p.GetCustomAttribute<KeyAttribute>() == null && p.GetCustomAttribute<AutoValueAttribute>() != null);
+            entityMap.AutoValuePropertiesMetadata = autoValueProperties.Select(p => new SqlPropertyMetadata(p));
+
+            if (entityMap.AutoValuePropertiesMetadata.Where(p => p.PropertyInfo.PropertyType == typeof(int)).Count() > 0)
+                throw new NotSupportedException("Integer non-key autovalues are not supported");
+
             // Grab all properties
             var properties = props.Where(p => !p.GetCustomAttributes<NotMappedAttribute>().Any());
 
@@ -139,7 +146,7 @@ namespace Extended.Dapper.Core.Mappers
         {
             return value == null 
                 || value.ToString() == Guid.Empty.ToString()
-                || value.ToString() == string.Empty
+                || string.IsNullOrWhiteSpace(value.ToString())
                 || value.ToString() == default(int).ToString();
         }
 

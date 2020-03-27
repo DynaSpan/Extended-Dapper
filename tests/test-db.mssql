@@ -6,6 +6,7 @@ DROP TABLE IF EXISTS [Spaceship];
 
 CREATE TABLE [Author] (
     [Id] INT IDENTITY(1,1) PRIMARY KEY,
+    [ExternalId] UNIQUEIDENTIFIER NOT NULL,
     [Name] VARCHAR(255),
     [BirthYear] INT,
     [Country] VARCHAR(255),
@@ -15,6 +16,7 @@ CREATE TABLE [Author] (
 
 CREATE TABLE [Book] (
     [Id] INT IDENTITY(1,1) PRIMARY KEY,
+    [ExternalId] UNIQUEIDENTIFIER NOT NULL,
     [AuthorId] INT NOT NULL,
     [CoAuthorId] INT,
     [CategoryId] INT,
@@ -42,6 +44,7 @@ CREATE TABLE [Log] (
 
 CREATE TABLE [Spaceship] (
     [Id] INT IDENTITY(1,1) PRIMARY KEY,
+    [ExternalId] UNIQUEIDENTIFIER NOT NULL,
     [OwnerId] INT,
     [Name] VARCHAR(255) NOT NULL,
     [BuildYear] INT

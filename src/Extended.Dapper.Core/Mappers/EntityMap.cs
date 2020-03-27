@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using Extended.Dapper.Core.Sql.Metadata;
 
@@ -38,6 +39,11 @@ namespace Extended.Dapper.Core.Mappers
         public IEnumerable<SqlPropertyMetadata> MappedPropertiesMetadata { get; set; }
 
         /// <summary>
+        /// Indicates if this entity has more than 1 primary key
+        /// </summary>
+        public bool MultipleKeys { get => this.PrimaryKeyProperties?.Count() > 1; }
+
+        /// <summary>
         /// Contains all the primary key properties
         /// </summary>
         public PropertyInfo[] PrimaryKeyProperties { get; set; }
@@ -46,6 +52,11 @@ namespace Extended.Dapper.Core.Mappers
         /// Contains all the primary key properties
         /// </summary>
         public IEnumerable<SqlKeyPropertyMetadata> PrimaryKeyPropertiesMetadata { get; set; }
+
+        /// <summary>
+        /// Contains all autovalue properties
+        /// </summary>
+        public IEnumerable<SqlPropertyMetadata> AutoValuePropertiesMetadata { get; set; }
 
         /// <summary>
         /// Contains all properties with relations
