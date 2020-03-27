@@ -24,6 +24,7 @@ Extends Dapper with a repository (CRUD) and native LINQ 2 SQL and `OneToMany` & 
 [View here](CHANGELOG.md)
 
 ## Known issues
+- CI/CD pipeline not working due to new testing implementation
 - None; if you find one; please create an issue :)
 
 ## TODO
