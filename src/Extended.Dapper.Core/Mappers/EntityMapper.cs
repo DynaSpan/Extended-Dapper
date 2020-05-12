@@ -7,9 +7,11 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using Extended.Dapper.Core.Attributes.Entities;
+using Extended.Dapper.Core.Attributes.Entities.Keys;
 using Extended.Dapper.Core.Attributes.Entities.Relations;
 using Extended.Dapper.Core.Extensions;
 using Extended.Dapper.Core.Helpers;
+using Extended.Dapper.Core.Models;
 using Extended.Dapper.Core.Sql.Metadata;
 
 namespace Extended.Dapper.Core.Mappers
@@ -46,6 +48,7 @@ namespace Extended.Dapper.Core.Mappers
             var relationProperties = entityMap.Properties.Where(p => p.GetCustomAttributes<RelationAttributeBase>().Any());
 
             entityMap.RelationProperties = new Dictionary<PropertyInfo, ICollection<SqlRelationPropertyMetadata>>();
+            entityMap.RelationPropertiesMetadata = relationProperties.Select(p => new SqlRelationPropertyMetadata(p, p));
 
             foreach (PropertyInfo pi in relationProperties)
             {
@@ -61,6 +64,12 @@ namespace Extended.Dapper.Core.Mappers
             // A maximum of 1 integer autovalue key can be given to an entity
             if (entityMap.PrimaryKeyProperties.Where(p => p.PropertyType == typeof(int) && p.GetCustomAttribute<AutoValueAttribute>() != null).Count() > 1)
                 throw new NotSupportedException("Multiple integer primary keys with auto value is not supported");
+
+            // Grab all alternative key properties
+            var alternativeKeyproperties = props.Where(p => p.GetCustomAttribute<AlternativeKeyAttribute>() != null);
+
+            entityMap.AlternativeKeyProperties          = alternativeKeyproperties.ToArray();
+            entityMap.AlternativeKeyPropertiesMetadata  = alternativeKeyproperties.Select(a => new SqlKeyPropertyMetadata(a));
 
             // Grab all autovalue properties
             var autoValueProperties = props.Where(p => p.GetCustomAttribute<KeyAttribute>() == null && p.GetCustomAttribute<AutoValueAttribute>() != null);
@@ -102,40 +111,39 @@ namespace Extended.Dapper.Core.Mappers
         }
 
         /// <summary>
-        /// Generates a unique identifier for this entity
+        /// Gets the keys &amp; values of the entity
         /// </summary>
-        public static object GetCompositeUniqueKey<T>(T entity, Type typeOverride = null)
+        public static IEnumerable<EntityKey> GetEntityKeys<T>(T entity, Type typeOverride = null)
             where T : class
         {
             if (entity == null)
                 return null;
 
             // Get the entity map
-            EntityMap entityMap;
+            EntityMap entityMap = GetEntityMap(typeOverride ?? typeof(T));
 
-            if (typeOverride != null)
-                entityMap = GetEntityMap(typeOverride);
-            else
-                entityMap = GetEntityMap(typeof(T));
+            var returnList = new List<EntityKey>();
+            returnList.AddRange(entityMap.PrimaryKeyPropertiesMetadata.Select(p => new EntityKey(entity, p)));
 
-            if (entityMap.PrimaryKeyPropertiesMetadata.Count() == 1)
-            {
-                var metadata = entityMap.PrimaryKeyPropertiesMetadata.FirstOrDefault();
-                var keyVal = metadata.PropertyInfo.GetValue(entity);
+            return returnList;
+        }
 
-                return keyVal;
-            }
+        /// <summary>
+        /// Gets the alternative keys &amp; values of the entity
+        /// </summary>
+        public static IEnumerable<EntityKey> GetAlternativeEntityKeys<T>(T entity, Type typeOverride = null)
+            where T : class
+        {
+            if (entity == null)
+                return null;
 
-            var compositeKeyBuilder = new StringBuilder();
+            // Get the entity map
+            EntityMap entityMap = GetEntityMap(typeOverride ?? typeof(T));
 
-            foreach (var keyProp in entityMap.PrimaryKeyPropertiesMetadata)
-            {
-                var keyVal = keyProp.PropertyInfo.GetValue(entity);
+            var returnList = new List<EntityKey>();
+            returnList.AddRange(entityMap.AlternativeKeyPropertiesMetadata.Select(p => new EntityKey(entity, p)));
 
-                compositeKeyBuilder.AppendFormat("{0}={1};", keyProp.ColumnName, keyVal);
-            }
-
-            return compositeKeyBuilder.ToString();
+            return returnList;
         }
 
         /// <summary>
@@ -156,26 +164,37 @@ namespace Extended.Dapper.Core.Mappers
         public static bool IsAutovalueKeysEmpty<T>(T entity, Type typeOverride = null)
             where T : class
         {
-            // Get the entity map
-            EntityMap entityMap;
+            var keys  = GetEntityKeys<T>(entity, typeOverride).Where(k => k.AutoValue);
+            
+            // if (keys.Count() == 0)
+            //     return false;
 
-            if (typeOverride != null)
-                entityMap = GetEntityMap(typeOverride);
-            else
-                entityMap = GetEntityMap(typeof(T));
-
-            var autoValProps = entityMap.PrimaryKeyPropertiesMetadata.Where(x => x.AutoValue);
-
-            if (autoValProps.Count() > 0)
+            foreach (var key in keys)
             {
-                foreach (var autoValueProperty in autoValProps)
-                {
-                    var autoValueType = autoValueProperty.PropertyInfo.PropertyType;
-                    var key = autoValueProperty.PropertyInfo.GetValue(entity);
+                if (!EntityMapper.IsKeyEmpty(key.Value))
+                    return false;
+            }
 
-                    if (!EntityMapper.IsKeyEmpty(key))
-                        return false;
-                }
+            return true;
+        }
+
+        /// <summary>
+        /// Checks if the alternative keys are empty
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <param name="typeOverride"></param>
+        public static bool IsAlternativeKeysEmpty<T>(T entity, Type typeOverride = null)
+            where T : class
+        {
+            var alternativeKeys = GetAlternativeEntityKeys<T>(entity, typeOverride);
+
+            if (alternativeKeys.Count() == 0)
+                return IsAutovalueKeysEmpty<T>(entity, typeOverride);
+
+            foreach (var key in alternativeKeys)
+            {
+                if (!EntityMapper.IsKeyEmpty(key.Value))
+                    return false;
             }
 
             return true;

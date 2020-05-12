@@ -21,11 +21,16 @@ namespace Extended.Dapper.Core.Mappers
         {
             return (objectArr) => {
                 T entity;
-                var entityCompositeKey  = EntityMapper.GetCompositeUniqueKey<T>((T)objectArr[0]);
-                var entityMap           = EntityMapper.GetEntityMap(typeof(T));
+                var entityCompositeKey            = EntityMapper.GetEntityKeys<T>((T)objectArr[0]);
+                var entityMap                     = EntityMapper.GetEntityMap(typeof(T));
 
-                if (!lookup.TryGetValue(entityCompositeKey.ToString(), out entity))
-                    lookup.Add(entityCompositeKey.ToString(), entity = (T)objectArr[0]);
+                string compositeKey = "";
+
+                foreach (var key in entityCompositeKey)
+                    compositeKey = string.Format("{0}{1}={2};", compositeKey, key.Name, key.Value.ToString());
+
+                if (!lookup.TryGetValue(compositeKey, out entity))
+                    lookup.Add(compositeKey, entity = (T)objectArr[0]);
 
                 var singleObjectCacher = new Dictionary<Type, int>();
 
@@ -42,7 +47,7 @@ namespace Extended.Dapper.Core.Mappers
                         var listType     = type.GetGenericArguments()[0].GetTypeInfo();
                         var listProperty = property.Key.GetValue(entity) as IList;
 
-                        var objList = objectArr.Where(x => x != null && x.GetType() == listType && !EntityMapper.IsKeyEmpty(EntityMapper.GetCompositeUniqueKey(x, x.GetType())));
+                        var objList = objectArr.Where(x => x != null && x.GetType() == listType && !EntityMapper.IsAutovalueKeysEmpty(x, x.GetType()));
                         IList value = ReflectionHelper.CastListTo(listType, objList);
 
                         if (value != null)
@@ -78,9 +83,7 @@ namespace Extended.Dapper.Core.Mappers
 
                         if (value != null)
                         {
-                            var valueId = EntityMapper.GetCompositeUniqueKey(value, value.GetType());
-
-                            if (!EntityMapper.IsKeyEmpty(valueId))
+                            if (!EntityMapper.IsAutovalueKeysEmpty(value, value.GetType()))
                                 property.Key.SetValue(entity, value);
                         }
                     }

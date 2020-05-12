@@ -26,7 +26,7 @@ namespace Extended.Dapper.Tests.Repository
         /// without its children works as expected
         /// </summary>
         [Test]
-        public void TestUpdateWithNullChildren()
+        public void TestUpdate()
         {
             var stephenAuthor = this.AuthorRepository.Get(a => a.Name == "Stephen Hawking").Result;
             stephenAuthor.Country = "United States";
@@ -36,6 +36,26 @@ namespace Extended.Dapper.Tests.Repository
             // Check if books still exists
             var stephenWithBooks = this.AuthorRepository.Get(a => a.Name == "Stephen Hawking", a => a.Books).Result;
             Assert.AreEqual(3, stephenWithBooks.Books.Count, "Books have been changed by update");
+            Assert.AreEqual("United States", stephenWithBooks.Country, "Country has not been updated properly");
+        }
+
+        /// <summary>
+        /// This tests if updating an entity
+        /// without its children works as expected
+        /// </summary>
+        [Test]
+        public void TestUpdateWithAlternativeKey()
+        {
+            var stephenAuthor = this.AuthorRepository.Get(a => a.Name == "Stephen Hawking").Result;
+            stephenAuthor.Id      = default(int);
+            stephenAuthor.Country = "United States";
+
+            this.AuthorRepository.Update(stephenAuthor).Wait();
+
+            // Check if books still exists
+            var stephenWithBooks = this.AuthorRepository.Get(a => a.Name == "Stephen Hawking", a => a.Books).Result;
+            Assert.AreEqual(3, stephenWithBooks.Books.Count, "Books have been changed by update");
+            Assert.AreEqual("United States", stephenWithBooks.Country, "Country has not been updated properly");
         }
 
         /// <summary>
@@ -148,6 +168,151 @@ namespace Extended.Dapper.Tests.Repository
             var stephenAuthor = this.AuthorRepository.Get(a => a.Name == "Stephen Hawking", a => a.Books).Result;
             var briefHistoryBook = stephenAuthor.Books.Single(b => b.Name == "A Brief History of Time");
             
+            // Remove book
+            stephenAuthor.Books.Remove(briefHistoryBook);
+
+            this.AuthorRepository.Update(stephenAuthor, a => a.Books).Wait();
+
+            // Check if books still exists
+            var stephenWithBooks = this.AuthorRepository.Get(a => a.Name == "Stephen Hawking", a => a.Books).Result;
+            Assert.AreEqual(2, stephenWithBooks.Books.Count, "Books have not been saved properly through update");
+        }
+
+        /// <summary>
+        /// This tests if updating an entity
+        /// with its alternative key children works as expected
+        /// </summary>
+        [Test]
+        public void TestUpdateWithAlternativeKeyChildren()
+        {
+            var stephenAuthor = this.AuthorRepository.Get(a => a.Name == "Stephen Hawking", a => a.Books).Result;
+            var briefHistoryBook = stephenAuthor.Books.Single(b => b.Name == "A Brief History of Time");
+
+            briefHistoryBook.Name = "Small History of Time";
+            briefHistoryBook.Id   = default(int);
+
+            this.AuthorRepository.Update(stephenAuthor, a => a.Books).Wait();
+
+            // Check if books still exists
+            var stephenWithBooks = this.AuthorRepository.Get(a => a.Name == "Stephen Hawking", a => a.Books).Result;
+            Assert.AreEqual(3, stephenWithBooks.Books.Count, "Books have been changed by update");
+
+            briefHistoryBook = stephenWithBooks.Books.SingleOrDefault(b => b.Name == "Small History of Time");
+            Assert.AreNotEqual(null, briefHistoryBook, "Book has not been updated though it was included");
+        }
+
+        /// <summary>
+        /// This test checks if multiple children in updates works correctly when alternative
+        /// keys are used
+        /// </summary>
+        [Test]
+        public void TestUpdateWithMultipleAlternativeKeyChildren() 
+        {
+            var book = this.BookRepository.Get(b => b.Name == "Brief Answers to the Big Questions").Result;
+            Assert.AreNotEqual(null, book, "Book was null");
+
+            var author = this.AuthorRepository.Get(a => a.Name == "Carl Sagan").Result;
+            Assert.AreNotEqual(null, author, "Author was null");
+
+            var category = this.CategoryRepository.Get(c => c.Name == "Science").Result;
+            Assert.AreNotEqual(null, category, "Category was null");
+
+            book.Author     = author;
+            book.Category   = category;
+            book.Author.Id  = default(int);
+
+            var updateResult = this.BookRepository.Update(book, b => b.Author, b => b.Category).Result;
+
+            Assert.AreEqual(true, updateResult, "Could not update book with multiple children");
+
+            var authorCount = this.AuthorRepository.GetAll().Result.Count();
+
+            Assert.AreEqual(3, authorCount, "Inserted new author; alternative key not honored");
+        }
+
+        /// <summary>
+        /// This tests if updating children that already exists (i.e. have an (alternative) id)
+        /// works properly when mixed with new children that don't have an id
+        /// </summary>
+        [Test]
+        public void TestUpdateWithExistingAndNewAlternativeKeyChildren()
+        {
+            var stephenAuthor = this.AuthorRepository.Get(a => a.Name == "Stephen Hawking", a => a.Books).Result;
+            var briefHistoryBook = stephenAuthor.Books.Single(b => b.Name == "A Brief History of Time");
+            briefHistoryBook.Name = "Small History of Time";
+            briefHistoryBook.Id   = default(int);
+
+            // Create a new book
+            Book newBook = new Book()
+            {
+                Author = stephenAuthor,
+                Name = "The Grand Design",
+                ReleaseYear = 2010
+            };
+            stephenAuthor.Books.Add(newBook);
+
+            this.AuthorRepository.Update(stephenAuthor, a => a.Books).Wait();
+
+            // Check if books still exists
+            var stephenWithBooks = this.AuthorRepository.Get(a => a.Name == "Stephen Hawking", a => a.Books).Result;
+            Assert.AreEqual(4, stephenWithBooks.Books.Count, "Books have not been saved properly through update");
+
+            briefHistoryBook = stephenWithBooks.Books.SingleOrDefault(b => b.Name == "Small History of Time");
+            var grandDesignBook = stephenWithBooks.Books.SingleOrDefault(b => b.Name == "The Grand Design");
+            Assert.AreNotEqual(null, briefHistoryBook, "Book has not been updated though it was included");
+            Assert.AreNotEqual(null, grandDesignBook, "The newly inserted child could not be found");
+        }
+
+        /// <summary>
+        /// This tests if updating children that already exists (i.e. have an id)
+        /// works properly when mixed with new children that don't have an id, with a parent
+        /// that has a alternative key
+        /// </summary>
+        [Test]
+        public void TestUpdateWithExistingAndNewChildrenAndAlternativeKeyParent()
+        {
+            var stephenAuthor = this.AuthorRepository.Get(a => a.Name == "Stephen Hawking", a => a.Books).Result;
+            stephenAuthor.Id  = default(int);
+            
+            var briefHistoryBook = stephenAuthor.Books.Single(b => b.Name == "A Brief History of Time");
+            briefHistoryBook.Name = "Small History of Time";
+
+            // Create a new book
+            Book newBook = new Book()
+            {
+                Author = stephenAuthor,
+                Name = "The Grand Design",
+                ReleaseYear = 2010
+            };
+            stephenAuthor.Books.Add(newBook);
+
+            this.AuthorRepository.Update(stephenAuthor, a => a.Books).Wait();
+
+            // Check if no new author has been added
+            var authorCount = this.AuthorRepository.GetAll(a => a.Name == "Stephen Hawking").Result.Count();
+            Assert.AreEqual(1, authorCount, "New parent has been inserted while parent had alternative key");
+
+            // Check if books still exists
+            var stephenWithBooks = this.AuthorRepository.Get(a => a.Name == "Stephen Hawking", a => a.Books).Result;
+            Assert.AreEqual(4, stephenWithBooks.Books.Count, "Books have not been saved properly through update");
+
+            briefHistoryBook = stephenWithBooks.Books.SingleOrDefault(b => b.Name == "Small History of Time");
+            var grandDesignBook = stephenWithBooks.Books.SingleOrDefault(b => b.Name == "The Grand Design");
+            Assert.AreNotEqual(null, briefHistoryBook, "Book has not been updated though it was included");
+            Assert.AreNotEqual(null, grandDesignBook, "The newly inserted child could not be found");
+        }
+
+        /// <summary>
+        /// This tests if updating children when a child is removed
+        /// indeeds remove the child from the database
+        /// </summary>
+        [Test]
+        public void TestUpdateWithRemovingAlternativeKeyChildren()
+        {
+            var stephenAuthor = this.AuthorRepository.Get(a => a.Name == "Stephen Hawking", a => a.Books).Result;
+            var briefHistoryBook = stephenAuthor.Books.Single(b => b.Name == "A Brief History of Time");
+            briefHistoryBook.Id  = default(int);
+
             // Remove book
             stephenAuthor.Books.Remove(briefHistoryBook);
 

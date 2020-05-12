@@ -621,8 +621,12 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
 
                             if (qpExpr.PropertyValue is BaseEntity)
                             {
-                                var key = EntityMapper.GetCompositeUniqueKey(qpExpr.PropertyValue, qpExpr.PropertyValue.GetType());
-                                conditions.Add(new KeyValuePair<string, object>(vKey, key));
+                                var keys = EntityMapper.GetEntityKeys(qpExpr.PropertyValue, qpExpr.PropertyValue.GetType());
+
+                                if (keys.Count() == 1)
+                                    conditions.Add(new KeyValuePair<string, object>(vKey, keys.First().Value));
+                                else
+                                    throw new NotSupportedException("Comparing on object level is currently not supported when multiple primary keys are applied");
                             }
                             else
                                 conditions.Add(new KeyValuePair<string, object>(vKey, qpExpr.PropertyValue));

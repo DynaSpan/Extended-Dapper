@@ -114,9 +114,6 @@ namespace Extended.Dapper.Tests.Repository
             Assert.AreNotEqual(default(int), galaxyShip.Id, "Integer autovalue was not filled");
             Assert.AreNotEqual(default(int), andromedaShip.Id, "Integer autovalue was not filled");
 
-            Assert.AreNotEqual(Guid.Empty, galaxyShip.ExternalId, "AutoValue GUID was not filled");
-            Assert.AreNotEqual(Guid.Empty, andromedaShip.ExternalId, "AutoValue GUID was not filled");
-
             var booksEntity = this.AuthorRepository.GetMany<Book>(stephenHawkingEntity, a => a.Books, b => b.Author).Result;
 
             Assert.AreEqual(2, booksEntity.Count(), "Could not retrieve the correct number of books");
@@ -270,6 +267,77 @@ namespace Extended.Dapper.Tests.Repository
         }
 
         /// <summary>
+        /// This tests if an object with a missing key, but filled
+        /// alternative key does not get inserted
+        /// </summary>
+        [Test]
+        public void TestInsertWithoutFilledKeyButWithAlternativeKey()
+        {
+            var paleBlueDotBook = ModelHelper.GetBookModel(BookModelType.PaleBlueDot);
+
+            var bookEntity = this.BookRepository.Insert(paleBlueDotBook).Result;
+            bookEntity.Id = default(int);
+
+            var newBookEntity = this.BookRepository.Insert(bookEntity).Result;
+
+            var numberOfBooks = this.BookRepository.GetAll().Result.Count();
+            
+            Assert.AreEqual(1, numberOfBooks, "Inserted new object when alternative key was filled");
+        }
+
+        /// <summary>
+        /// This tests if children objects with a missing key, but filled
+        /// alternative key does not get inserted
+        /// </summary>
+        [Test]
+        public void TestInsertWithoutFilledChildrenKeysButWithAlternativeKeys()
+        {
+            var paleBlueDotBook = ModelHelper.GetBookModel(BookModelType.PaleBlueDot);
+            var cosmosBook = ModelHelper.GetBookModel(BookModelType.Cosmos);
+
+            var paleBlueDotBookEntity = this.BookRepository.Insert(paleBlueDotBook).Result;
+            paleBlueDotBookEntity.Id = default(int);
+
+            var cosmosBookEntity = this.BookRepository.Insert(cosmosBook).Result;
+            cosmosBookEntity.Id = default(int);
+
+            var carlSagan = ModelHelper.GetAuthorModel(AuthorModelType.CarlSagan);
+            carlSagan.Books = new List<Book>();
+            carlSagan.Books.Add(paleBlueDotBook);
+            carlSagan.Books.Add(cosmosBook);
+
+            var carlSaganEntity = this.AuthorRepository.Insert(carlSagan).Result;
+            var bookCount = this.BookRepository.GetAll().Result.Count();
+
+            Assert.AreEqual(2, bookCount, "Inserted existing entities with alternative keys");
+        }
+
+        /// <summary>
+        /// This tests if parent objects with a missing key, but filled
+        /// alternative key does not get inserted
+        /// </summary>
+        [Test]
+        public void TestInsertWithoutFilledParentKeysButWithAlternativeKeys()
+        {
+            var carlSagan       = ModelHelper.GetAuthorModel(AuthorModelType.CarlSagan);
+            var carlSaganEntity = this.AuthorRepository.Insert(carlSagan).Result;
+            carlSaganEntity.Id  = default(int);
+
+            var paleBlueDotBook = ModelHelper.GetBookModel(BookModelType.PaleBlueDot);
+            var cosmosBook = ModelHelper.GetBookModel(BookModelType.Cosmos);
+
+            paleBlueDotBook.Author = carlSaganEntity;
+            cosmosBook.Author      = carlSaganEntity;
+
+            this.BookRepository.Insert(paleBlueDotBook).Wait();
+            this.BookRepository.Insert(cosmosBook).Wait();
+            
+            var authorCount = this.AuthorRepository.GetAll().Result.Count();
+
+            Assert.AreEqual(1, authorCount, "Inserted existing parent with alternative keys");
+        }
+
+        /// <summary>
         /// This test checks if integer autovalues works properly
         /// </summary>
         [Test]
@@ -290,10 +358,6 @@ namespace Extended.Dapper.Tests.Repository
             Assert.AreNotEqual(default(int), ship1Entity.Id, "Integer autovalue ID was not properly inserted");
             Assert.AreNotEqual(default(int), ship2Entity.Id, "Integer autovalue ID was not properly inserted");
             Assert.AreNotEqual(default(int), ship3Entity.Id, "Integer autovalue ID was not properly inserted");
-
-            Assert.AreNotEqual(Guid.Empty, ship1Entity.ExternalId, "GUID autovalue was not properly inserted");
-            Assert.AreNotEqual(Guid.Empty, ship2Entity.ExternalId, "GUID autovalue was not properly inserted");
-            Assert.AreNotEqual(Guid.Empty, ship3Entity.ExternalId, "GUID autovalue was not properly inserted");
         }
 
         /// <summary>

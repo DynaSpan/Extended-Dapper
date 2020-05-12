@@ -8,6 +8,7 @@ using System.Reflection;
 using Extended.Dapper.Core.Attributes.Entities;
 using Extended.Dapper.Core.Database;
 using Extended.Dapper.Core.Mappers;
+using Extended.Dapper.Core.Models;
 using Extended.Dapper.Core.Sql.QueryProviders;
 
 namespace Extended.Dapper.Core.Sql.Generator
@@ -31,7 +32,7 @@ namespace Extended.Dapper.Core.Sql.Generator
                 throw new ArgumentException(databaseProvider.ToString() + " is currently not implemented");
         }
 
-                /// <summary>
+        /// <summary>
         /// Creates an search expression for the ID
         /// </summary>
         /// <param name="id">The id that is wanted</param>
@@ -39,22 +40,67 @@ namespace Extended.Dapper.Core.Sql.Generator
         public virtual Expression<Func<T, bool>> CreateByIdExpression<T>(object id)
             where T : class
         {
-            var entityMap = EntityMapper.GetEntityMap(typeof(T));
+            EntityMap entityMap = EntityMapper.GetEntityMap(typeof(T));
+            var primaryKey = entityMap.PrimaryKeyPropertiesMetadata.FirstOrDefault();
 
-            var keyProperty = entityMap.PrimaryKeyProperties.Where(x => x.GetCustomAttribute<AutoValueAttribute>() != null).FirstOrDefault();
-
-            if (keyProperty == null)
-                keyProperty = entityMap.PrimaryKeyProperties.FirstOrDefault();
-
-            // Check if we need to convert the id
-            if (keyProperty.PropertyType == typeof(Guid) && id.GetType() == typeof(string))
-                id = new Guid(id.ToString());
-
-            ParameterExpression t = Expression.Parameter(typeof(T), "t");
-            Expression idProperty = Expression.Property(t, keyProperty.Name);
-            Expression comparison = Expression.Equal(idProperty, Expression.Constant(id));
+            if (primaryKey == null)
+                throw new NotSupportedException("No primary keys defined");
             
-            return Expression.Lambda<Func<T, bool>>(comparison, t);
+            var entityKey = new EntityKey(primaryKey, id);
+
+            return CreateByIdExpression<T>(new List<EntityKey>() { entityKey });
+        }
+
+        /// <summary>
+        /// Creates an search expression for the ID
+        /// </summary>
+        /// <param name="keys">The keys to search ofor</param>
+        /// <typeparam name="T">Entity type</typeparam>
+        public virtual Expression<Func<T, bool>> CreateByIdExpression<T>(IEnumerable<EntityKey> keys)
+            where T : class
+        {
+            Expression<Func<T, bool>> returnExpr = null;
+            ParameterExpression t = Expression.Parameter(typeof(T), "t");
+
+            foreach (var key in keys)
+            {
+                Expression keyProperty = Expression.Property(t, key.Property.Name);
+                Expression comparison = this.MapKeyValueComparison(keyProperty, key);
+                
+                if (returnExpr == null)
+                    returnExpr = Expression.Lambda<Func<T, bool>>(comparison, t);
+                else
+                {
+                    var binaryExpression = Expression.AndAlso(returnExpr, Expression.Lambda<Func<T, bool>>(comparison, t));
+                    returnExpr = Expression.Lambda<Func<T, bool>>(binaryExpression, returnExpr.Parameters);
+                }
+            }
+            
+            return returnExpr;
+        }
+
+        /// <summary>
+        /// Maps the correct value to the Expression
+        /// </summary>
+        /// <param name="keyProperty"></param>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        protected virtual Expression MapKeyValueComparison(Expression keyProperty, EntityKey key)
+        {
+            switch (key.Value)
+            {
+                case int i:
+                    return Expression.Equal(keyProperty, Expression.Constant(i));
+
+                case Guid g:
+                    return Expression.Equal(keyProperty, Expression.Constant(g));
+
+                case string s:
+                    return Expression.Equal(keyProperty, Expression.Constant(s));
+
+                default: 
+                    return Expression.Equal(keyProperty, Expression.Constant(key.Value));
+            } 
         }
     }
 

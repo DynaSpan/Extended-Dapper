@@ -14,7 +14,7 @@ namespace Extended.Dapper.Tests.Models
 
         public string Country { get; set; }
 
-        [OneToMany(typeof(Book), "AuthorId", true)]
+        [OneToMany(typeof(Book), "AuthorId")]
         public ICollection<Book> Books { get; set; }
 
         [OneToMany(typeof(Spaceship), "OwnerId", true)]

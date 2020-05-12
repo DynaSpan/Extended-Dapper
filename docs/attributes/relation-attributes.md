@@ -20,9 +20,11 @@ Implements a many to one relation on this property, meaning this property can be
 
 Since the description above might not be completely clear, an example is added. The Book table contains a field `AuthorId` and `CategoryId`, which contains the primary key of the Author & Category. This field does not have to be mapped seperately in the Book class.
 
-Please note that both classes inherit from `Entity`, thus adding the fields `Id`, `UpdatedAt` and `Deleted`.
+Please note that both classes inherit from `ExternalIdEntity`, thus adding the fields `Id`, `ExternalId`, `UpdatedAt` and `Deleted`. 
 
-    public class Book : Entity
+This example also makes use of the Alternative Primary Key capabilities of Extended Dapper, to use different ID's for external vs. internal communication. See the property attributes documentation for more info.
+
+    public class Book : ExternalIdEntity
     {
         public string Name { get; set; }
 
@@ -38,7 +40,7 @@ Please note that both classes inherit from `Entity`, thus adding the fields `Id`
         public Category? Category { get; set; }
     }
 
-    public class Author : Entity
+    public class Author : ExternalIdEntity
     {
         public string Name { get; set; }
 
@@ -64,14 +66,29 @@ Please note that both classes inherit from `Entity`, thus adding the fields `Id`
     {
         [Key]
         [AutoValue]
-        public Guid Id { get; set; }
+        public int Id { get; set; }
+    }
+
+    public abstract class BaseExternalIdEntity : BaseEntity
+    {
+        [AlternativeKey]
+        [AutoValue]
+        public Guid ExternalId { get; set; }
     }
 
     public abstract class Entity : BaseEntity
     {
+        [IgnoreOnUpdate]
+        public DateTime CreatedAt { get; set;}
+
         [UpdatedAt]
         public DateTime? UpdatedAt { get; set; }
 
         [Deleted]
         public bool Deleted { get; set; }
+    }
+
+    public abstract class ExternalIdEntity : Entity, BaseExternalIdEntity
+    {
+        
     }

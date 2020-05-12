@@ -27,6 +27,14 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
             where T : class;
 
         /// <summary>
+        /// Executes a select query by alternative id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="includes"></param>
+        Task<T> ExecuteSelectByAlternativeIdQuery<T>(object id, params Expression<Func<T, object>>[] includes)
+            where T : class;
+
+        /// <summary>
         /// Executes a select many children query
         /// </summary>
         /// <param name="entity"></paran>

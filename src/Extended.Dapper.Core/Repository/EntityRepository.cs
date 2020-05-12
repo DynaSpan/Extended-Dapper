@@ -70,6 +70,15 @@ namespace Extended.Dapper.Core.Repository
             => this.QueryExecuter.ExecuteSelectByIdQuery<T>(id, includes);
 
         /// <summary>
+        /// Gets an entity by its alternative ID
+        /// </summary>
+        /// <param name="id">The ID of the entity</param>
+        /// <param name="includes">Which children to include</param>
+        /// <returns>The entity that matches the ID</param>
+        public virtual Task<T> GetByAlternativeId(object id, params Expression<Func<T, object>>[] includes)
+            => this.QueryExecuter.ExecuteSelectByAlternativeIdQuery<T>(id, includes);
+
+        /// <summary>
         /// Retrieves the many of an entity
         /// </summary>
         /// <param name="many">The many property of the entity</param>

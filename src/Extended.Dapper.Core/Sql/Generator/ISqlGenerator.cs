@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using Extended.Dapper.Core.Models;
 using Extended.Dapper.Core.Sql.Query;
 using Extended.Dapper.Core.Sql.QueryBuilders;
 
@@ -97,6 +98,14 @@ namespace Extended.Dapper.Core.Sql.Generator
         /// <param name="id">The id that is wanted</param>
         /// <typeparam name="T">Entity type</typeparam>
         Expression<Func<T, bool>> CreateByIdExpression<T>(object id)
+            where T : class;
+
+        /// <summary>
+        /// Creates an search expression for the ID
+        /// </summary>
+        /// <param name="keys">The keys to search ofor</param>
+        /// <typeparam name="T">Entity type</typeparam>
+        Expression<Func<T, bool>> CreateByIdExpression<T>(IEnumerable<EntityKey> keys)
             where T : class;
     }
 }

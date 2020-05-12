@@ -44,7 +44,6 @@ CREATE TABLE [Log] (
 
 CREATE TABLE [Spaceship] (
     [Id] INT IDENTITY(1,1) PRIMARY KEY,
-    [ExternalId] UNIQUEIDENTIFIER NOT NULL,
     [OwnerId] INT,
     [Name] VARCHAR(255) NOT NULL,
     [BuildYear] INT

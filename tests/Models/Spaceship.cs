@@ -11,9 +11,6 @@ namespace Extended.Dapper.Tests.Models
         [AutoValue]
         public int Id { get; set; }
 
-        [AutoValue]
-        public Guid ExternalId { get; set; }
-
         [ManyToOne(typeof(Author), "OwnerId", true)]
         public Author Owner { get; set; }
 

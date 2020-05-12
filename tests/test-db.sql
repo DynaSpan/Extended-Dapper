@@ -44,7 +44,6 @@ CREATE TABLE IF NOT EXISTS "Log" (
 
 CREATE TABLE IF NOT EXISTS "Spaceship" (
     "Id" INTEGER PRIMARY KEY,
-    "ExternalId" GUID UNIQUE NOT NULL,
     "OwnerId" INTEGER,
     "Name" VARCHAR NOT NULL,
     "BuildYear" INT

@@ -52,3 +52,14 @@ An example of retrieving an entity from the database:
         .IncludeChild<Category>(b => b.Category, c => c.Name)
         .Where(b => b.Name == "Science questions answered")
         .GetResults()).First();
+
+## Building
+
+Build the library by running `dotnet build -c Release` or `dotnet publish -c Release`.
+
+## Testing
+
+You can run the unittests against the sqlite, MySQL and MSSQL backends with Docker. Issue the following commands: 
+
+    docker-compose build
+    docker-compose up --abort-on-container-exit

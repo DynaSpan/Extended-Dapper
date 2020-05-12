@@ -5,7 +5,9 @@ using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Dapper;
 using Extended.Dapper.Core.Mappers;
+using Extended.Dapper.Core.Models;
 using Extended.Dapper.Core.Reflection;
+using Extended.Dapper.Core.Sql.Generator;
 using Extended.Dapper.Core.Sql.Query;
 using Extended.Dapper.Core.Sql.QueryBuilders;
 
@@ -35,6 +37,29 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
             where T : class
         {
             var search = this.SqlGenerator.CreateByIdExpression<T>(id);
+
+            return (await this.ExecuteSelectQuery<T>(search, includes)).FirstOrDefault();
+        }
+
+        /// <summary>
+        /// Executes a select query by alternative id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="includes"></param>
+        public virtual async Task<T> ExecuteSelectByAlternativeIdQuery<T>(object id, params Expression<Func<T, object>>[] includes)
+            where T : class
+        {
+            var entityMap = EntityMapper.GetEntityMap(typeof(T));
+
+            if (entityMap.AlternativeKeyPropertiesMetadata.Count() == 0)
+                throw new NotSupportedException("Could not get by alternative key when entity has none defined");
+
+            if (entityMap.AlternativeKeyPropertiesMetadata.Count() > 1)
+                throw new NotSupportedException("Could not get by single alternative key when entity has multiple defined");
+
+            var key = new EntityKey(entityMap.AlternativeKeyPropertiesMetadata.First(), id);
+
+            var search = this.SqlGenerator.CreateByIdExpression<T>(new List<EntityKey>() { key });
 
             return (await this.ExecuteSelectQuery<T>(search, includes)).FirstOrDefault();
         }
@@ -123,6 +148,38 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
             }
 
             return entityLookup.Values;
+        }
+
+        public virtual async Task<object> GetEntityByAlternativeKey<T>(T entity, Type typeOverride = null)
+            where T : class
+        {
+            if (typeOverride != null)
+            {
+                var reflectionCall = ReflectionHelper.CallGenericMethod(typeof(QueryExecuter), "GetEntityByAlternativeKey", typeOverride, new object[] { entity, null }, this) as Task<object>;
+                
+                return reflectionCall;
+            }
+
+            var expression = this.SqlGenerator.CreateByIdExpression<T>(EntityMapper.GetAlternativeEntityKeys<T>(entity));
+            var idQuery = this.SqlGenerator.Select<T>(expression);
+            var objEntity = (await this.ExecuteSelectQuery<T>(idQuery)).FirstOrDefault();
+
+            return objEntity;
+        }
+
+        public virtual async Task<IEnumerable<EntityKey>> GetEntityKeysFromAlternativeKeys(object entity, Type entityType)
+        {
+            var reflectionCall = ReflectionHelper.CallGenericMethod(typeof(QueryExecuter), "GetEntityByAlternativeKey", entityType, new object[] { entity, null }, this) as Task<object>;
+            var dbEntity = reflectionCall != null ? await reflectionCall : null;
+            var keys = EntityMapper.GetEntityKeys(dbEntity, entityType);
+
+            if (dbEntity != null && keys != null)
+            {
+                foreach (var key in keys)
+                    key.Property.SetValue(entity, key.Value);
+            }
+
+            return keys;
         }
     }
 }

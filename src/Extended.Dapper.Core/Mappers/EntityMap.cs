@@ -54,6 +54,16 @@ namespace Extended.Dapper.Core.Mappers
         public IEnumerable<SqlKeyPropertyMetadata> PrimaryKeyPropertiesMetadata { get; set; }
 
         /// <summary>
+        /// Contains all the alternative key properties
+        /// </summary>
+        public PropertyInfo[] AlternativeKeyProperties { get; set; }
+
+        /// <summary>
+        /// Contains all the alternative key properties metadata
+        /// </summary>
+        public IEnumerable<SqlKeyPropertyMetadata> AlternativeKeyPropertiesMetadata {  get; set; }
+
+        /// <summary>
         /// Contains all autovalue properties
         /// </summary>
         public IEnumerable<SqlPropertyMetadata> AutoValuePropertiesMetadata { get; set; }
@@ -62,6 +72,11 @@ namespace Extended.Dapper.Core.Mappers
         /// Contains all properties with relations
         /// </summary>
         public Dictionary<PropertyInfo, ICollection<SqlRelationPropertyMetadata>> RelationProperties { get; set; }
+
+        /// <summary>
+        /// Contains all the metadata of properties with relations
+        /// </summary>
+        public IEnumerable<SqlRelationPropertyMetadata> RelationPropertiesMetadata { get; set; }
 
         /// <summary>
         /// Contains the UpdatedAt property (if set; null otherwise)

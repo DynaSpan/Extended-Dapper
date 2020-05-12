@@ -6,7 +6,6 @@ using System.Text;
 using Extended.Dapper.Core.Attributes.Entities.Relations;
 using Extended.Dapper.Core.Helpers;
 using Extended.Dapper.Core.Mappers;
-using Extended.Dapper.Core.Reflection;
 using Extended.Dapper.Core.Sql.Metadata;
 using Extended.Dapper.Core.Sql.Query;
 using Extended.Dapper.Core.Sql.Query.Models;
@@ -146,7 +145,7 @@ namespace Extended.Dapper.Core.Sql.Generator
                 this.sqlProvider.EscapeColumn(relationAttr.ForeignKey),
                 this.sqlProvider.ParameterChar);
             
-            sqlQuery.Params.Add("o2m_parent_id", EntityMapper.GetCompositeUniqueKey<T>(entity));
+            sqlQuery.Params.Add("o2m_parent_id", EntityMapper.GetEntityKeys<T>(entity).First().Value);
 
             return sqlQuery;
         }
@@ -172,7 +171,7 @@ namespace Extended.Dapper.Core.Sql.Generator
             
             var relationAttr = System.Attribute.GetCustomAttributes(manyProperty.Key, typeof(ManyToOneAttribute), true).FirstOrDefault() as ManyToOneAttribute;
 
-            var selectRootExpr = this.CreateByIdExpression<T>(EntityMapper.GetCompositeUniqueKey<T>(entity));
+            var selectRootExpr = this.CreateByIdExpression<T>(EntityMapper.GetEntityKeys<T>(entity));
             var selectRootQuery = this.SelectForeignKey<T>(selectRootExpr, relationAttr.ForeignKey);
             string rootQuery = this.sqlProvider.BuildSelectQuery(selectRootQuery);
 

@@ -1,5 +1,9 @@
 # Changelog
 
+[0.6.0]
+- Allow AlternativeKeys in case primary key is not available
+- Fix some buggies
+
 [0.5.0]
 - Add some more tests
 - Make BaseEntity and Entity fields virtual

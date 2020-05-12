@@ -24,19 +24,21 @@ Construct the DatabaseFactory by creating it: `new DatabaseFactory(string connec
 
 If you're on ASP.NET (Core), you can use the `appsettings.json` file for configuring your database settings. An example:
 
+    [...],
     "DatabaseConnection": {
         "Host": "localhost",
         "Port": 3306,
         "User": "root",
         "Password": "123456",
-        "Database": "supersecret"
-    }
+        "Database": "mydatabase"
+    },
+    [...]
 
 which you can cast to a `DatabaseSettings` object in `Startup.cs`: `var dbSettings = Configuration.GetSection("DatabaseConnection").Get<DatabaseSettings>();`. You can then create the DatabaseFactory by `new DatabaseFactory(dbSettings)`. Make sure you provide your DatabaseProvider first: `dbSettings.DatabaseProvider = DatabaseProvider.MySQL;`.
 
 ## 3. Using the EntityRepository
 
-After you have created your DatabaseFactory, you can use it to create EntityRepository's. These are repositories that contain most `CRUD` methods suchs as `Insert`, `Update`, `Get`, `GetAll` & `Delete`. In most of these queries, you can use LINQ to search for the objects you want.
+After you have created your DatabaseFactory, you can use it to create EntityRepositories. These are repositories that contain most `CRUD` methods suchs as `Insert`, `Update`, `Get`, `GetAll` & `Delete`. In most of these queries, you can use LINQ to search for the objects you want.
 
 The EntityRepository has this signature: `EntityRepository<TEntity>(DatabaseFactory databaseFactory)`. If we have this model:
 
@@ -66,6 +68,7 @@ We can create an EntityRepository `var categoryRepository = new EntityRepository
 
     var scienceCategoryEntity = await categoryRepository.Insert(scienceCategory);
 
+    Console.WriteLine(scienceCategory.Id); // Will be a random GUID
     Console.WriteLine(scienceCategoryEntity.Id); // Will be a random GUID
 
     scienceCategoryEntity.Description = "Books about science";
@@ -96,5 +99,16 @@ We can create an EntityRepository `var categoryRepository = new EntityRepository
     // With updates, you'll have to include the children you want to update
     // to prevent deletion of children if the child is null
     bool updateResult = await categoryRepository.Update(horrorCategory, c => c.Books);
+
+    // You can also choose to update just one field:
+    bool updateFieldResult = await categoryRepository.UpdateOnly(horrorCategory, c => c.Name);
+
+    // You can use the QueryBuilder to create custom queries:
+    var categoriesStartingWithA = await categoryRepository.GetQueryBuilder()
+        .Select(b => b.Name) // which fields of the entity you want to include
+        .IncludeChild<Book>(c => c.Books) // which children you want to include
+        .Where(c => c.Name.StartsWith("A")) // search
+        .OrderBy(c => c.Name, OrderBy.ASC)
+        .GetResults();
 
 // TODO: add more here

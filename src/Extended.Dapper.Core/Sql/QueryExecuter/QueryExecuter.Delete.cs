@@ -1,9 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Dapper;
 using Extended.Dapper.Core.Mappers;
+using Extended.Dapper.Core.Models;
 using Extended.Dapper.Core.Sql.Query;
 
 namespace Extended.Dapper.Core.Sql.QueryExecuter
@@ -19,7 +21,15 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
         public virtual Task<int> ExecuteDeleteEntityQuery<T>(T entity, IDbTransaction transaction = null)
             where T : class
         {
-            var entityId = EntityMapper.GetCompositeUniqueKey<T>(entity);
+            IEnumerable<EntityKey> entityId;
+
+            if (!EntityMapper.IsAutovalueKeysEmpty(entity))
+                entityId = EntityMapper.GetEntityKeys<T>(entity);
+            else if (!EntityMapper.IsAlternativeKeysEmpty(entity))
+                entityId = EntityMapper.GetAlternativeEntityKeys<T>(entity);
+            else
+                throw new IndexOutOfRangeException("Could not find unique key to execute this update");
+
             var search = this.SqlGenerator.CreateByIdExpression<T>(entityId);
 
             return this.ExecuteDeleteQuery<T>(search, transaction);
@@ -34,6 +44,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
         public virtual async Task<int> ExecuteDeleteQuery<T>(Expression<Func<T, bool>> search, IDbTransaction transaction = null)
             where T : class
         {
+            var entityMap = EntityMapper.GetEntityMap(typeof(T));
             var query = this.SqlGenerator.Delete<T>(search);
             var shouldCommit = false;
             IDbConnection connection = null;
@@ -49,8 +60,14 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
 
             try
             {
-                string deleteQuery = this.DatabaseFactory.SqlProvider.BuildDeleteQuery(query as DeleteSqlQuery, EntityMapper.GetEntityMap(typeof(T)));
-                var result = await transaction.Connection.ExecuteAsync(deleteQuery, query.Params, transaction);
+                string queryStr;
+
+                if (entityMap.LogicalDelete)
+                    queryStr = this.DatabaseFactory.SqlProvider.BuildUpdateQuery((UpdateSqlQuery)query);
+                else
+                    queryStr = this.DatabaseFactory.SqlProvider.BuildDeleteQuery((DeleteSqlQuery)query, entityMap);
+                
+                var result = await transaction.Connection.ExecuteAsync(queryStr, query.Params, transaction);
 
                 if (shouldCommit)
                     transaction.Commit();

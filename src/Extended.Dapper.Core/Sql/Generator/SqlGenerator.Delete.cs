@@ -66,12 +66,7 @@ namespace Extended.Dapper.Core.Sql.Generator
             Type typeOverride = null)
             where T : class
         {
-            EntityMap entityMap;
-
-            if (typeOverride == null)
-                entityMap = EntityMapper.GetEntityMap(typeof(T));
-            else
-                entityMap = EntityMapper.GetEntityMap(typeOverride);
+            EntityMap entityMap = EntityMapper.GetEntityMap(typeOverride ?? typeof(T));
 
             var query               = new DeleteSqlQuery();
             query.Table             = entityMap.TableName;

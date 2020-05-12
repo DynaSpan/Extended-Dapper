@@ -9,6 +9,9 @@ using System.Threading.Tasks;
 using Dapper;
 using Extended.Dapper.Core.Attributes.Entities.Relations;
 using Extended.Dapper.Core.Mappers;
+using Extended.Dapper.Core.Models;
+using Extended.Dapper.Core.Reflection;
+using Extended.Dapper.Core.Sql.Generator;
 using Extended.Dapper.Core.Sql.Query;
 using Extended.Dapper.Core.Sql.Query.Models;
 
@@ -61,20 +64,20 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
 
             try
             {
-                var entityKey = EntityMapper.GetCompositeUniqueKey<T>(entity, typeOverride);
-                bool hasNoKey = EntityMapper.IsAutovalueKeysEmpty<T>(entity, typeOverride);
+                var entityKey = EntityMapper.GetEntityKeys<T>(entity, typeOverride);
+                bool hasNoKey = EntityMapper.IsAutovalueKeysEmpty<T>(entity, typeOverride) && EntityMapper.IsAlternativeKeysEmpty<T>(entity, typeOverride);
 
                 // First grab & insert all the ManyToOnes (foreign keys of this entity)
                 var m2oInsertQuery = await this.InsertManyToOnes<T>(entity, transaction, typeOverride, queryFields, queryParams);
 
-                hasNoKey = hasNoKey && EntityMapper.IsAutovalueKeysEmpty<T>(entity, typeOverride);
+                hasNoKey = hasNoKey && EntityMapper.IsAutovalueKeysEmpty<T>(entity, typeOverride) && EntityMapper.IsAlternativeKeysEmpty<T>(entity, typeOverride);
 
                 int insertResult = 0;
 
                 if (hasNoKey || forceInsert)
                 {
                     InsertSqlQuery insertQuery = this.SqlGenerator.Insert<T>(entity, typeOverride);
-                    entityKey = EntityMapper.GetCompositeUniqueKey<T>(entity, typeOverride);
+                    entityKey = EntityMapper.GetEntityKeys<T>(entity, typeOverride);
 
                     if (queryFields != null)
                         insertQuery.Insert.AddRange(queryFields);
@@ -93,12 +96,17 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
 
                     if (insertQuery.AutoIncrementKey)
                     {
-                        entityKey = await transaction.Connection.QuerySingleAsync<int>(query, insertQuery.Params, transaction);
+                        var insertedKey = await transaction.Connection.QuerySingleAsync<int>(query, insertQuery.Params, transaction);
 
-                        if ((int)entityKey != default(int))
+                        if ((int)insertedKey != default(int))
                             insertResult = 1;
 
-                        insertQuery.AutoIncrementField.PropertyInfo.SetValue(entity, entityKey);
+                        insertQuery.AutoIncrementField.PropertyInfo.SetValue(entity, insertedKey);
+
+                        if (entityKey.Count() == 1)
+                            entityKey.First().Value = insertedKey;
+                        else
+                            entityKey.Single(k => k.Property.Name == insertQuery.AutoIncrementField.PropertyName).Value = insertedKey;
                     }
                     else
                         insertResult = await transaction.Connection.ExecuteAsync(query, insertQuery.Params, transaction);
@@ -107,7 +115,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                 if (insertResult > 0 || !hasNoKey)
                 {
                     // Insert the OneToManys
-                    if (!await this.InsertOneToManys<T>(entity, entityKey, transaction, typeOverride))
+                    if (!await this.InsertOneToManys<T>(entity, entityKey.First().Value, transaction, typeOverride))
                         insertResult = -1;
                 }
 
@@ -140,7 +148,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
         /// <param name="entity"></param>
         /// <param name="transaction"></param>
         /// <returns>null when failed; id otherwise</returns>
-        protected virtual async Task<object> InsertEntityAndReturnId<T>(T entity, Type typeOverride = null, IDbTransaction transaction = null)
+        protected virtual async Task<IEnumerable<EntityKey>> InsertEntityAndReturnId<T>(T entity, Type typeOverride = null, IDbTransaction transaction = null)
             where T : class
         {
             // Insert it
@@ -150,7 +158,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                 return null;
 
             // Grab primary key
-            return EntityMapper.GetCompositeUniqueKey<T>(entity, typeOverride);
+            return EntityMapper.GetEntityKeys<T>(entity, typeOverride);
         }
 
         protected virtual async Task<InsertSqlQuery> InsertManyToOnes<T>(
@@ -161,14 +169,9 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
             Dictionary<string, object> queryParams = null)
             where T : class
         {
-            EntityMap entityMap;
+            EntityMap entityMap = EntityMapper.GetEntityMap(typeOverride ?? typeof(T));
 
-            if (typeOverride != null)
-                entityMap = EntityMapper.GetEntityMap(typeOverride);
-            else
-                entityMap = EntityMapper.GetEntityMap(typeof(T));
-
-            var manyToOnes = entityMap.RelationProperties.Where(x => x.Key.GetCustomAttributes<ManyToOneAttribute>().Any());
+            var manyToOnes = entityMap.RelationPropertiesMetadata.Where(x => x.RelationPropertyInfo.GetCustomAttributes<ManyToOneAttribute>().Any());
 
             InsertSqlQuery insertQuery = new InsertSqlQuery();
             insertQuery.Insert = new List<QueryField>();
@@ -176,19 +179,29 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
 
             foreach (var one in manyToOnes)
             {
-                var oneObj          = one.Key.GetValue(entity);
-                var attr            = one.Key.GetCustomAttribute<ManyToOneAttribute>();
+                var oneObj          = one.PropertyInfo.GetValue(entity);
+                var attr            = one.PropertyInfo.GetCustomAttribute<ManyToOneAttribute>();
 
                 if (oneObj != null)
                 {
                     Type oneObjType = oneObj.GetType();
-                    var oneObjKey = EntityMapper.GetCompositeUniqueKey(oneObj, oneObjType);
+                    var oneObjKey = EntityMapper.GetEntityKeys(oneObj, oneObjType).Single(k => k.Name == attr.LocalKey);
                     
                     // If it has no key, we can assume it is a new entity
-                    if (EntityMapper.IsKeyEmpty(oneObjKey))
+                    if (EntityMapper.IsAutovalueKeysEmpty(oneObj, oneObjType) && !EntityMapper.IsAlternativeKeysEmpty(oneObj, oneObjType)
+                        && (queryParams == null || !queryParams.ContainsKey("p_fk_" + attr.ForeignKey)))
+                    {
+                        // Entity exists already but does not have primary key
+                        // so we load the entity
+                        var oneObjKeys = await this.GetEntityKeysFromAlternativeKeys(oneObj, oneObjType);
+
+                        if (oneObjKeys != null)
+                            oneObjKey = oneObjKeys.SingleOrDefault(k => k.Name == attr.LocalKey);
+                    }
+                    else if (EntityMapper.IsAutovalueKeysEmpty(oneObj, oneObjType))
                     {
                         // Insert
-                        oneObjKey = await this.InsertEntityAndReturnId(oneObj, oneObjType, transaction);
+                        oneObjKey = (await this.InsertEntityAndReturnId(oneObj, oneObjType, transaction)).SingleOrDefault(k => k.Name == attr.LocalKey);
 
                         if (oneObjKey == null)
                             throw new ApplicationException("Could not insert a ManyToOne object: " + oneObj);
@@ -197,21 +210,33 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                     if (queryParams == null || !queryParams.ContainsKey("p_fk_" + attr.ForeignKey))
                     {
                         insertQuery.Insert.Add(new QueryField(entityMap.TableName, attr.ForeignKey, "p_m2o_" + attr.TableName + "_" + attr.ForeignKey));
-                        insertQuery.Params.Add("p_m2o_" + attr.TableName + "_" + attr.ForeignKey, oneObjKey);
+                        insertQuery.Params.Add("p_m2o_" + attr.TableName + "_" + attr.ForeignKey, oneObjKey.Value);
                     }
                 } 
                 else if (!attr.Nullable && (queryParams == null || !queryParams.ContainsKey("p_fk_" + attr.ForeignKey)))
                 {
-                    var oneObjEntityMap = EntityMapper.GetEntityMap(one.Key.PropertyType);
+                    var oneObjType = one.PropertyInfo.PropertyType;
+                    var oneObjEntityMap = EntityMapper.GetEntityMap(oneObjType);
                     var prop = oneObjEntityMap.RelationProperties.Where(p => p.Key.GetCustomAttribute<OneToManyAttribute>() != null
                         && p.Key.GetCustomAttribute<OneToManyAttribute>().ForeignKey == attr.ForeignKey).Count();
 
                     if (prop > 0)
                     {
-                        var entityKey = EntityMapper.GetCompositeUniqueKey<T>(entity);
+                        var entityKey = EntityMapper.GetEntityKeys<T>(entity).SingleOrDefault(k => k.Name == attr.LocalKey);
+
+                        if (EntityMapper.IsAutovalueKeysEmpty(oneObj, oneObjType) && !EntityMapper.IsAlternativeKeysEmpty(oneObj, oneObjType)
+                            && (queryParams == null || !queryParams.ContainsKey("p_fk_" + attr.ForeignKey)))
+                        {
+                            // Entity exists already but does not have primary key
+                            // so we load the entity
+                            var oneObjKeys = await this.GetEntityKeysFromAlternativeKeys(oneObj, oneObjType);
+                            
+                            if (oneObjKeys != null)
+                                entityKey = oneObjKeys.SingleOrDefault(k => k.Name == attr.LocalKey);
+                        }
 
                         insertQuery.Insert.Add(new QueryField(entityMap.TableName, attr.ForeignKey, "p_m2o_" + attr.TableName + "_" + attr.ForeignKey));
-                        insertQuery.Params.Add("p_m2o_" + attr.TableName + "_" + attr.ForeignKey, entityKey);
+                        insertQuery.Params.Add("p_m2o_" + attr.TableName + "_" + attr.ForeignKey, entityKey?.Value);
                     }
                 }
             }
@@ -222,13 +247,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
         protected virtual async Task<bool> InsertOneToManys<T>(T entity, object foreignKey, IDbTransaction transaction = null, Type typeOverride = null)
             where T : class
         {
-            EntityMap entityMap;
-
-            if (typeOverride != null)
-                entityMap = EntityMapper.GetEntityMap(typeOverride);
-            else
-                entityMap = EntityMapper.GetEntityMap(typeof(T));
-
+            var entityMap = EntityMapper.GetEntityMap(typeOverride ?? typeof(T));
             var oneToManys = entityMap.RelationProperties.Where(x => x.Key.GetCustomAttribute<OneToManyAttribute>() != null);
 
             foreach (var many in oneToManys)
@@ -245,10 +264,9 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                 foreach (var obj in manyObj)
                 {
                     Type objType = obj.GetType();
-                    var objKey = EntityMapper.GetCompositeUniqueKey(obj, objType);
 
                     // If it has no key, we can assume it is a new entity
-                    if (EntityMapper.IsKeyEmpty(objKey))
+                    if (EntityMapper.IsAutovalueKeysEmpty(obj, objType) && EntityMapper.IsAlternativeKeysEmpty(obj, objType))
                     {
                         var queryField = new List<QueryField>();
                         queryField.Add(new QueryField(attr.TableName, attr.ForeignKey, "p_fk_" + attr.ForeignKey));
@@ -262,6 +280,8 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                             return false;
                     }
                 }
+
+                many.Key.SetValue(entity, manyObj);
             }
 
             return true;

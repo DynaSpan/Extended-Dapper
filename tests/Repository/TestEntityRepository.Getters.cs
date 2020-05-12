@@ -234,23 +234,23 @@ namespace Extended.Dapper.Tests.Repository
 
             var andromedaShip = this.SpaceshipRepository.GetById(andromedaShipId).Result;
 
-            Assert.AreNotEqual(null, andromedaShipId, "Could not get by integer id");
+            Assert.AreNotEqual(null, andromedaShip, "Could not get by integer id");
             Assert.AreEqual("Andromeda Link", andromedaShip.Name);
             Assert.AreEqual(2009, andromedaShip.BuildYear);
         }
 
         /// <summary>
-        /// This tests if getting by GUID works properly
+        /// This tests if getting by AlternativeKey works properly
         /// </summary>
         [Test]
-        public void TestGetByGuidId()
+        public void TestGetByAlternativeId()
         {
             var books = this.BookRepository.GetAll().Result;
-            var briefAnswerId = books.Single(b => b.Name == "Brief Answers to the Big Questions").Id;
+            var briefAnswerId = books.Single(b => b.Name == "Brief Answers to the Big Questions").ExternalId;
 
-            Assert.AreNotEqual(default(Guid), briefAnswerId, "ID was not properly set on object");
+            Assert.AreNotEqual(default(Guid), briefAnswerId, "Alternative key was not properly set on object");
 
-            var briefBook = this.BookRepository.GetById(briefAnswerId).Result;
+            var briefBook = this.BookRepository.GetByAlternativeId(briefAnswerId).Result;
 
             this.TestIfBookIsValid(briefBook, BookModelType.BriefAnswers);
         }

@@ -54,7 +54,15 @@ namespace Extended.Dapper.Core.Sql.Generator
                 updateQuery.Params.Add("p_" + property.ColumnName, property.PropertyInfo.GetValue(entity));
             }
 
-            var idExpression = this.CreateByIdExpression<T>(EntityMapper.GetCompositeUniqueKey<T>(entity));
+            Expression<Func<T, bool>> idExpression;
+            
+            if (!EntityMapper.IsAutovalueKeysEmpty(entity))
+                idExpression = this.CreateByIdExpression<T>(EntityMapper.GetEntityKeys<T>(entity));
+            else if (!EntityMapper.IsAlternativeKeysEmpty(entity))
+                idExpression = this.CreateByIdExpression<T>(EntityMapper.GetAlternativeEntityKeys<T>(entity));
+            else
+                throw new IndexOutOfRangeException("Could not find unique key to execute this update");
+
             this.sqlProvider.AppendWherePredicateQuery<T>(updateQuery, idExpression, QueryType.Update, entityMap);
             
             return updateQuery;
