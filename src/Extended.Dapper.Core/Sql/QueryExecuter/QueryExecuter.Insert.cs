@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Dapper;
 using Extended.Dapper.Core.Attributes.Entities.Relations;
+using Extended.Dapper.Core.Extensions;
 using Extended.Dapper.Core.Mappers;
 using Extended.Dapper.Core.Models;
 using Extended.Dapper.Core.Reflection;
@@ -193,7 +194,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                     {
                         // Entity exists already but does not have primary key
                         // so we load the entity
-                        var oneObjKeys = await this.GetEntityKeysFromAlternativeKeys(oneObj, oneObjType);
+                        var oneObjKeys = await this.GetEntityKeysFromAlternativeKeys(oneObj, oneObjType, transaction);
 
                         if (oneObjKeys != null)
                             oneObjKey = oneObjKeys.SingleOrDefault(k => k.Name == attr.LocalKey);
@@ -229,7 +230,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                         {
                             // Entity exists already but does not have primary key
                             // so we load the entity
-                            var oneObjKeys = await this.GetEntityKeysFromAlternativeKeys(oneObj, oneObjType);
+                            var oneObjKeys = await this.GetEntityKeysFromAlternativeKeys(oneObj, oneObjType, transaction);
                             
                             if (oneObjKeys != null)
                                 entityKey = oneObjKeys.SingleOrDefault(k => k.Name == attr.LocalKey);
@@ -258,7 +259,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                     continue;
 
                 var attr            = many.Key.GetCustomAttribute<OneToManyAttribute>();
-                var listType        = manyObj.GetType().GetGenericArguments()[0].GetTypeInfo();
+                var listType        = manyObj.GetListType().GetTypeInfo();
                 var listEntityMap   = EntityMapper.GetEntityMap(listType);
 
                 foreach (var obj in manyObj)

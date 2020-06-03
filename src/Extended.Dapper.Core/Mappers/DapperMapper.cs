@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using Extended.Dapper.Core.Extensions;
 using Extended.Dapper.Core.Reflection;
 
 namespace Extended.Dapper.Core.Mappers
@@ -44,7 +45,7 @@ namespace Extended.Dapper.Core.Mappers
                     if (type.IsGenericType)
                     {
                         // Handle as list, get all entities with this type
-                        var listType     = type.GetGenericArguments()[0].GetTypeInfo();
+                        var listType     = exp.Type.GetGenericType().GetTypeInfo();
                         var listProperty = property.Key.GetValue(entity) as IList;
 
                         var objList = objectArr.Where(x => x != null && x.GetType() == listType && !EntityMapper.IsAutovalueKeysEmpty(x, x.GetType()));

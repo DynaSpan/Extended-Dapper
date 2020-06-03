@@ -1,5 +1,7 @@
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
@@ -86,6 +88,31 @@ namespace Extended.Dapper.Core.Extensions
         public static bool IsBool(this Type type)
         {
             return type == typeof(bool);
+        }
+
+        /// <summary>
+        /// Returns the type of this list
+        /// </summary>
+        /// <param name="list"></param>
+        /// <returns></returns>
+        public static Type GetListType(this IList list) 
+        {
+            Type collectionType = list.GetType();
+
+            return collectionType.GetGenericType();
+        }
+
+        /// <summary>
+        /// Returns the generic type of a type
+        /// </summary>
+        /// <param name="collectionType"></param>
+        /// <returns></returns>
+        public static Type GetGenericType(this Type collectionType) 
+        {   
+            if (collectionType.IsGenericType)
+                return collectionType.GetGenericArguments()[0];
+            else
+                return collectionType.GetInterface(typeof(IEnumerable<>).Name)?.GetGenericArguments()?.FirstOrDefault();
         }
     }
 }

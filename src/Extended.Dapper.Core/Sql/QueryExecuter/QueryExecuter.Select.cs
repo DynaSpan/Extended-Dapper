@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
@@ -113,7 +114,17 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
         /// </summary>
         /// <param name="query"></param>
         /// <param name="includes"></param>
-        public virtual async Task<IEnumerable<T>> ExecuteSelectQuery<T>(SelectSqlQuery query, params Expression<Func<T, object>>[] includes)
+        public virtual Task<IEnumerable<T>> ExecuteSelectQuery<T>(SelectSqlQuery query, params Expression<Func<T, object>>[] includes)
+            where T : class
+            => this.ExecuteSelectQuery(query, null, includes);
+
+        /// <summary>
+        /// Executes a select query
+        /// </summary>
+        /// <param name="query"></param>
+        /// <param name="transaction"></param>
+        /// <param name="includes"></param>
+        public virtual async Task<IEnumerable<T>> ExecuteSelectQuery<T>(SelectSqlQuery query, IDbTransaction transaction = null, params Expression<Func<T, object>>[] includes)
             where T : class
         {
             var typeArr = ReflectionHelper.GetTypeListFromIncludes<T>(includes).ToArray();
@@ -127,50 +138,60 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
 
             var entityLookup = new Dictionary<string, T>();
 
-            var connection = this.DatabaseFactory.GetDatabaseConnection();
+            IDbConnection connection = null;
+
+            if (transaction == null) 
+            {
+                connection = this.DatabaseFactory.GetDatabaseConnection();
+                this.OpenConnection(connection);
+            } else {
+                connection = transaction.Connection;
+            }
 
             try
             {
                 this.OpenConnection(connection);
 
-                await connection.QueryAsync<T>(selectQuery, typeArr, DapperMapper.MapDapperEntity<T>(typeArr, entityLookup, includes), query.Params, null, true, splitOn);
-            
-                connection?.Close();
+                await connection.QueryAsync<T>(selectQuery, typeArr, DapperMapper.MapDapperEntity<T>(typeArr, entityLookup, includes), query.Params, transaction, true, splitOn);
+                
+                if (transaction == null)
+                    connection?.Close();
             }
             catch (Exception)
             {
                 connection?.Close();
+                connection?.Dispose();
+
                 throw;
             }
-            finally
-            {
-                connection?.Close();
-            }
 
-            return entityLookup.Values;
+            return entityLookup.Values.ToArray();
         }
 
-        public virtual async Task<object> GetEntityByAlternativeKey<T>(T entity, Type typeOverride = null)
+        public virtual async Task<object> GetEntityByAlternativeKey<T>(T entity, Type typeOverride = null, IDbTransaction transaction = null)
             where T : class
         {
             if (typeOverride != null)
             {
-                var reflectionCall = ReflectionHelper.CallGenericMethod(typeof(QueryExecuter), "GetEntityByAlternativeKey", typeOverride, new object[] { entity, null }, this) as Task<object>;
+                // TODO test
+                var reflectionCall = ReflectionHelper.CallGenericMethod(typeof(QueryExecuter), "GetEntityByAlternativeKey", typeOverride, new object[] { entity, null, transaction }, this) as Task<object>;
                 
-                return reflectionCall;
+                return await reflectionCall;
+
+                // var resultProperty = reflectionCall.GetType().GetProperty("Result");
+                // return resultProperty.GetValue(reflectionCall);
             }
 
             var expression = this.SqlGenerator.CreateByIdExpression<T>(EntityMapper.GetAlternativeEntityKeys<T>(entity));
             var idQuery = this.SqlGenerator.Select<T>(expression);
-            var objEntity = (await this.ExecuteSelectQuery<T>(idQuery)).FirstOrDefault();
+            var objEntity = (await this.ExecuteSelectQuery<T>(idQuery, transaction)).FirstOrDefault();
 
             return objEntity;
         }
 
-        public virtual async Task<IEnumerable<EntityKey>> GetEntityKeysFromAlternativeKeys(object entity, Type entityType)
+        public virtual async Task<IEnumerable<EntityKey>> GetEntityKeysFromAlternativeKeys(object entity, Type entityType, IDbTransaction transaction = null)
         {
-            var reflectionCall = ReflectionHelper.CallGenericMethod(typeof(QueryExecuter), "GetEntityByAlternativeKey", entityType, new object[] { entity, null }, this) as Task<object>;
-            var dbEntity = reflectionCall != null ? await reflectionCall : null;
+            var dbEntity = await this.GetEntityByAlternativeKey(entity, entityType, transaction);
             var keys = EntityMapper.GetEntityKeys(dbEntity, entityType);
 
             if (dbEntity != null && keys != null)

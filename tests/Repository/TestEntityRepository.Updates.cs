@@ -159,6 +159,37 @@ namespace Extended.Dapper.Tests.Repository
         }
 
         /// <summary>
+        /// This tests if updating children that already exists (i.e. have an id)
+        /// works properly when mixed with new children that don't have an id
+        /// </summary>
+        [Test]
+        public void TestUpdateWithExistingKeylessChildren()
+        {
+            var stephenAuthor = this.AuthorRepository.Get(a => a.Name == "Stephen Hawking", a => a.Books).Result;
+
+            foreach (var book in stephenAuthor.Books)
+                book.Id = default(int);
+
+            // Create a new book
+            Book newBook = new Book()
+            {
+                Author = stephenAuthor,
+                Name = "The Grand Design",
+                ReleaseYear = 2010
+            };
+            stephenAuthor.Books.Add(newBook);
+
+            this.AuthorRepository.Update(stephenAuthor, a => a.Books).Wait();
+
+            // Check if books still exists
+            var stephenWithBooks = this.AuthorRepository.Get(a => a.Name == "Stephen Hawking", a => a.Books).Result;
+            Assert.AreEqual(4, stephenWithBooks.Books.Count, "Books have not been saved properly through update");
+
+            var grandDesignBook = stephenWithBooks.Books.SingleOrDefault(b => b.Name == "The Grand Design");
+            Assert.AreNotEqual(null, grandDesignBook, "The newly inserted child could not be found");
+        }
+
+        /// <summary>
         /// This tests if updating children when a child is removed
         /// indeeds remove the child from the database
         /// </summary>

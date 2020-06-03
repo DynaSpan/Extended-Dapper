@@ -8,6 +8,8 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Dapper;
 using Extended.Dapper.Core.Attributes.Entities.Relations;
+using Extended.Dapper.Core.Database;
+using Extended.Dapper.Core.Extensions;
 using Extended.Dapper.Core.Helpers;
 using Extended.Dapper.Core.Mappers;
 using Extended.Dapper.Core.Models;
@@ -58,10 +60,10 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
             // Check if keys are filled
             if (EntityMapper.IsAutovalueKeysEmpty(entity, typeOverride) && EntityMapper.IsAlternativeKeysEmpty(entity, typeOverride))
                 throw new NotSupportedException("Could not update entity based on key, as no keys have been provided");
-            else if (EntityMapper.IsAutovalueKeysEmpty(entity, typeOverride) && !EntityMapper.IsAlternativeKeysEmpty(entity, typeOverride))
+            else if (EntityMapper.IsAutovalueKeysEmpty(entity, typeOverride) && !EntityMapper.IsAlternativeKeysEmpty(entity, typeOverride) && includes != null)
             {
                 // Grab proper entity keys
-                foreignKeys = await this.GetEntityKeysFromAlternativeKeys(entity, typeOverride ?? typeof(T));
+                foreignKeys = await this.GetEntityKeysFromAlternativeKeys(entity, typeOverride ?? typeof(T), transaction);
             } else {
                 foreignKeys = EntityMapper.GetEntityKeys(entity, typeOverride);
             }
@@ -75,6 +77,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                 this.OpenConnection(connection);
 
                 transaction = connection.BeginTransaction();
+                
                 shouldCommit = true;
             }
 
@@ -185,7 +188,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                             {
                                 // Entity exists already but does not have primary key
                                 // so we load the entity
-                                var oneObjKeys = await this.GetEntityKeysFromAlternativeKeys(oneObj, objType);
+                                var oneObjKeys = await this.GetEntityKeysFromAlternativeKeys(oneObj, objType, transaction);
 
                                 if (oneObjKeys != null)
                                     oneObjKey = oneObjKeys.SingleOrDefault(k => k.Name == attr.LocalKey);
@@ -200,7 +203,8 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                         var currentChildrenIds = new List<object>();
 
                         var listObj = oneObj as IList;
-                        var listType = listObj.GetType().GetGenericArguments()[0];
+
+                        var listType = listObj.GetListType();
                         inclEntityMap = EntityMapper.GetEntityMap(listType);
 
                         foreach (var listItem in listObj)
@@ -239,7 +243,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                                 // Grab by alternative key
                                 if (EntityMapper.IsAutovalueKeysEmpty(listItem, listType) && !EntityMapper.IsAlternativeKeysEmpty(listItem, listType)) 
                                 {
-                                    var altEntityKeys = await this.GetEntityKeysFromAlternativeKeys(listItem, listType);
+                                    var altEntityKeys = await this.GetEntityKeysFromAlternativeKeys(listItem, listType, transaction);
 
                                     if (altEntityKeys != null)
                                         objKey = altEntityKeys.SingleOrDefault(k => k.Name == attr.LocalKey);
