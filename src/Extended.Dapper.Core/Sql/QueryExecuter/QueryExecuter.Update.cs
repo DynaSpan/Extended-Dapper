@@ -200,6 +200,8 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                     }
                     else if (attr is OneToManyAttribute)
                     {
+                        bool useAutoValueKey = false;
+                        string autoValueKeyName = null;
                         var currentChildrenIds = new List<object>();
 
                         var listObj = oneObj as IList;
@@ -222,7 +224,16 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
 
                                 var queryResult = await this.ExecuteInsertQuery(listItem, transaction, listType, false, queryField, queryParams);
 
-                                objKey = EntityMapper.GetEntityKeys(listItem, listType).SingleOrDefault(k => k.Name == attr.LocalKey);
+                                var entityKeys = EntityMapper.GetEntityKeys(listItem, listType);
+                                objKey = entityKeys.SingleOrDefault(k => k.Name == attr.LocalKey);
+
+                                // Specific use-case, for when an object doesn't follow standard
+                                // SQL conventions with naming local keys (e.g. different key names in different classes)
+                                if (objKey == null) {
+                                    objKey = entityKeys.Where(k => k.AutoValue).FirstOrDefault();
+                                    useAutoValueKey = true;
+                                    autoValueKeyName = objKey.Name;
+                                }
 
                                 if (!queryResult)
                                     throw new ApplicationException("Could not create a OneToMany object: " + listItem);
@@ -241,17 +252,27 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                                 objKey = EntityMapper.GetEntityKeys(listItem, listType).SingleOrDefault(k => k.Name == attr.LocalKey);
 
                                 // Grab by alternative key
-                                if (EntityMapper.IsAutovalueKeysEmpty(listItem, listType) && !EntityMapper.IsAlternativeKeysEmpty(listItem, listType)) 
+                                if (objKey == null || (EntityMapper.IsAutovalueKeysEmpty(listItem, listType) && !EntityMapper.IsAlternativeKeysEmpty(listItem, listType)))
                                 {
                                     var altEntityKeys = await this.GetEntityKeysFromAlternativeKeys(listItem, listType, transaction);
 
                                     if (altEntityKeys != null)
                                         objKey = altEntityKeys.SingleOrDefault(k => k.Name == attr.LocalKey);
+
+                                    // Specific use-case, for when an object doesn't follow standard
+                                    // SQL conventions with naming local keys (e.g. different key names in different classes)
+                                    if (objKey == null) {
+                                        objKey = altEntityKeys.Where(k => k.AutoValue).FirstOrDefault();
+                                        useAutoValueKey = true;
+                                        autoValueKeyName = objKey.Name;
+                                    }
                                 }
 
                                 if (!queryResult)
                                     throw new ApplicationException("Could not update a OneToMany object: " + listItem);
                             }
+
+                            Console.WriteLine("OBJ: " + objKey);
 
                             Guid guidId;
 
@@ -261,8 +282,13 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                                 currentChildrenIds.Add(objKey.Value);
                         }
 
+                        string localKey = attr.LocalKey;
+
+                        if (useAutoValueKey)
+                            localKey = autoValueKeyName;
+
                         // Delete children not in list anymore
-                        var deleteQuery = this.SqlGenerator.DeleteChildren<object>(attr.TableName, foreignKey.SingleOrDefault(k => k.Name == attr.LocalKey).Value, attr.ForeignKey, attr.LocalKey, currentChildrenIds, listType);
+                        var deleteQuery = this.SqlGenerator.DeleteChildren<object>(attr.TableName, foreignKey.SingleOrDefault(k => k.Name == attr.LocalKey).Value, attr.ForeignKey, localKey, currentChildrenIds, listType);
                         
                         try
                         {

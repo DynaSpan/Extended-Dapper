@@ -30,6 +30,7 @@ Extends Dapper with a repository (CRUD) and native LINQ 2 SQL and `OneToMany` & 
 ## TODO
 
 - Write more unittests (working on it, EntityRepository is covered)
+    - Add unittests for non-standard object/SQL formats (e.g. weird pk's)
 - ~Setup CI/CD for automated deployment to NuGet~ (need to fix with new testing)
 - Setup documentation
 - (Proper) support for more than 1 primary key
