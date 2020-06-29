@@ -224,6 +224,9 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
 
                                 var queryResult = await this.ExecuteInsertQuery(listItem, transaction, listType, false, queryField, queryParams);
 
+                                if (!queryResult)
+                                    throw new ApplicationException("Could not create a OneToMany object: " + listItem);
+
                                 var entityKeys = EntityMapper.GetEntityKeys(listItem, listType);
                                 objKey = entityKeys.SingleOrDefault(k => k.Name == attr.LocalKey);
 
@@ -234,9 +237,6 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                                     useAutoValueKey = true;
                                     autoValueKeyName = objKey.Name;
                                 }
-
-                                if (!queryResult)
-                                    throw new ApplicationException("Could not create a OneToMany object: " + listItem);
                             }
                             else
                             {
@@ -249,30 +249,29 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
 
                                 var queryResult = await this.ExecuteUpdateQuery(listItem, transaction, null, null, queryField, queryParams, listType);
 
+                                if (!queryResult)
+                                    throw new ApplicationException("Could not update a OneToMany object: " + listItem);
+
                                 objKey = EntityMapper.GetEntityKeys(listItem, listType).SingleOrDefault(k => k.Name == attr.LocalKey);
 
                                 // Grab by alternative key
-                                if (objKey == null || (EntityMapper.IsAutovalueKeysEmpty(listItem, listType) && !EntityMapper.IsAlternativeKeysEmpty(listItem, listType)))
+                                if (EntityMapper.IsAutovalueKeysEmpty(listItem, listType) && !EntityMapper.IsAlternativeKeysEmpty(listItem, listType))
                                 {
                                     var altEntityKeys = await this.GetEntityKeysFromAlternativeKeys(listItem, listType, transaction);
 
                                     if (altEntityKeys != null)
                                         objKey = altEntityKeys.SingleOrDefault(k => k.Name == attr.LocalKey);
-
-                                    // Specific use-case, for when an object doesn't follow standard
-                                    // SQL conventions with naming local keys (e.g. different key names in different classes)
-                                    if (objKey == null) {
-                                        objKey = altEntityKeys.Where(k => k.AutoValue).FirstOrDefault();
-                                        useAutoValueKey = true;
-                                        autoValueKeyName = objKey.Name;
-                                    }
                                 }
-
-                                if (!queryResult)
-                                    throw new ApplicationException("Could not update a OneToMany object: " + listItem);
                             }
 
-                            Console.WriteLine("OBJ: " + objKey);
+                            // Specific use-case, for when an object doesn't follow standard
+                            // SQL conventions with naming local keys (e.g. different key names in different classes)
+                            if (objKey == null) {
+                                var entityKeys = EntityMapper.GetEntityKeys(listItem, listType);
+                                objKey = entityKeys.Where(k => k.AutoValue).FirstOrDefault();
+                                useAutoValueKey = true;
+                                autoValueKeyName = objKey.Name;
+                            }
 
                             Guid guidId;
 

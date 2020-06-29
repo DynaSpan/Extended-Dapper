@@ -1,5 +1,9 @@
 # Changelog
 
+[0.6.1 - 0.6.3]
+- Fix diverse bugs regarding updates where the DB doesn't follow normal naming schemes
+    - e.g. local (primary) keys have the same name as foreign keys, which differs between tables
+
 [0.6.0]
 - Allow AlternativeKeys in case primary key is not available
 - Fix some buggies
