@@ -67,7 +67,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                 else
                     queryStr = this.DatabaseFactory.SqlProvider.BuildDeleteQuery((DeleteSqlQuery)query, entityMap);
                 
-                var result = await transaction.Connection.ExecuteAsync(queryStr, query.Params, transaction);
+                var result = await transaction.Connection.ExecuteAsync(queryStr, query.Params, transaction).ConfigureAwait(false);
 
                 if (shouldCommit)
                     transaction.Commit();

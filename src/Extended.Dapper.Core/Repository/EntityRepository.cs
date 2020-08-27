@@ -58,7 +58,7 @@ namespace Extended.Dapper.Core.Repository
         /// <param name="includes">Which children to include</param>
         /// <returns>A single entity that mataches the search</returns>
         public virtual async Task<T> Get(Expression<Func<T, bool>> search, params Expression<Func<T, object>>[] includes)
-            => (await this.QueryExecuter.ExecuteSelectQuery<T>(search, includes))?.FirstOrDefault();
+            => (await this.QueryExecuter.ExecuteSelectQuery<T>(search, includes).ConfigureAwait(false))?.FirstOrDefault();
 
         /// <summary>
         /// Gets an entity by its ID
@@ -107,7 +107,7 @@ namespace Extended.Dapper.Core.Repository
         /// <typeparam name="O"></typeparam>
         /// <returns>An instance of the child</returns>
         public virtual async Task<O> GetOne<O>(T entity, Expression<Func<T, O>> one, params Expression<Func<O, object>>[] includes)
-            where O : class => (await this.QueryExecuter.ExecuteSelectOneQuery<T, O>(entity, one, includes))?.FirstOrDefault();
+            where O : class => (await this.QueryExecuter.ExecuteSelectOneQuery<T, O>(entity, one, includes).ConfigureAwait(false))?.FirstOrDefault();
 
         /// <summary>
         /// Inserts an entity into the database
@@ -152,7 +152,7 @@ namespace Extended.Dapper.Core.Repository
         /// <returns>The inserted entity</returns>
         public virtual async Task<T> Insert(T entity, IDbTransaction transaction, bool forceInsert)
         {
-            if (await this.QueryExecuter.ExecuteInsertEntityQuery<T>(entity, transaction, null, forceInsert))
+            if (await this.QueryExecuter.ExecuteInsertEntityQuery<T>(entity, transaction, null, forceInsert).ConfigureAwait(false))
                 return entity;
 
             return null;

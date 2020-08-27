@@ -39,7 +39,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
         {
             var search = this.SqlGenerator.CreateByIdExpression<T>(id);
 
-            return (await this.ExecuteSelectQuery<T>(search, includes)).FirstOrDefault();
+            return (await this.ExecuteSelectQuery<T>(search, includes).ConfigureAwait(false)).FirstOrDefault();
         }
 
         /// <summary>
@@ -62,7 +62,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
 
             var search = this.SqlGenerator.CreateByIdExpression<T>(new List<EntityKey>() { key });
 
-            return (await this.ExecuteSelectQuery<T>(search, includes)).FirstOrDefault();
+            return (await this.ExecuteSelectQuery<T>(search, includes).ConfigureAwait(false)).FirstOrDefault();
         }
 
         /// <summary>
@@ -152,7 +152,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
             {
                 this.OpenConnection(connection);
 
-                await connection.QueryAsync<T>(selectQuery, typeArr, DapperMapper.MapDapperEntity<T>(typeArr, entityLookup, includes), query.Params, transaction, true, splitOn);
+                await connection.QueryAsync<T>(selectQuery, typeArr, DapperMapper.MapDapperEntity<T>(typeArr, entityLookup, includes), query.Params, transaction, true, splitOn).ConfigureAwait(false);
                 
                 if (transaction == null)
                     connection?.Close();
@@ -176,7 +176,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                 // TODO test
                 var reflectionCall = ReflectionHelper.CallGenericMethod(typeof(QueryExecuter), "GetEntityByAlternativeKey", typeOverride, new object[] { entity, null, transaction }, this) as Task<object>;
                 
-                return await reflectionCall;
+                return await reflectionCall.ConfigureAwait(false);
 
                 // var resultProperty = reflectionCall.GetType().GetProperty("Result");
                 // return resultProperty.GetValue(reflectionCall);
@@ -184,14 +184,14 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
 
             var expression = this.SqlGenerator.CreateByIdExpression<T>(EntityMapper.GetAlternativeEntityKeys<T>(entity));
             var idQuery = this.SqlGenerator.Select<T>(expression);
-            var objEntity = (await this.ExecuteSelectQuery<T>(idQuery, transaction)).FirstOrDefault();
+            var objEntity = (await this.ExecuteSelectQuery<T>(idQuery, transaction).ConfigureAwait(false)).FirstOrDefault();
 
             return objEntity;
         }
 
         public virtual async Task<IEnumerable<EntityKey>> GetEntityKeysFromAlternativeKeys(object entity, Type entityType, IDbTransaction transaction = null)
         {
-            var dbEntity = await this.GetEntityByAlternativeKey(entity, entityType, transaction);
+            var dbEntity = await this.GetEntityByAlternativeKey(entity, entityType, transaction).ConfigureAwait(false);
             var keys = EntityMapper.GetEntityKeys(dbEntity, entityType);
 
             if (dbEntity != null && keys != null)
