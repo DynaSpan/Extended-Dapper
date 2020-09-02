@@ -437,5 +437,31 @@ namespace Extended.Dapper.Tests.Repository
 
             Assert.AreNotEqual(null, bookEntity, "Insert in transaction failed");
         }
+
+        /// <summary>
+        /// This tests if a changed parent will NOT update when using the update only method, as it should only update references and not objects
+        /// </summary>
+        [Test]
+        public void TestUpdateOnlyWithEditedParent()
+        {
+            var bookEntity = this.BookRepository.Get(b => b.Name == "Brief Answers to the Big Questions").Result;
+            var carlSagan = this.AuthorRepository.Get(a => a.Name == "Carl Sagan").Result;
+
+            bookEntity.Name = "The Brief Answers to the Big Questions";
+            bookEntity.Author = carlSagan;
+            carlSagan.Name = "Karl Sagan";
+            carlSagan.BirthYear = 1944;
+
+            var updateResult = this.BookRepository.UpdateOnly(bookEntity, b => b.Name, b => b.Author).Result;
+
+            Assert.AreNotEqual(false, updateResult, "Could not update Book");
+
+            var updatedBookEntity = this.BookRepository.Get(b => b.Name == "The Brief Answers to the Big Questions", b => b.Author).Result;
+
+            Assert.AreNotEqual(null, updatedBookEntity, "Could not retrieve updated Book");
+            Assert.AreEqual(carlSagan.Id, updatedBookEntity.Author.Id, "Author reference in Book was not updated");
+            Assert.AreEqual("Carl Sagan", updatedBookEntity.Author.Name, "Author name was updated when only reference should be updated");
+            Assert.AreEqual(1934, updatedBookEntity.Author.BirthYear, "Author birth year was updated when only reference should be updated");
+        }
     }
 }

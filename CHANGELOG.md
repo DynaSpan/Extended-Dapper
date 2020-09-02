@@ -1,5 +1,9 @@
 # Changelog
 
+[0.6.4 - 0.6.6]
+- Add ConfigureAwait(false) on all async calls
+- Make sure UpdateOnly only updates references of many2one children
+
 [0.6.1 - 0.6.3]
 - Fix diverse bugs regarding updates where the DB doesn't follow normal naming schemes
     - e.g. local (primary) keys have the same name as foreign keys, which differs between tables

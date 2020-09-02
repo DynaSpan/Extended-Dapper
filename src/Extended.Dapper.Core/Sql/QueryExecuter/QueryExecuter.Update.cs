@@ -88,8 +88,13 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                 foreach (var param in queryParams)
                     query.Params.Add(param.Key, param.Value);
 
-            if (includes == null && updateFields != null)
+            bool executeChildrenUpdates = true;
+
+            if (includes == null && updateFields != null) 
+            {
+                executeChildrenUpdates = false;
                 includes = updateFields.Where(f => entityMap.RelationProperties.Where(r => r.Key.Name == ExpressionHelper.GetMemberExpression(f).Member.Name).Any()).ToArray();
+            }
 
             // Update all children
             if (includes != null)
@@ -97,15 +102,15 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                 UpdateSqlQuery updateQuery;
 
                 if (typeOverride == null)
-                    updateQuery = await this.UpdateChildren<T>(entity, transaction, typeOverride, foreignKeys, includes).ConfigureAwait(false);
+                    updateQuery = await this.UpdateChildren<T>(entity, transaction, typeOverride, foreignKeys, executeChildrenUpdates, includes).ConfigureAwait(false);
                 else
-                    updateQuery = await this.UpdateChildren(entity, transaction, typeOverride, foreignKeys, includes).ConfigureAwait(false);
+                    updateQuery = await this.UpdateChildren(entity, transaction, typeOverride, foreignKeys, executeChildrenUpdates, includes).ConfigureAwait(false);
 
-                updateQuery.Updates.AddRange(updateQuery.Updates);
+                query.Updates.AddRange(updateQuery.Updates);
 
                 foreach (var param in updateQuery.Params)
-                    if (!updateQuery.Params.ContainsKey(param.Key))
-                        updateQuery.Params.Add(param.Key, param.Value);
+                    if (!query.Params.ContainsKey(param.Key))
+                        query.Params.Add(param.Key, param.Value);
             }
 
             try
@@ -136,7 +141,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
             }
         }
         
-        protected virtual async Task<UpdateSqlQuery> UpdateChildren<T>(T entity, IDbTransaction transaction, Type typeOverride = null, IEnumerable<EntityKey> foreignKeysParam = null, params Expression<Func<T, object>>[] includes)
+        protected virtual async Task<UpdateSqlQuery> UpdateChildren<T>(T entity, IDbTransaction transaction, Type typeOverride = null, IEnumerable<EntityKey> foreignKeysParam = null, bool executeUpdates = true, params Expression<Func<T, object>>[] includes)
             where T : class
         {
             UpdateSqlQuery updateQuery = new UpdateSqlQuery();
@@ -178,11 +183,14 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                         else
                         {
                             // Update the entity
-                            var query = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "Update", objType, new[] { oneObj, null }, this.SqlGenerator) as UpdateSqlQuery;
-                            var queryResult = await this.ExecuteUpdateQuery(oneObj, transaction, null, null, null, null, objType).ConfigureAwait(false);
+                            if (executeUpdates)
+                            {
+                                var query = ReflectionHelper.CallGenericMethod(typeof(SqlGenerator), "Update", objType, new[] { oneObj, null }, this.SqlGenerator) as UpdateSqlQuery;
+                                var queryResult = await this.ExecuteUpdateQuery(oneObj, transaction, null, null, null, null, objType).ConfigureAwait(false);
 
-                            if (!queryResult)
-                                throw new ApplicationException("Could not update a ManyToOne object: " + oneObj);
+                                if (!queryResult)
+                                    throw new ApplicationException("Could not update a ManyToOne object: " + oneObj);
+                            }
 
                             if (EntityMapper.IsAutovalueKeysEmpty(oneObj, objType) && !EntityMapper.IsAlternativeKeysEmpty(oneObj, objType))
                             {
@@ -241,16 +249,19 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                             else
                             {
                                 // Update the entity
-                                var queryField = new List<QueryField>();
-                                queryField.Add(new QueryField(attr.TableName, attr.ForeignKey, "p_fk_" + attr.ForeignKey));
-                                
-                                var queryParams = new Dictionary<string, object>();
-                                queryParams.Add("p_fk_" + attr.ForeignKey, foreignKey.SingleOrDefault(k => k.Name == attr.LocalKey).Value);
+                                if (executeUpdates)
+                                {
+                                    var queryField = new List<QueryField>();
+                                    queryField.Add(new QueryField(attr.TableName, attr.ForeignKey, "p_fk_" + attr.ForeignKey));
+                                    
+                                    var queryParams = new Dictionary<string, object>();
+                                    queryParams.Add("p_fk_" + attr.ForeignKey, foreignKey.SingleOrDefault(k => k.Name == attr.LocalKey).Value);
 
-                                var queryResult = await this.ExecuteUpdateQuery(listItem, transaction, null, null, queryField, queryParams, listType).ConfigureAwait(false);
+                                    var queryResult = await this.ExecuteUpdateQuery(listItem, transaction, null, null, queryField, queryParams, listType).ConfigureAwait(false);
 
-                                if (!queryResult)
-                                    throw new ApplicationException("Could not update a OneToMany object: " + listItem);
+                                    if (!queryResult)
+                                        throw new ApplicationException("Could not update a OneToMany object: " + listItem);
+                                }
 
                                 objKey = EntityMapper.GetEntityKeys(listItem, listType).SingleOrDefault(k => k.Name == attr.LocalKey);
 
