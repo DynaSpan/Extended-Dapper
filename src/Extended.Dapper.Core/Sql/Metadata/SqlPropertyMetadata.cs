@@ -28,6 +28,12 @@ namespace Extended.Dapper.Core.Sql.Metadata
         public bool IgnoreOnUpdate { get; set; }
 
         /// <summary>
+        /// Boolean indicating if we should include this
+        /// field on select queries
+        /// </summary>
+        public bool IgnoreOnSelect { get ;set; }
+
+        /// <summary>
         /// Name of the property
         /// </summary>
         public virtual string PropertyName => PropertyInfo.Name;
@@ -48,6 +54,8 @@ namespace Extended.Dapper.Core.Sql.Metadata
             {
                 this.ColumnName = propertyInfo.Name;
             }
+
+            this.IgnoreOnSelect = propertyInfo.GetCustomAttribute<IgnoreOnSelectAttribute>() != null;
 
             // Check if we're allowed to update this
             this.IgnoreOnUpdate = propertyInfo.GetCustomAttribute<IgnoreOnUpdateAttribute>() != null;

@@ -201,7 +201,7 @@ namespace Extended.Dapper.Core.Sql.Generator
                 }
             };
 
-            selectList.AddRange(properties.Select(k =>
+            selectList.AddRange(properties.Where(p => !p.IgnoreOnSelect).Select(k =>
                 new SelectField(){
                     IsMainKey = false,
                     Table = tableName,
