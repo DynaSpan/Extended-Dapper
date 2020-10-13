@@ -1,5 +1,9 @@
 # Changelog
 
+[0.6.7]
+- Refactor codebase
+- Add `IgnoreOnSelect` attribute
+
 [0.6.4 - 0.6.6]
 - Add ConfigureAwait(false) on all async calls
 - Make sure UpdateOnly only updates references of many2one children
