@@ -31,7 +31,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// The char used for parameters
         /// </summary>
         string ParameterChar { get; }
-        
+
         /// <summary>
         /// Build a select query
         /// </summary>

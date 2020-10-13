@@ -22,7 +22,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// <param name="tableName"></param>
         public override string EscapeTable(string tableName)
         {
-            return "`" + tableName + "`";
+            return $"`{tableName}`";
         }
 
         /// <summary>
@@ -31,7 +31,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// <param name="columnName"></param>
         public override string EscapeColumn(string columnName)
         {
-            return "`" + columnName + "`";
+            return $"`{columnName}`";
         }
 
         /// <summary>

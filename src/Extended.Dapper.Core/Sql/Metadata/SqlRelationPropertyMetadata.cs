@@ -34,11 +34,11 @@ namespace Extended.Dapper.Core.Sql.Metadata
             PropertyInfo relationPropertyInfo, 
             PropertyInfo propertyInfo) : base(propertyInfo)
         {
-            var relationAttribute = 
+            var relationAttribute =
                 relationPropertyInfo.GetCustomAttribute<RelationAttributeBase>();
 
             this.RelationPropertyInfo = relationPropertyInfo;
-            
+
             this.TableName      = relationAttribute.TableName;
             this.ExternalKey    = relationAttribute.ForeignKey;
             this.LocalKey       = relationAttribute.LocalKey;

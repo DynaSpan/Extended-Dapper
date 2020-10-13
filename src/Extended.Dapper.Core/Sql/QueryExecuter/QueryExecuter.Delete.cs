@@ -15,7 +15,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
         /// <summary>
         /// Executes a delete query
         /// </summary>
-        /// <param name="search"></param>
+        /// <param name="entity"></param>
         /// <param name="transaction"></param>
         /// <returns>Number of deleted records</returns>
         public virtual Task<int> ExecuteDeleteEntityQuery<T>(T entity, IDbTransaction transaction = null)
@@ -49,7 +49,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
             var shouldCommit = false;
             IDbConnection connection = null;
 
-            if (transaction == null) 
+            if (transaction == null)
             {
                 connection = this.DatabaseFactory.GetDatabaseConnection();
                 this.OpenConnection(connection);
@@ -66,7 +66,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                     queryStr = this.DatabaseFactory.SqlProvider.BuildUpdateQuery((UpdateSqlQuery)query);
                 else
                     queryStr = this.DatabaseFactory.SqlProvider.BuildDeleteQuery((DeleteSqlQuery)query, entityMap);
-                
+
                 var result = await transaction.Connection.ExecuteAsync(queryStr, query.Params, transaction).ConfigureAwait(false);
 
                 if (shouldCommit)

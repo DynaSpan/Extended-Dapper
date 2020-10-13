@@ -24,7 +24,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// <param name="tableName"></param>
         public override string EscapeTable(string tableName)
         {
-            return "[" + tableName + "]";
+            return $"[{tableName}]";
         }
 
         /// <summary>
@@ -33,7 +33,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// <param name="columnName"></param>
         public override string EscapeColumn(string columnName)
         {
-            return "[" + columnName + "]";
+            return $"[{columnName}]";
         }
 
         /// <summary>
@@ -45,19 +45,19 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
             var query = new StringBuilder();
 
             var selectFields = string.Join(", ", selectQuery.Select.Select(this.MapAliasColumn));
-            
+
             if (selectQuery.Limit != null)
                 query.AppendFormat("SELECT TOP {0} {1} FROM {2}", selectQuery.Limit, selectFields, this.EscapeTable(selectQuery.From));
             else
                 query.AppendFormat("SELECT {0} FROM {1}", selectFields, this.EscapeTable(selectQuery.From));
 
-            if (selectQuery.Joins != null && selectQuery.Joins.Count > 0)
-                query.Append(" " + string.Join(" ", selectQuery.Joins.Select(j => this.MapJoin(j, EntityMapper.GetEntityMap(j.EntityType)))));
+            if (selectQuery.Joins?.Count > 0)
+                query.Append(' ').Append(string.Join(" ", selectQuery.Joins.Select(j => this.MapJoin(j, EntityMapper.GetEntityMap(j.EntityType)))));
 
             if (selectQuery.Where != null && !string.IsNullOrEmpty(selectQuery.Where.ToString()))
                 query.AppendFormat(" WHERE {0}", selectQuery.Where);
 
-            if (selectQuery.OrderBy != null && selectQuery.OrderBy.Count > 0)
+            if (selectQuery.OrderBy?.Count > 0)
                 query.AppendFormat(" ORDER BY {0}", this.MapOrderBy(selectQuery.OrderBy));
 
             if (SqlQueryProviderHelper.Verbose)

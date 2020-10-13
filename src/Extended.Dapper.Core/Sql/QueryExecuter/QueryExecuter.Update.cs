@@ -34,8 +34,8 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
         /// <param name="typeOverride"></param>
         /// <returns>True when succesfull; false otherwise</returns>
         public virtual async Task<bool> ExecuteUpdateQuery<T>(
-            T entity, 
-            IDbTransaction transaction = null, 
+            T entity,
+            IDbTransaction transaction = null,
             Expression<Func<T, object>>[] updateFields = null,
             Expression<Func<T, object>>[] includes = null,
             IEnumerable<QueryField> queryFields = null,
@@ -45,7 +45,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
         {
             UpdateSqlQuery query;
             EntityMap entityMap;
-            
+
             if (typeOverride == null)
             {
                 query = this.SqlGenerator.Update<T>(entity, updateFields);
@@ -59,25 +59,29 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
 
             // Check if keys are filled
             if (EntityMapper.IsAutovalueKeysEmpty(entity, typeOverride) && EntityMapper.IsAlternativeKeysEmpty(entity, typeOverride))
+            {
                 throw new NotSupportedException("Could not update entity based on key, as no keys have been provided");
+            }
             else if (EntityMapper.IsAutovalueKeysEmpty(entity, typeOverride) && !EntityMapper.IsAlternativeKeysEmpty(entity, typeOverride) && includes != null)
             {
                 // Grab proper entity keys
                 foreignKeys = await this.GetEntityKeysFromAlternativeKeys(entity, typeOverride ?? typeof(T), transaction).ConfigureAwait(false);
-            } else {
+            }
+            else
+            {
                 foreignKeys = EntityMapper.GetEntityKeys(entity, typeOverride);
             }
 
             var shouldCommit = false;
             IDbConnection connection = null;
 
-            if (transaction == null) 
+            if (transaction == null)
             {
                 connection = this.DatabaseFactory.GetDatabaseConnection();
                 this.OpenConnection(connection);
 
                 transaction = connection.BeginTransaction();
-                
+
                 shouldCommit = true;
             }
 
@@ -85,15 +89,19 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                 query.Updates.AddRange(queryFields);
 
             if (queryParams != null)
+            {
                 foreach (var param in queryParams)
+                {
                     query.Params.Add(param.Key, param.Value);
+                }
+            }
 
             bool executeChildrenUpdates = true;
 
-            if (includes == null && updateFields != null) 
+            if (includes == null && updateFields != null)
             {
                 executeChildrenUpdates = false;
-                includes = updateFields.Where(f => entityMap.RelationProperties.Where(r => r.Key.Name == ExpressionHelper.GetMemberExpression(f).Member.Name).Any()).ToArray();
+                includes = updateFields.Where(f => entityMap.RelationProperties.Any(r => r.Key.Name == ExpressionHelper.GetMemberExpression(f).Member.Name)).ToArray();
             }
 
             // Update all children
@@ -109,8 +117,12 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                 query.Updates.AddRange(updateQuery.Updates);
 
                 foreach (var param in updateQuery.Params)
+                {
                     if (!query.Params.ContainsKey(param.Key))
+                    {
                         query.Params.Add(param.Key, param.Value);
+                    }
+                }
             }
 
             try
@@ -140,13 +152,15 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                 connection?.Close();
             }
         }
-        
+
         protected virtual async Task<UpdateSqlQuery> UpdateChildren<T>(T entity, IDbTransaction transaction, Type typeOverride = null, IEnumerable<EntityKey> foreignKeysParam = null, bool executeUpdates = true, params Expression<Func<T, object>>[] includes)
             where T : class
         {
-            UpdateSqlQuery updateQuery = new UpdateSqlQuery();
-            updateQuery.Updates = new List<QueryField>();
-            updateQuery.Params = new Dictionary<string, object>();
+            UpdateSqlQuery updateQuery = new UpdateSqlQuery
+            {
+                Updates = new List<QueryField>(),
+                Params = new Dictionary<string, object>()
+            };
 
             EntityMap entityMap = EntityMapper.GetEntityMap(typeOverride ?? typeof(T));
             IEnumerable<EntityKey> foreignKey = foreignKeysParam ?? EntityMapper.GetEntityKeys<T>(entity, typeOverride);
@@ -156,7 +170,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                 var type = incl.Body.Type.GetTypeInfo();
 
                 var exp = (MemberExpression)incl.Body;
-                var property = entityMap.RelationProperties.Where(x => x.Key.Name == exp.Member.Name).SingleOrDefault();
+                var property = entityMap.RelationProperties.SingleOrDefault(x => x.Key.Name == exp.Member.Name);
 
                 var oneObj   = property.Key.GetValue(entity);
                 var attr     = property.Key.GetCustomAttribute<RelationAttributeBase>();
@@ -170,7 +184,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                         var objType = oneObj.GetType();
                         var oneObjKey = EntityMapper.GetEntityKeys(oneObj, objType).SingleOrDefault(k => k.Name == attr.LocalKey);
                         inclEntityMap = EntityMapper.GetEntityMap(objType);
-                        
+
                         // If it has no key, we can assume it is a new entity
                         if (EntityMapper.IsAutovalueKeysEmpty(oneObj, objType) && EntityMapper.IsAlternativeKeysEmpty(oneObj, objType))
                         {
@@ -224,11 +238,15 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                             // If it has no key, we can assume it is a new entity
                             if (EntityMapper.IsAutovalueKeysEmpty(listItem, listType) && EntityMapper.IsAlternativeKeysEmpty(listItem, listType))
                             {
-                                var queryField = new List<QueryField>();
-                                queryField.Add(new QueryField(attr.TableName, attr.ForeignKey, "p_fk_" + attr.ForeignKey));
-                                
-                                var queryParams = new Dictionary<string, object>();
-                                queryParams.Add("p_fk_" + attr.ForeignKey, foreignKey.SingleOrDefault(k => k.Name == attr.LocalKey).Value);
+                                var queryField = new List<QueryField>()
+                                {
+                                    new QueryField(attr.TableName, attr.ForeignKey, "p_fk_" + attr.ForeignKey)
+                                };
+
+                                var queryParams = new Dictionary<string, object>()
+                                {
+                                    { "p_fk_" + attr.ForeignKey, foreignKey.SingleOrDefault(k => k.Name == attr.LocalKey).Value }
+                                };
 
                                 var queryResult = await this.ExecuteInsertQuery(listItem, transaction, listType, false, queryField, queryParams).ConfigureAwait(false);
 
@@ -241,7 +259,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                                 // Specific use-case, for when an object doesn't follow standard
                                 // SQL conventions with naming local keys (e.g. different key names in different classes)
                                 if (objKey == null) {
-                                    objKey = entityKeys.Where(k => k.AutoValue).FirstOrDefault();
+                                    objKey = entityKeys.FirstOrDefault(k => k.AutoValue);
                                     useAutoValueKey = true;
                                     autoValueKeyName = objKey.Name;
                                 }
@@ -251,11 +269,15 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                                 // Update the entity
                                 if (executeUpdates)
                                 {
-                                    var queryField = new List<QueryField>();
-                                    queryField.Add(new QueryField(attr.TableName, attr.ForeignKey, "p_fk_" + attr.ForeignKey));
-                                    
-                                    var queryParams = new Dictionary<string, object>();
-                                    queryParams.Add("p_fk_" + attr.ForeignKey, foreignKey.SingleOrDefault(k => k.Name == attr.LocalKey).Value);
+                                    var queryField = new List<QueryField>()
+                                    {
+                                        new QueryField(attr.TableName, attr.ForeignKey, "p_fk_" + attr.ForeignKey)
+                                    };
+
+                                    var queryParams = new Dictionary<string, object>()
+                                    {
+                                        { "p_fk_" + attr.ForeignKey, foreignKey.SingleOrDefault(k => k.Name == attr.LocalKey).Value }
+                                    };
 
                                     var queryResult = await this.ExecuteUpdateQuery(listItem, transaction, null, null, queryField, queryParams, listType).ConfigureAwait(false);
 
@@ -279,14 +301,12 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                             // SQL conventions with naming local keys (e.g. different key names in different classes)
                             if (objKey == null) {
                                 var entityKeys = EntityMapper.GetEntityKeys(listItem, listType);
-                                objKey = entityKeys.Where(k => k.AutoValue).FirstOrDefault();
+                                objKey = entityKeys.FirstOrDefault(k => k.AutoValue);
                                 useAutoValueKey = true;
                                 autoValueKeyName = objKey.Name;
                             }
 
-                            Guid guidId;
-
-                            if (Guid.TryParse(objKey?.Value?.ToString(), out guidId))
+                            if (Guid.TryParse(objKey?.Value?.ToString(), out Guid guidId))
                                 currentChildrenIds.Add(guidId);
                             else
                                 currentChildrenIds.Add(objKey.Value);
@@ -299,7 +319,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
 
                         // Delete children not in list anymore
                         var deleteQuery = this.SqlGenerator.DeleteChildren<object>(attr.TableName, foreignKey.SingleOrDefault(k => k.Name == attr.LocalKey).Value, attr.ForeignKey, localKey, currentChildrenIds, listType);
-                        
+
                         try
                         {
                             string query = this.DatabaseFactory.SqlProvider.BuildDeleteQuery(deleteQuery, inclEntityMap);

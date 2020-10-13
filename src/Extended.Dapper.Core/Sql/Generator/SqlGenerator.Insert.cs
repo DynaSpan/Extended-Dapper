@@ -4,7 +4,6 @@ using System.Linq;
 using System.Reflection;
 using Extended.Dapper.Core.Attributes.Entities;
 using Extended.Dapper.Core.Attributes.Entities.Relations;
-using Extended.Dapper.Core.Database;
 using Extended.Dapper.Core.Mappers;
 using Extended.Dapper.Core.Sql.Metadata;
 using Extended.Dapper.Core.Sql.Query;
@@ -24,7 +23,7 @@ namespace Extended.Dapper.Core.Sql.Generator
             where T : class
         {
             EntityMap entityMap;
-            
+
             if (typeOverride != null)
                 entityMap = EntityMapper.GetEntityMap(typeOverride);
             else
@@ -38,8 +37,10 @@ namespace Extended.Dapper.Core.Sql.Generator
                     entityMap.UpdatedAtProperty.SetValue(entity, DateTime.Now);
             }
 
-            var insertQuery = new InsertSqlQuery();
-            insertQuery.Table = entityMap.TableName;
+            var insertQuery = new InsertSqlQuery
+            {
+                Table = entityMap.TableName
+            };
 
             // Grab all properties, except autovalue ones
             var autoValueKeyProperties = entityMap.PrimaryKeyPropertiesMetadata.Where(x => x.AutoValue);
@@ -52,8 +53,8 @@ namespace Extended.Dapper.Core.Sql.Generator
                 .AddRange(entityMap.MappedPropertiesMetadata
                     .Where(x => !x.PropertyInfo.GetCustomAttributes<RelationAttributeBase>().Any()
                         && x.PropertyInfo.GetCustomAttribute<IgnoreOnInsertAttribute>() == null
-                        && ( insertQuery.AutoIncrementField == null 
-                            || (insertQuery.AutoIncrementField != null && x.PropertyName != insertQuery.AutoIncrementField.PropertyName)))
+                        && (insertQuery.AutoIncrementField == null
+                            || (x.PropertyName != insertQuery.AutoIncrementField.PropertyName)))
                     .Select(p => {
                         insertQuery.Params.Add("p_" + p.ColumnName, p.PropertyInfo.GetValue(entity));
 
@@ -72,16 +73,22 @@ namespace Extended.Dapper.Core.Sql.Generator
                 var key = autoValueProperty.PropertyInfo.GetValue(entity);
 
                 if (keyInsert && !EntityMapper.IsKeyEmpty(key))
+                {
                     insertQuery.IdAlreadyPresent = true;
+                }
                 else if (autoValueType == typeof(Guid))
+                {
                     autoValueProperty.PropertyInfo.SetValue(entity, Guid.NewGuid());
+                }
                 else if (keyInsert && autoValueType == typeof(int))
                 {
                     insertQuery.AutoIncrementKey = true;
                     insertQuery.AutoIncrementField = autoValueProperty as SqlKeyPropertyMetadata;
                 }
                 else
+                {
                     throw new NotImplementedException($"AutoValue for type {autoValueProperty.PropertyInfo.PropertyType} is not supported");
+                }
             }
         }
     }

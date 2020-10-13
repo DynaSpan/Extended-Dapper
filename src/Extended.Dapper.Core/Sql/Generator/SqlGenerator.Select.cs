@@ -46,8 +46,10 @@ namespace Extended.Dapper.Core.Sql.Generator
             where T : class
         {
             var entityMap = EntityMapper.GetEntityMap(typeof(T));
-            var sqlQuery  = new SelectSqlQuery();
-            sqlQuery.Limit = queryBuilder.LimitResults;
+            var sqlQuery = new SelectSqlQuery
+            {
+                Limit = queryBuilder.LimitResults
+            };
 
             sqlQuery.Select.AddRange(this.GenerateSelectFields<T>(entityMap, queryBuilder));
 
@@ -136,15 +138,15 @@ namespace Extended.Dapper.Core.Sql.Generator
             var sqlQuery = this.Select<M>(search, includes);
 
             var manyPropertyName = ((MemberExpression)many.Body).Member.Name.ToLower();
-            var manyProperty = rootEntityMap.RelationProperties.Where(x => x.Key.Name.ToLower() == manyPropertyName).SingleOrDefault();
-            
-            var relationAttr = System.Attribute.GetCustomAttributes(manyProperty.Key, typeof(OneToManyAttribute), true).FirstOrDefault() as OneToManyAttribute;
-            sqlQuery.Where.AppendFormat("{0} {1}.{2} = {3}o2m_parent_id", 
+            var manyProperty = rootEntityMap.RelationProperties.SingleOrDefault(x => x.Key.Name.ToLower() == manyPropertyName);
+
+            var relationAttr = Attribute.GetCustomAttributes(manyProperty.Key, typeof(OneToManyAttribute), true).FirstOrDefault() as OneToManyAttribute;
+            sqlQuery.Where.AppendFormat("{0} {1}.{2} = {3}o2m_parent_id",
                 string.IsNullOrEmpty(sqlQuery.Where.ToString()) ? "" : " AND",
                 this.sqlProvider.EscapeTable(relationAttr.TableName),
                 this.sqlProvider.EscapeColumn(relationAttr.ForeignKey),
                 this.sqlProvider.ParameterChar);
-            
+
             sqlQuery.Params.Add("o2m_parent_id", EntityMapper.GetEntityKeys<T>(entity).First().Value);
 
             return sqlQuery;
@@ -167,20 +169,20 @@ namespace Extended.Dapper.Core.Sql.Generator
             var sqlQuery = this.Select<O>(null, includes);
 
             var manyPropertyName = ((MemberExpression)one.Body).Member.Name.ToLower();
-            var manyProperty = rootEntityMap.RelationProperties.Where(x => x.Key.Name.ToLower() == manyPropertyName).SingleOrDefault();
-            
-            var relationAttr = System.Attribute.GetCustomAttributes(manyProperty.Key, typeof(ManyToOneAttribute), true).FirstOrDefault() as ManyToOneAttribute;
+            var manyProperty = rootEntityMap.RelationProperties.SingleOrDefault(x => x.Key.Name.ToLower() == manyPropertyName);
+
+            var relationAttr = Attribute.GetCustomAttributes(manyProperty.Key, typeof(ManyToOneAttribute), true).FirstOrDefault() as ManyToOneAttribute;
 
             var selectRootExpr = this.CreateByIdExpression<T>(EntityMapper.GetEntityKeys<T>(entity));
             var selectRootQuery = this.SelectForeignKey<T>(selectRootExpr, relationAttr.ForeignKey);
             string rootQuery = this.sqlProvider.BuildSelectQuery(selectRootQuery);
 
-            sqlQuery.Where.AppendFormat("{0}{1}.{2} = ({3})", 
-                sqlQuery.Where.ToString() == string.Empty ? "" : " AND ",
+            sqlQuery.Where.AppendFormat("{0}{1}.{2} = ({3})",
+                sqlQuery.Where.ToString()?.Length == 0 ? "" : " AND ",
                 this.sqlProvider.EscapeTable(oneEntityMap.TableName),
                 this.sqlProvider.EscapeColumn(relationAttr.LocalKey),
                 rootQuery);
-            
+
             foreach (var param in selectRootQuery.Params)
                 sqlQuery.Params.Add(param.Key, param.Value);
 
@@ -189,13 +191,15 @@ namespace Extended.Dapper.Core.Sql.Generator
 
         private ICollection<SelectField> GenerateSelectFields(string tableName, IEnumerable<SqlPropertyMetadata> properties, string tableAlias = null)
         {
-            var selectList = new List<SelectField>();
-            
-            selectList.Add(new SelectField(){
-                IsMainKey = true,
-                Table = tableName,
-                Field = "Split_" + tableName
-            });
+            var selectList = new List<SelectField>
+            {
+                new SelectField()
+                {
+                    IsMainKey = true,
+                    Table = tableName,
+                    Field = "Split_" + tableName
+                }
+            };
 
             selectList.AddRange(properties.Select(k =>
                 new SelectField(){
@@ -213,21 +217,23 @@ namespace Extended.Dapper.Core.Sql.Generator
         private ICollection<SelectField> GenerateSelectFields<T>(EntityMap entityMap, QueryBuilder<T> queryBuilder)
             where T : class
         {
-            var selectList = new List<SelectField>();
-            
-            selectList.Add(new SelectField(){
-                IsMainKey = true,
-                Table = entityMap.TableName,
-                Field = "Split_" + entityMap.TableName
-            });
+            var selectList = new List<SelectField>
+            {
+                new SelectField()
+                {
+                    IsMainKey = true,
+                    Table = entityMap.TableName,
+                    Field = "Split_" + entityMap.TableName
+                }
+            };
 
             List<SqlPropertyMetadata> mappedSelects = entityMap.MappedPropertiesMetadata.ToList();
 
-            if (queryBuilder.Selects != null && queryBuilder.Selects.Count > 0)
+            if (queryBuilder.Selects?.Count > 0)
             {
                 mappedSelects = entityMap.MappedPropertiesMetadata
                     .Where(p => queryBuilder.Selects
-                        .Where(f => ExpressionHelper.GetPropertyName(f) == p.PropertyName).Any()).ToList();
+                        .Any(f => ExpressionHelper.GetPropertyName(f) == p.PropertyName)).ToList();
 
                 mappedSelects.AddRange(entityMap.PrimaryKeyPropertiesMetadata);
             }
@@ -244,42 +250,42 @@ namespace Extended.Dapper.Core.Sql.Generator
             return selectList;
         }
 
-        private ICollection<SelectField> GenerateSelectFields<T, TChild>(EntityMap entityMap, ICollection<SqlRelationPropertyMetadata> metadata, QueryBuilder<T>.IIncludedChild child)
-            where T : class
-            where TChild : class
-        {
-            var selectList = new List<SelectField>();
-            
-            selectList.Add(new SelectField(){
-                IsMainKey = true,
-                Table = entityMap.TableName,
-                Field = "Split_" + entityMap.TableName
-            });
+        // private ICollection<SelectField> GenerateSelectFields<T, TChild>(EntityMap entityMap, ICollection<SqlRelationPropertyMetadata> metadata, QueryBuilder<T>.IIncludedChild child)
+        //     where T : class
+        //     where TChild : class
+        // {
+        //     var selectList = new List<SelectField>();
 
-            List<SqlPropertyMetadata> mappedSelects = metadata.Cast<SqlPropertyMetadata>().ToList();
-            
-            var includeChild = child as QueryBuilder<T>.IncludedChild<TChild>;
+        //     selectList.Add(new SelectField(){
+        //         IsMainKey = true,
+        //         Table = entityMap.TableName,
+        //         Field = "Split_" + entityMap.TableName
+        //     });
 
-            if (includeChild.IncludedProperties != null && includeChild.IncludedProperties.Count() > 0)
-            {
-                mappedSelects = mappedSelects
-                    .Where(p => includeChild.IncludedProperties
-                        .Where(f => ExpressionHelper.GetPropertyName(f) == p.PropertyName).Any()).ToList();
+        //     List<SqlPropertyMetadata> mappedSelects = metadata.Cast<SqlPropertyMetadata>().ToList();
 
-                mappedSelects.AddRange(entityMap.PrimaryKeyPropertiesMetadata);
-            }
+        //     var includeChild = child as QueryBuilder<T>.IncludedChild<TChild>;
 
-            selectList.AddRange(mappedSelects.Select(k =>
-                new SelectField(){
-                    IsMainKey = false,
-                    Table = entityMap.TableName,
-                    Field = k.ColumnName,
-                    FieldAlias = k.ColumnAlias
-                }
-            ));
+        //     if (includeChild.IncludedProperties?.Count() > 0)
+        //     {
+        //         mappedSelects = mappedSelects
+        //             .Where(p => includeChild.IncludedProperties
+        //                 .Any(f => ExpressionHelper.GetPropertyName(f) == p.PropertyName).ToList();
 
-            return selectList;
-        }
+        //         mappedSelects.AddRange(entityMap.PrimaryKeyPropertiesMetadata);
+        //     }
+
+        //     selectList.AddRange(mappedSelects.Select(k =>
+        //         new SelectField(){
+        //             IsMainKey = false,
+        //             Table = entityMap.TableName,
+        //             Field = k.ColumnName,
+        //             FieldAlias = k.ColumnAlias
+        //         }
+        //     ));
+
+        //     return selectList;
+        // }
 
         /// <summary>
         /// Maps the includes on a select query
@@ -301,7 +307,7 @@ namespace Extended.Dapper.Core.Sql.Generator
                     var property = kvpProperty.Key;
                     var metadata = kvpProperty.Value;
 
-                    var relationAttr = System.Attribute.GetCustomAttributes(property, typeof(RelationAttributeBase), true).FirstOrDefault() as RelationAttributeBase;
+                    var relationAttr = Attribute.GetCustomAttributes(property, typeof(RelationAttributeBase), true).FirstOrDefault() as RelationAttributeBase;
 
                     var tableName = relationAttr.TableName;
                     var typeStr = relationAttr.Type.ToString();
@@ -311,24 +317,28 @@ namespace Extended.Dapper.Core.Sql.Generator
 
                     sqlQuery.Select.AddRange(this.GenerateSelectFields(tableName, metadata.Cast<SqlPropertyMetadata>().ToList()));
 
-                    var join = new Join();
-                    join.EntityType = relationAttr.Type;
+                    var join = new Join()
+                    {
+                        EntityType = relationAttr.Type
+                    };
 
                     // Check the type of relation
                     if (relationAttr is ManyToOneAttribute)
                     {
                         join.JoinType = JoinType.INNER;
-                        
+
                         join.ExternalTable = entityMap.TableName;
                         join.LocalTable = relationAttr.TableName;
 
                         if (relationTables.ContainsKey(typeStr))
                         {
-                            join.TableAlias = relationAttr.TableName + "_" + relationTables[typeStr];
+                            join.TableAlias = $"{relationAttr.TableName}_{relationTables[typeStr]}";
                             relationTables[typeStr]++;
                         }
                         else
+                        {
                             relationTables.Add(typeStr, 0);
+                        }
                     }
                     else if (relationAttr is OneToManyAttribute)
                     {
@@ -339,11 +349,13 @@ namespace Extended.Dapper.Core.Sql.Generator
 
                         if (relationTables.ContainsKey(typeStr))
                         {
-                            join.TableAlias = entityMap.TableName + "_" + relationTables[typeStr];
+                            join.TableAlias = $"{entityMap.TableName}_{relationTables[typeStr]}";
                             relationTables[typeStr]++;
                         }
                         else
+                        {
                             relationTables.Add(typeStr, 0);
+                        }
                     }
 
                     join.ExternalKey = relationAttr.ForeignKey;
@@ -360,13 +372,13 @@ namespace Extended.Dapper.Core.Sql.Generator
         /// </summary>
         /// <param name="sqlQuery"></param>
         /// <param name="entityMap"></param>
-        /// <param name="includes"></param>
+        /// <param name="queryBuilder"></param>
         public void MapIncludes<T>(SelectSqlQuery sqlQuery, EntityMap entityMap, QueryBuilder<T> queryBuilder)
             where T : class
         {
             var relationTables = new Dictionary<string, int>();
 
-            if (queryBuilder.IncludedChildren != null && queryBuilder.IncludedChildren.Count > 0)
+            if (queryBuilder.IncludedChildren?.Count > 0)
             {
                 foreach (var include in queryBuilder.IncludedChildren)
                 {
@@ -389,14 +401,16 @@ namespace Extended.Dapper.Core.Sql.Generator
 
                     sqlQuery.Select.AddRange(fields);
 
-                    var join = new Join();
-                    join.EntityType = relationAttr.Type;
+                    var join = new Join()
+                    {
+                        EntityType = relationAttr.Type
+                    };
 
                     // Check the type of relation
                     if (relationAttr is ManyToOneAttribute)
                     {
                         join.JoinType = JoinType.INNER;
-                        
+
                         join.ExternalTable = entityMap.TableName;
                         join.LocalTable = relationAttr.TableName;
 
@@ -406,7 +420,9 @@ namespace Extended.Dapper.Core.Sql.Generator
                             relationTables[typeStr]++;
                         }
                         else
+                        {
                             relationTables.Add(typeStr, 0);
+                        }
                     }
                     else if (relationAttr is OneToManyAttribute)
                     {
@@ -421,7 +437,9 @@ namespace Extended.Dapper.Core.Sql.Generator
                             relationTables[typeStr]++;
                         }
                         else
+                        {
                             relationTables.Add(typeStr, 0);
+                        }
                     }
 
                     join.ExternalKey = relationAttr.ForeignKey;

@@ -15,7 +15,6 @@ namespace Extended.Dapper.Core.Sql.Generator
 {
     public partial class SqlGenerator : ISqlGenerator
     {
-        private readonly DatabaseProvider databaseProvider;
         private readonly ISqlQueryProvider sqlProvider;
 
         /// <summary>
@@ -24,8 +23,7 @@ namespace Extended.Dapper.Core.Sql.Generator
         /// <param name="databaseProvider">Which database we connect to; defaults to MSSQL</param>
         public SqlGenerator(DatabaseProvider databaseProvider = DatabaseProvider.MSSQL)
         {
-            this.databaseProvider = databaseProvider;
-            this.sqlProvider      = SqlQueryProviderHelper.GetProvider(databaseProvider);
+            this.sqlProvider = SqlQueryProviderHelper.GetProvider(databaseProvider);
 
             // Check if it is implemented
             if (this.sqlProvider == null)
@@ -45,7 +43,7 @@ namespace Extended.Dapper.Core.Sql.Generator
 
             if (primaryKey == null)
                 throw new NotSupportedException("No primary keys defined");
-            
+
             var entityKey = new EntityKey(primaryKey, id);
 
             return CreateByIdExpression<T>(new List<EntityKey>() { entityKey });
@@ -66,16 +64,18 @@ namespace Extended.Dapper.Core.Sql.Generator
             {
                 Expression keyProperty = Expression.Property(t, key.Property.Name);
                 Expression comparison = this.MapKeyValueComparison(keyProperty, key);
-                
+
                 if (returnExpr == null)
+                {
                     returnExpr = Expression.Lambda<Func<T, bool>>(comparison, t);
+                }
                 else
                 {
                     var binaryExpression = Expression.AndAlso(returnExpr, Expression.Lambda<Func<T, bool>>(comparison, t));
                     returnExpr = Expression.Lambda<Func<T, bool>>(binaryExpression, returnExpr.Parameters);
                 }
             }
-            
+
             return returnExpr;
         }
 
@@ -87,20 +87,13 @@ namespace Extended.Dapper.Core.Sql.Generator
         /// <returns></returns>
         protected virtual Expression MapKeyValueComparison(Expression keyProperty, EntityKey key)
         {
-            switch (key.Value)
+            return key.Value switch
             {
-                case int i:
-                    return Expression.Equal(keyProperty, Expression.Constant(i));
-
-                case Guid g:
-                    return Expression.Equal(keyProperty, Expression.Constant(g));
-
-                case string s:
-                    return Expression.Equal(keyProperty, Expression.Constant(s));
-
-                default: 
-                    return Expression.Equal(keyProperty, Expression.Constant(key.Value));
-            } 
+                int i => Expression.Equal(keyProperty, Expression.Constant(i)),
+                Guid g => Expression.Equal(keyProperty, Expression.Constant(g)),
+                string s => Expression.Equal(keyProperty, Expression.Constant(s)),
+                _ => Expression.Equal(keyProperty, Expression.Constant(key.Value)),
+            };
         }
     }
 

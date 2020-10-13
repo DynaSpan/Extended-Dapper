@@ -1,5 +1,3 @@
-using Extended.Dapper.Core.Mappers;
-
 namespace Extended.Dapper.Core.Sql.Query.Expression
 {
     /// <summary>
@@ -23,9 +21,9 @@ namespace Extended.Dapper.Core.Sql.Query.Expression
         /// <param name="nestedProperty">Signilize if it is nested property.</param>
         internal QueryParameterExpression(
             string linkingOperator,
-            string propertyName, 
+            string propertyName,
             object propertyValue,
-            string queryOperator, 
+            string queryOperator,
             bool nestedProperty) : this()
         {
             this.LinkingOperator = linkingOperator;

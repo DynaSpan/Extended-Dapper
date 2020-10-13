@@ -52,7 +52,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
         {
             var entityMap = EntityMapper.GetEntityMap(typeof(T));
 
-            if (entityMap.AlternativeKeyPropertiesMetadata.Count() == 0)
+            if (!entityMap.AlternativeKeyPropertiesMetadata.Any())
                 throw new NotSupportedException("Could not get by alternative key when entity has none defined");
 
             if (entityMap.AlternativeKeyPropertiesMetadata.Count() > 1)
@@ -129,10 +129,10 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
         {
             var typeArr = ReflectionHelper.GetTypeListFromIncludes<T>(includes).ToArray();
             string selectQuery = this.DatabaseFactory.SqlProvider.BuildSelectQuery(query);
-            
+
             // Grab keys
             var keys = query.Select.Where(x => x.IsMainKey).ToList();
-            keys.Remove(keys.First()); // remove first key as it is from entity itself
+            keys.Remove(keys[0]); // remove first key as it is from entity itself
 
             string splitOn = string.Join(",", keys.Select(k => k.Field)).Trim();
 
@@ -140,7 +140,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
 
             IDbConnection connection = null;
 
-            if (transaction == null) 
+            if (transaction == null)
             {
                 connection = this.DatabaseFactory.GetDatabaseConnection();
                 this.OpenConnection(connection);
@@ -152,8 +152,8 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
             {
                 this.OpenConnection(connection);
 
-                await connection.QueryAsync<T>(selectQuery, typeArr, DapperMapper.MapDapperEntity<T>(typeArr, entityLookup, includes), query.Params, transaction, true, splitOn).ConfigureAwait(false);
-                
+                await connection.QueryAsync<T>(selectQuery, typeArr, DapperMapper.MapDapperEntity<T>(entityLookup, includes), query.Params, transaction, true, splitOn).ConfigureAwait(false);
+
                 if (transaction == null)
                     connection?.Close();
             }
@@ -175,18 +175,14 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
             {
                 // TODO test
                 var reflectionCall = ReflectionHelper.CallGenericMethod(typeof(QueryExecuter), "GetEntityByAlternativeKey", typeOverride, new object[] { entity, null, transaction }, this) as Task<object>;
-                
-                return await reflectionCall.ConfigureAwait(false);
 
-                // var resultProperty = reflectionCall.GetType().GetProperty("Result");
-                // return resultProperty.GetValue(reflectionCall);
+                return await reflectionCall.ConfigureAwait(false);
             }
 
             var expression = this.SqlGenerator.CreateByIdExpression<T>(EntityMapper.GetAlternativeEntityKeys<T>(entity));
             var idQuery = this.SqlGenerator.Select<T>(expression);
-            var objEntity = (await this.ExecuteSelectQuery<T>(idQuery, transaction).ConfigureAwait(false)).FirstOrDefault();
 
-            return objEntity;
+            return (await this.ExecuteSelectQuery<T>(idQuery, transaction).ConfigureAwait(false)).FirstOrDefault();
         }
 
         public virtual async Task<IEnumerable<EntityKey>> GetEntityKeysFromAlternativeKeys(object entity, Type entityType, IDbTransaction transaction = null)

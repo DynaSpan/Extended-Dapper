@@ -17,7 +17,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
         /// <param name="queryBuilder"></param>
         Task<IEnumerable<T>> ExecuteQueryBuilder<T>(QueryBuilder<T> queryBuilder)
             where T : class;
-        
+
         /// <summary>
         /// Executes a select query by id
         /// </summary>
@@ -85,8 +85,8 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
         /// <param name="queryParams"></param>
         /// <returns>true when succesful; false otherwise</returns>
         Task<bool> ExecuteInsertQuery<T>(
-           T entity, 
-            IDbTransaction transaction = null, 
+           T entity,
+            IDbTransaction transaction = null,
             Type typeOverride = null,
             bool forceInsert = false,
             IEnumerable<QueryField> queryFields = null,
@@ -100,13 +100,13 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
         /// <param name="transaction"></param>
         /// <param name="updateFields"></param>
         /// <param name="includes"></param>
-        /// <param name="queryField"></param>
+        /// <param name="queryFields"></param>
         /// <param name="queryParams"></param>
         /// <param name="typeOverride"></param>
         /// <returns>True when succesfull; false otherwise</returns>
         Task<bool> ExecuteUpdateQuery<T>(
-            T entity, 
-            IDbTransaction transaction = null, 
+            T entity,
+            IDbTransaction transaction = null,
             Expression<Func<T, object>>[] updateFields = null,
             Expression<Func<T, object>>[] includes = null,
             IEnumerable<QueryField> queryFields = null,

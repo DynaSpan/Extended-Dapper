@@ -27,8 +27,10 @@ namespace Extended.Dapper.Core.Sql.Generator
                 var logicalDeleteProp = entityMap.LogicalDeletePropertyMetadata;
 
                 // Update the entity
-                var query = new UpdateSqlQuery();
-                query.Table = entityMap.TableName;
+                var query = new UpdateSqlQuery
+                {
+                    Table = entityMap.TableName
+                };
                 query.Updates.Add(new QueryField(entityMap.TableName, logicalDeleteProp.ColumnName, "p_log_delete"));
                 query.Params.Add("p_log_delete", true);
 
@@ -36,11 +38,13 @@ namespace Extended.Dapper.Core.Sql.Generator
 
                 return query;
             }
-            else 
+            else
             {
                 // Delete the entity
-                var query = new DeleteSqlQuery();
-                query.Table = entityMap.TableName;
+                var query = new DeleteSqlQuery
+                {
+                    Table = entityMap.TableName
+                };
 
                 this.sqlProvider.AppendWherePredicateQuery(query, search, QueryType.Delete, entityMap);
 
@@ -58,25 +62,26 @@ namespace Extended.Dapper.Core.Sql.Generator
         /// <param name="doNotErases"></param>
         /// <param name="typeOverride"></param>
         public DeleteSqlQuery DeleteChildren<T>(
-            string parentTable, 
-            object parentKey, 
-            string parentKeyField, 
-            string localKeyField, 
-            List<object> doNotErases, 
+            string parentTable,
+            object parentKey,
+            string parentKeyField,
+            string localKeyField,
+            List<object> doNotErases,
             Type typeOverride = null)
             where T : class
         {
             EntityMap entityMap = EntityMapper.GetEntityMap(typeOverride ?? typeof(T));
 
-            var query               = new DeleteSqlQuery();
-            query.Table             = entityMap.TableName;
-            query.ParentTable       = parentTable;
-            query.ParentKey         = parentKey;
-            query.ParentKeyField    = parentKeyField;
-            query.LocalKeyField     = localKeyField;
-            query.DoNotErase        = doNotErases;
-
-            query.LogicalDelete      = entityMap.LogicalDelete;
+            var query = new DeleteSqlQuery
+            {
+                Table = entityMap.TableName,
+                ParentTable = parentTable,
+                ParentKey = parentKey,
+                ParentKeyField = parentKeyField,
+                LocalKeyField = localKeyField,
+                DoNotErase = doNotErases,
+                LogicalDelete = entityMap.LogicalDelete
+            };
 
             if (entityMap.LogicalDelete)
                 query.LogicalDeleteField = entityMap.LogicalDeletePropertyMetadata.ColumnName;

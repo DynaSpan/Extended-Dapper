@@ -11,14 +11,14 @@ namespace Extended.Dapper.Core.Sql.ConnectionProviders
         /// <summary>
         /// Empty constructor
         /// </summary>
-        public ConnectionProvider()
+        protected ConnectionProvider()
         {}
 
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="databaseSettings"></param>
-        public ConnectionProvider(DatabaseSettings databaseSettings)
+        protected ConnectionProvider(DatabaseSettings databaseSettings)
         {
             this.ConnectionString = this.BuildConnectionString(databaseSettings);
         }
@@ -27,7 +27,7 @@ namespace Extended.Dapper.Core.Sql.ConnectionProviders
         /// Constructor
         /// </summary>
         /// <param name="connectionString"></param>
-        public ConnectionProvider(string connectionString)
+        protected ConnectionProvider(string connectionString)
         {
             this.ConnectionString = connectionString;
         }
@@ -49,17 +49,13 @@ namespace Extended.Dapper.Core.Sql.ConnectionProviders
         /// <param name="dbSettings"></param>
         public static IConnectionProvider GetConnectionProvider(DatabaseSettings dbSettings)
         {
-            switch (dbSettings.DatabaseProvider)
+            return dbSettings.DatabaseProvider switch
             {
-                case DatabaseProvider.MSSQL:
-                    return new MsSqlConnectionProvider(dbSettings);
-                case DatabaseProvider.MySQL:
-                    return new MySqlConnectionProvider(dbSettings);
-                case DatabaseProvider.SQLite:
-                    return new SqliteConnectionProvider(dbSettings);
-                default:
-                    throw new NotImplementedException();
-            }
+                DatabaseProvider.MSSQL => new MsSqlConnectionProvider(dbSettings),
+                DatabaseProvider.MySQL => new MySqlConnectionProvider(dbSettings),
+                DatabaseProvider.SQLite => new SqliteConnectionProvider(dbSettings),
+                _ => throw new NotImplementedException(),
+            };
         }
 
         /// <summary>
@@ -69,17 +65,13 @@ namespace Extended.Dapper.Core.Sql.ConnectionProviders
         /// <param name="connectionString"></param>
         public static IConnectionProvider GetConnectionProvider(DatabaseProvider databaseProvider, string connectionString)
         {
-            switch (databaseProvider)
+            return databaseProvider switch
             {
-                case DatabaseProvider.MSSQL:
-                    return new MsSqlConnectionProvider(connectionString);
-                case DatabaseProvider.MySQL:
-                    return new MySqlConnectionProvider(connectionString);
-                case DatabaseProvider.SQLite:
-                    return new SqliteConnectionProvider(connectionString);
-                default:
-                    throw new NotImplementedException();
-            }
+                DatabaseProvider.MSSQL => new MsSqlConnectionProvider(connectionString),
+                DatabaseProvider.MySQL => new MySqlConnectionProvider(connectionString),
+                DatabaseProvider.SQLite => new SqliteConnectionProvider(connectionString),
+                _ => throw new NotImplementedException(),
+            };
         }
     }
 }

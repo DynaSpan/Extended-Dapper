@@ -26,7 +26,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// <param name="tableName"></param>
         public override string EscapeTable(string tableName)
         {
-            return "\"" + tableName + "\"";
+            return $"\"{tableName}\"";
         }
 
         /// <summary>
@@ -35,7 +35,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// <param name="columnName"></param>
         public override string EscapeColumn(string columnName)
         {
-            return "\"" + columnName + "\"";
+            return $"\"{columnName}\"";
         }
 
         /// <summary>
@@ -81,7 +81,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
                 this.EscapeTable(deleteQuery.Table),
                 this.EscapeColumn(deleteQuery.LogicalDeleteField));
 
-            if (deleteQuery.UpdatedAtField != null && deleteQuery.UpdatedAtField != string.Empty)
+            if (!string.IsNullOrEmpty(deleteQuery.UpdatedAtField))
             {
                 queryBuilder.AppendFormat(", {0} = {1}p_updatedat",
                     this.EscapeColumn(deleteQuery.UpdatedAtField),

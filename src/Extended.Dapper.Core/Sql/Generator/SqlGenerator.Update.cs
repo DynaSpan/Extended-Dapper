@@ -22,8 +22,10 @@ namespace Extended.Dapper.Core.Sql.Generator
         {
             var entityMap = EntityMapper.GetEntityMap(typeof(T));
 
-            var updateQuery = new UpdateSqlQuery();
-            updateQuery.Table = entityMap.TableName;
+            var updateQuery = new UpdateSqlQuery
+            {
+                Table = entityMap.TableName
+            };
 
             // Grab all mapped properties
             var mappedProperties = entityMap.MappedPropertiesMetadata.Where(
@@ -42,7 +44,7 @@ namespace Extended.Dapper.Core.Sql.Generator
             {
                 mappedProperties = mappedProperties
                     .Where(p => updateFields
-                        .Where(f => ExpressionHelper.GetPropertyName(f) == p.PropertyName).Any()).ToList();
+                        .Any(f => ExpressionHelper.GetPropertyName(f) == p.PropertyName)).ToList();
 
                 if (entityMap.UpdatedAtProperty != null)
                     mappedProperties.Add(entityMap.MappedPropertiesMetadata.Single(x => x.PropertyInfo.GetCustomAttribute<UpdatedAtAttribute>() != null));
@@ -55,7 +57,7 @@ namespace Extended.Dapper.Core.Sql.Generator
             }
 
             Expression<Func<T, bool>> idExpression;
-            
+
             if (!EntityMapper.IsAutovalueKeysEmpty(entity))
                 idExpression = this.CreateByIdExpression<T>(EntityMapper.GetEntityKeys<T>(entity));
             else if (!EntityMapper.IsAlternativeKeysEmpty(entity))
@@ -64,7 +66,7 @@ namespace Extended.Dapper.Core.Sql.Generator
                 throw new IndexOutOfRangeException("Could not find unique key to execute this update");
 
             this.sqlProvider.AppendWherePredicateQuery<T>(updateQuery, idExpression, QueryType.Update, entityMap);
-            
+
             return updateQuery;
         }
     }

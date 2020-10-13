@@ -22,10 +22,7 @@ namespace Extended.Dapper.Core.Repository
             this.DatabaseFactory = databaseFactory;
             this.SqlGenerator    = new SqlGenerator(databaseFactory.DatabaseProvider);
 
-            if (queryExecuter == null)
-                this.QueryExecuter = new QueryExecuter(databaseFactory, this.SqlGenerator);
-            else
-                this.QueryExecuter = queryExecuter;
+            this.QueryExecuter = queryExecuter ?? new QueryExecuter(databaseFactory, this.SqlGenerator);
         }
 
         /// <summary>
@@ -116,7 +113,7 @@ namespace Extended.Dapper.Core.Repository
         /// </summary>
         /// <param name="entity">The entity to insert</param>
         /// <returns>The inserted entity</returns>
-        public virtual Task<T> Insert(T entity) 
+        public virtual Task<T> Insert(T entity)
             => this.Insert(entity, null, false);
 
         /// <summary>
@@ -127,7 +124,7 @@ namespace Extended.Dapper.Core.Repository
         /// <param name="entity">The entity to insert</param>
         /// <param name="transaction">Database transaction</param>
         /// <returns>The inserted entity</returns>
-        public virtual Task<T> Insert(T entity, IDbTransaction transaction) 
+        public virtual Task<T> Insert(T entity, IDbTransaction transaction)
             => this.Insert(entity, transaction, false);
 
         /// <summary>
@@ -138,7 +135,7 @@ namespace Extended.Dapper.Core.Repository
         /// <param name="entity">The entity to insert</param>
         /// <param name="forceInsert">Forces Extended.Dapper to insert an item where autovalue key is filled</param>
         /// <returns>The inserted entity</returns>
-        public virtual Task<T> Insert(T entity, bool forceInsert) 
+        public virtual Task<T> Insert(T entity, bool forceInsert)
             => this.Insert(entity, null, forceInsert);
 
         /// <summary>
@@ -163,7 +160,7 @@ namespace Extended.Dapper.Core.Repository
         /// </summary>
         /// <param name="entity">The entity to update</param>
         /// <returns>True when succesful; false otherwise</returns>
-        public virtual Task<bool> Update(T entity) 
+        public virtual Task<bool> Update(T entity)
             => this.Update(null, null, entity);
 
         /// <summary>
@@ -172,7 +169,7 @@ namespace Extended.Dapper.Core.Repository
         /// <param name="entity">The entity to update</param>
         /// <param name="transaction">Database transaction</param>
         /// <returns>True when succesful; false otherwise</returns>
-        public virtual Task<bool> Update(T entity, IDbTransaction transaction) 
+        public virtual Task<bool> Update(T entity, IDbTransaction transaction)
             => this.Update(transaction, null, entity);
 
         /// <summary>
@@ -182,7 +179,7 @@ namespace Extended.Dapper.Core.Repository
         /// <param name="includes">Which children should also be updated
         /// (erases them if they don't exist in the list anymore)</param>
         /// <returns>True when succesful; false otherwise</returns>
-        public virtual Task<bool> Update(T entity, params Expression<Func<T, object>>[] includes) 
+        public virtual Task<bool> Update(T entity, params Expression<Func<T, object>>[] includes)
             => this.Update(null, includes, entity);
 
         /// <summary>
@@ -199,10 +196,10 @@ namespace Extended.Dapper.Core.Repository
         /// <summary>
         /// Updates a given entity
         /// </summary>
-        /// <param name="entity">The entity to update</param>
         /// <param name="transaction">Database transaction</param>
         /// <param name="includes">Which children should also be updated
         /// (erases them if they don't exist in the list anymore)</param>
+        /// <param name="entity">The entity to update</param>
         /// <returns>True when succesful; false otherwise</returns>
         protected virtual Task<bool> Update(IDbTransaction transaction, Expression<Func<T, object>>[] includes, T entity)
             => this.QueryExecuter.ExecuteUpdateQuery<T>(entity, transaction, null, includes);

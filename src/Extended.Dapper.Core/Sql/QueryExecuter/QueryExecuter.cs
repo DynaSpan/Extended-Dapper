@@ -22,11 +22,11 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
         /// <param name="connection"></param>
         protected virtual void OpenConnection(IDbConnection connection)
         {
-            if (connection.State != System.Data.ConnectionState.Open)
+            if (connection.State != ConnectionState.Open)
             {
                 connection.Open();
 
-                if (connection.State != System.Data.ConnectionState.Open)
+                if (connection.State != ConnectionState.Open)
                     throw new ApplicationException("Could not connect to the SQL server");
             }
         }

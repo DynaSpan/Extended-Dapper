@@ -5,7 +5,6 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using Extended.Dapper.Core.Attributes.Entities;
 using Extended.Dapper.Core.Attributes.Entities.Keys;
 using Extended.Dapper.Core.Attributes.Entities.Relations;
@@ -16,7 +15,7 @@ using Extended.Dapper.Core.Sql.Metadata;
 
 namespace Extended.Dapper.Core.Mappers
 {
-    public class EntityMapper
+    public static class EntityMapper
     {
         /// <summary>
         /// Cache entities which have been mapped
@@ -35,12 +34,13 @@ namespace Extended.Dapper.Core.Mappers
             var entityTypeInfo  = entityType.GetTypeInfo();
             var tableAttribute  = entityTypeInfo.GetCustomAttribute<TableAttribute>();
 
-            var entityMap = new EntityMap();
-
-            entityMap.Type         = entityType;
-            entityMap.TableName    = tableAttribute?.Name ?? entityTypeInfo.Name;
-            entityMap.TableSchema  = tableAttribute?.Schema ?? string.Empty;
-            entityMap.Properties   = entityType.FindClassProperties().Where(q => q.CanWrite).ToArray();
+            var entityMap = new EntityMap
+            {
+                Type = entityType,
+                TableName = tableAttribute?.Name ?? entityTypeInfo.Name,
+                TableSchema = tableAttribute?.Schema ?? string.Empty,
+                Properties = entityType.FindClassProperties().Where(q => q.CanWrite).ToArray()
+            };
 
             var props = entityMap.Properties.Where(ExpressionHelper.GetPrimitivePropertiesPredicate());
 
@@ -62,7 +62,7 @@ namespace Extended.Dapper.Core.Mappers
             entityMap.PrimaryKeyPropertiesMetadata  = primaryKeyProperties.Select(p => new SqlKeyPropertyMetadata(p));
 
             // A maximum of 1 integer autovalue key can be given to an entity
-            if (entityMap.PrimaryKeyProperties.Where(p => p.PropertyType == typeof(int) && p.GetCustomAttribute<AutoValueAttribute>() != null).Count() > 1)
+            if (entityMap.PrimaryKeyProperties.Count(p => p.PropertyType == typeof(int) && p.GetCustomAttribute<AutoValueAttribute>() != null) > 1)
                 throw new NotSupportedException("Multiple integer primary keys with auto value is not supported");
 
             // Grab all alternative key properties
@@ -75,7 +75,7 @@ namespace Extended.Dapper.Core.Mappers
             var autoValueProperties = props.Where(p => p.GetCustomAttribute<KeyAttribute>() == null && p.GetCustomAttribute<AutoValueAttribute>() != null);
             entityMap.AutoValuePropertiesMetadata = autoValueProperties.Select(p => new SqlPropertyMetadata(p));
 
-            if (entityMap.AutoValuePropertiesMetadata.Where(p => p.PropertyInfo.PropertyType == typeof(int)).Count() > 0)
+            if (entityMap.AutoValuePropertiesMetadata.Count(p => p.PropertyInfo.PropertyType == typeof(int)) > 0)
                 throw new NotSupportedException("Integer non-key autovalues are not supported");
 
             // Grab all properties
@@ -85,9 +85,9 @@ namespace Extended.Dapper.Core.Mappers
             entityMap.MappedPropertiesMetadata  = properties.Select(p => new SqlPropertyMetadata(p));
 
             // Grab UpdatedAt property if exists
-            var updatedAtProperty = props.Where(p => p.GetCustomAttributes<UpdatedAtAttribute>().Any()).FirstOrDefault();
+            var updatedAtProperty = props.FirstOrDefault(p => p.GetCustomAttributes<UpdatedAtAttribute>().Any());
 
-            if (updatedAtProperty != null 
+            if (updatedAtProperty != null
                 && (updatedAtProperty.PropertyType == typeof(DateTime) || updatedAtProperty.PropertyType == typeof(DateTime?)))
             {
                 entityMap.UpdatedAtProperty         = updatedAtProperty;
@@ -95,7 +95,7 @@ namespace Extended.Dapper.Core.Mappers
                 entityMap.UpdatedAtUTC              = updatedAtProperty.GetCustomAttribute<UpdatedAtAttribute>().UseUTC;
             }
 
-            var logicalDeleteProperty = props.Where(p => p.GetCustomAttributes<DeletedAttribute>().Any()).FirstOrDefault();
+            var logicalDeleteProperty = props.FirstOrDefault(p => p.GetCustomAttributes<DeletedAttribute>().Any());
 
             if (logicalDeleteProperty != null
                 && (logicalDeleteProperty.PropertyType == typeof(bool)))
@@ -152,7 +152,7 @@ namespace Extended.Dapper.Core.Mappers
         /// <param name="value"></param>
         public static bool IsKeyEmpty(object value)
         {
-            return value == null 
+            return value == null
                 || value.ToString() == Guid.Empty.ToString()
                 || string.IsNullOrWhiteSpace(value.ToString())
                 || value.ToString() == default(int).ToString();
@@ -164,12 +164,7 @@ namespace Extended.Dapper.Core.Mappers
         public static bool IsAutovalueKeysEmpty<T>(T entity, Type typeOverride = null)
             where T : class
         {
-            var keys  = GetEntityKeys<T>(entity, typeOverride).Where(k => k.AutoValue);
-            
-            // if (keys.Count() == 0)
-            //     return false;
-
-            foreach (var key in keys)
+            foreach (var key in GetEntityKeys<T>(entity, typeOverride).Where(k => k.AutoValue))
             {
                 if (!EntityMapper.IsKeyEmpty(key.Value))
                     return false;
@@ -188,7 +183,7 @@ namespace Extended.Dapper.Core.Mappers
         {
             var alternativeKeys = GetAlternativeEntityKeys<T>(entity, typeOverride);
 
-            if (alternativeKeys.Count() == 0)
+            if (!alternativeKeys.Any())
                 return IsAutovalueKeysEmpty<T>(entity, typeOverride);
 
             foreach (var key in alternativeKeys)

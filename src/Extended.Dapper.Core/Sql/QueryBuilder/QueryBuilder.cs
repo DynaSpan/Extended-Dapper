@@ -20,7 +20,7 @@ namespace Extended.Dapper.Core.Sql.QueryBuilders
         public Dictionary<Expression<Func<T, object>>, OrderBy> OrderBys { get; set; }
         public int? LimitResults { get; set; }
 
-        public QueryBuilder(IQueryExecuter queryExecuter) 
+        public QueryBuilder(IQueryExecuter queryExecuter)
         {
             this.queryExecuter = queryExecuter;
 
@@ -95,7 +95,7 @@ namespace Extended.Dapper.Core.Sql.QueryBuilders
         /// Limits the returned results.
         /// CANNOT BE USED WITH INCLUDECHILDREN
         /// </summary>
-        /// <param name="limit"></param>        
+        /// <param name="limit"></param>
         public QueryBuilder<T> Limit(int limit)
         {
             this.LimitResults = limit;
@@ -124,22 +124,24 @@ namespace Extended.Dapper.Core.Sql.QueryBuilders
 
             public IEnumerable<SelectField> GetSelectFields(EntityMap entityMap, ICollection<SqlRelationPropertyMetadata> metadata, string tableAlias = null)
             {
-                var selectList = new List<SelectField>();
-            
-                selectList.Add(new SelectField(){
-                    IsMainKey = true,
-                    Table = entityMap.TableName,
-                    TableAlias = tableAlias,
-                    Field = "Split_" + entityMap.TableName
-                });
+                var selectList = new List<SelectField>
+                {
+                    new SelectField()
+                    {
+                        IsMainKey = true,
+                        Table = entityMap.TableName,
+                        TableAlias = tableAlias,
+                        Field = "Split_" + entityMap.TableName
+                    }
+                };
 
                 List<SqlPropertyMetadata> mappedSelects = metadata.Cast<SqlPropertyMetadata>().ToList();
 
-                if (IncludedProperties != null && IncludedProperties.Count() > 0)
+                if (IncludedProperties?.Count() > 0)
                 {
                     mappedSelects = mappedSelects
                         .Where(p => IncludedProperties
-                            .Where(f => ExpressionHelper.GetPropertyName(f) == p.PropertyName).Any()).ToList();
+                            .Any(f => ExpressionHelper.GetPropertyName(f) == p.PropertyName)).ToList();
 
                     mappedSelects.AddRange(entityMap.PrimaryKeyPropertiesMetadata);
                 }
@@ -158,8 +160,8 @@ namespace Extended.Dapper.Core.Sql.QueryBuilders
             }
         }
 
-        public interface IIncludedChild 
-        { 
+        public interface IIncludedChild
+        {
             Type Type { get; }
 
             Type ChildType { get; }

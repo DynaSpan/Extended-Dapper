@@ -11,7 +11,7 @@ using Dapper;
 
 namespace Extended.Dapper.Core.Reflection
 {
-    public class ReflectionHelper
+    public static class ReflectionHelper
     {
         /// <summary>
         /// Caches references to generic methods
@@ -25,8 +25,10 @@ namespace Extended.Dapper.Core.Reflection
         /// <typeparam name="T"></typeparam>
         public static List<Type> GetTypeListFromIncludes<T>(params Expression<Func<T, object>>[] includes)
         {
-            var typeList = new List<Type>();
-            typeList.Add(typeof(T));
+            var typeList = new List<Type>
+            {
+                typeof(T)
+            };
 
             foreach (var incl in includes)
             {
@@ -51,9 +53,9 @@ namespace Extended.Dapper.Core.Reflection
         /// <param name="target">In case the method is not static, the instance of the class</param>
         /// <returns>Result of method invocation</returns>
         public static object CallGenericMethod(
-            Type methodClassType, 
-            string methodName, 
-            Type genericType, 
+            Type methodClassType,
+            string methodName,
+            Type genericType,
             object[] parameters = null,
             object target = null) => CallGenericMethod(methodClassType, methodName, new Type[] { genericType }, parameters, target);
 
@@ -73,13 +75,12 @@ namespace Extended.Dapper.Core.Reflection
             object[] parameters = null,
             object target = null
         ) {
-            if (GenericMethods == null) 
+            if (GenericMethods == null)
                 GenericMethods = new ConcurrentDictionary<string, MethodInfo>();
 
             var idStr = methodClassType.ToString() + methodName;
-            MethodInfo method;
 
-            if (!GenericMethods.TryGetValue(idStr, out method))
+            if (!GenericMethods.TryGetValue(idStr, out MethodInfo method))
             {
                 GenericMethods.TryAdd(idStr, method = methodClassType.GetMethod(methodName));
             }
@@ -95,7 +96,7 @@ namespace Extended.Dapper.Core.Reflection
         /// <param name="list">The list itself</param>
         public static IList CastListTo(Type listType, IEnumerable list)
             => CallGenericMethod(typeof(ReflectionHelper), "CastListAs", listType, new[] { list }) as IList;
-        
+
         /// <summary>
         /// Casts a list to a new type
         /// </summary>

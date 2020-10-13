@@ -9,7 +9,7 @@ using Extended.Dapper.Core.Reflection;
 
 namespace Extended.Dapper.Core.Mappers
 {
-    public class DapperMapper
+    public static class DapperMapper
     {
         /// <summary>
         /// Maps a query result set to an entity
@@ -17,20 +17,19 @@ namespace Extended.Dapper.Core.Mappers
         /// <param name="typeArr">Array with all sub-types</param>
         /// <param name="lookup">Dictionary to lookup entities</param>
         /// <param name="includes">Which children should be included</param>
-        public static Func<object[], T> MapDapperEntity<T>(Type[] typeArr, Dictionary<string, T> lookup, params Expression<Func<T, object>>[] includes)
+        public static Func<object[], T> MapDapperEntity<T>(Dictionary<string, T> lookup, params Expression<Func<T, object>>[] includes)
             where T : class
         {
             return (objectArr) => {
-                T entity;
-                var entityCompositeKey            = EntityMapper.GetEntityKeys<T>((T)objectArr[0]);
-                var entityMap                     = EntityMapper.GetEntityMap(typeof(T));
+                var entityCompositeKey = EntityMapper.GetEntityKeys<T>((T)objectArr[0]);
+                var entityMap          = EntityMapper.GetEntityMap(typeof(T));
 
                 string compositeKey = "";
 
                 foreach (var key in entityCompositeKey)
                     compositeKey = string.Format("{0}{1}={2};", compositeKey, key.Name, key.Value.ToString());
 
-                if (!lookup.TryGetValue(compositeKey, out entity))
+                if (!lookup.TryGetValue(compositeKey, out T entity))
                     lookup.Add(compositeKey, entity = (T)objectArr[0]);
 
                 var singleObjectCacher = new Dictionary<Type, int>();
@@ -40,7 +39,7 @@ namespace Extended.Dapper.Core.Mappers
                     var exp = (MemberExpression)incl.Body;
                     var type = exp.Type.GetTypeInfo();
 
-                    var property = entityMap.RelationProperties.Where(x => x.Key.Name == exp.Member.Name).SingleOrDefault();
+                    var property = entityMap.RelationProperties.SingleOrDefault(x => x.Key.Name == exp.Member.Name);
 
                     if (type.IsGenericType)
                     {
@@ -54,11 +53,19 @@ namespace Extended.Dapper.Core.Mappers
                         if (value != null)
                         {
                             if (listProperty == null)
+                            {
                                 property.Key.SetValue(entity, value);
-                            else 
+                            }
+                            else
+                            {
                                 foreach (var val in value)
+                                {
                                     if (val != null && !listProperty.Contains(val))
+                                    {
                                         listProperty.Add(val);
+                                    }
+                                }
+                            }
                         }
                     }
                     else
@@ -78,14 +85,13 @@ namespace Extended.Dapper.Core.Mappers
                         }
                         else
                         {
-                            value = objectArr.Where(x => x.GetType() == type).FirstOrDefault();
+                            value = Array.Find(objectArr, x => x.GetType() == type);
                             singleObjectCacher.Add(type, 0);
                         }
 
-                        if (value != null)
+                        if (value != null && !EntityMapper.IsAutovalueKeysEmpty(value, value.GetType()))
                         {
-                            if (!EntityMapper.IsAutovalueKeysEmpty(value, value.GetType()))
-                                property.Key.SetValue(entity, value);
+                            property.Key.SetValue(entity, value);
                         }
                     }
                 }

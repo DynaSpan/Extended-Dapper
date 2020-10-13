@@ -21,25 +21,14 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
             else if (providerCache.ContainsKey(databaseProvider))
                 return providerCache[databaseProvider];
 
-            ISqlQueryProvider queryProvider;
-            switch (databaseProvider)
+            ISqlQueryProvider queryProvider = databaseProvider switch
             {
-                case DatabaseProvider.MSSQL:
-                    queryProvider = new MsSqlQueryProvider(databaseProvider);
-                    break;
-
-                case DatabaseProvider.MySQL:
-                    queryProvider = new MySqlQueryProvider(databaseProvider);
-                    break;
-
-                case DatabaseProvider.SQLite:
-                    queryProvider = new SqliteQueryProvider(databaseProvider);
-                    break;
-
-                default:
-                    throw new NotImplementedException();
-            }
-
+                DatabaseProvider.MSSQL => new MsSqlQueryProvider(databaseProvider),
+                DatabaseProvider.MySQL => new MySqlQueryProvider(databaseProvider),
+                DatabaseProvider.SQLite => new SqliteQueryProvider(databaseProvider),
+                _ => throw new NotImplementedException(),
+            };
+            
             providerCache.Add(databaseProvider, queryProvider);
 
             return queryProvider;

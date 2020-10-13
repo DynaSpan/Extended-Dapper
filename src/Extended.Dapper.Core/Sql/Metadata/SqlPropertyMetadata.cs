@@ -45,7 +45,9 @@ namespace Extended.Dapper.Core.Sql.Metadata
                 this.ColumnAlias = propertyInfo.Name;
             }
             else
+            {
                 this.ColumnName = propertyInfo.Name;
+            }
 
             // Check if we're allowed to update this
             this.IgnoreOnUpdate = propertyInfo.GetCustomAttribute<IgnoreOnUpdateAttribute>() != null;

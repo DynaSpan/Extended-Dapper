@@ -23,7 +23,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
     {
         public DatabaseProvider ProviderType { get; set; }
 
-        public SqlQueryProvider(DatabaseProvider dbProvider)
+        protected SqlQueryProvider(DatabaseProvider dbProvider)
         {
             this.ProviderType = dbProvider;
         }
@@ -58,13 +58,13 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
             var selectFields = string.Join(", ", selectQuery.Select.Select(this.MapAliasColumn));
             query.AppendFormat("SELECT {0} FROM {1}", selectFields, this.EscapeTable(selectQuery.From));
 
-            if (selectQuery.Joins != null && selectQuery.Joins.Count > 0)
-                query.Append(" " + string.Join(" ", selectQuery.Joins.Select(j => this.MapJoin(j, EntityMapper.GetEntityMap(j.EntityType)))));
+            if (selectQuery.Joins?.Count > 0)
+                query.Append(' ').Append(string.Join(" ", selectQuery.Joins.Select(j => this.MapJoin(j, EntityMapper.GetEntityMap(j.EntityType)))));
 
             if (selectQuery.Where != null && !string.IsNullOrEmpty(selectQuery.Where.ToString()))
                 query.AppendFormat(" WHERE {0}", selectQuery.Where);
 
-            if (selectQuery.OrderBy != null && selectQuery.OrderBy.Count > 0)
+            if (selectQuery.OrderBy?.Count > 0)
                 query.AppendFormat(" ORDER BY {0}", this.MapOrderBy(selectQuery.OrderBy));
 
             if (selectQuery.Limit != null)
@@ -105,7 +105,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         {
             if (!string.IsNullOrEmpty(selectField.FieldAlias))
                 return this.EscapeColumn(selectField.FieldAlias);
-            else 
+            else
                 return this.EscapeColumn(selectField.Field);
         }
 
@@ -126,7 +126,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
 
             return string.Format("UPDATE {0} SET {1} WHERE {2}", this.EscapeTable(updateQuery.Table), updateFields, updateQuery.Where);
         }
-        
+
         /// <summary>
         /// Maps the update columns for the query
         /// </summary>
@@ -162,9 +162,11 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
                 queryBuilder.AppendFormat(" WHERE ({0})", deleteQuery.Where);
 
             if (deleteQuery.LogicalDelete)
+            {
                 queryBuilder.AppendFormat(" AND {0}.{1} != 1",
                     this.EscapeTable(deleteQuery.Table),
                     this.EscapeColumn(deleteQuery.LogicalDeleteField));
+            }
 
             if (SqlQueryProviderHelper.Verbose)
                 Console.WriteLine(queryBuilder.ToString());
@@ -183,7 +185,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
                 this.EscapeTable(deleteQuery.Table),
                 this.EscapeColumn(deleteQuery.LogicalDeleteField));
 
-            if (deleteQuery.UpdatedAtField != null && deleteQuery.UpdatedAtField != string.Empty)
+            if (!string.IsNullOrEmpty(deleteQuery.UpdatedAtField))
             {
                 queryBuilder.AppendFormat(", {0}.{1} = {2}p_updatedat",
                     this.EscapeTable(deleteQuery.Table),
@@ -196,7 +198,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
                         deleteQuery.Params.Add(this.ParameterChar + "p_updatedat", DateTime.UtcNow);
                     else
                         deleteQuery.Params.Add(this.ParameterChar + "p_updatedat", DateTime.Now);
-                }   
+                }
             }
         }
 
@@ -208,7 +210,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         public virtual void LogicalDeleteAppendParentWhere(DeleteSqlQuery deleteQuery, StringBuilder queryBuilder)
         {
             queryBuilder.AppendFormat(" WHERE {0}.{1} NOT IN {2}p_id_list AND {3}.{4} = {2}p_parent_key",
-                this.EscapeTable(deleteQuery.Table), 
+                this.EscapeTable(deleteQuery.Table),
                 this.EscapeColumn(deleteQuery.LocalKeyField),
                 this.ParameterChar,
                 this.EscapeTable(deleteQuery.ParentTable),
@@ -231,7 +233,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// <param name="orderBy"></param>
         public virtual string MapOrderBy(Dictionary<SelectField, OrderBy> orderBy)
         {
-            return string.Join(", ", 
+            return string.Join(", ",
                 orderBy.Select(o => string.Format("{0} {1}", this.MapAliasColumn(o.Key), this.MapOrderByEnum(o.Value))));
         }
 
@@ -241,50 +243,55 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// <param name="orderBy"></param>
         public virtual string MapOrderByEnum(OrderBy orderBy)
         {
-            switch (orderBy)
+            return orderBy switch
             {
-                case OrderBy.Asc:
-                    return "ASC";
-                case OrderBy.Desc:
-                    return "DESC";
-            }
-
-            return "ASC";
+                OrderBy.Desc => "DESC",
+                _ => "ASC",
+            };
         }
 
         /// <summary>
         /// Projection function for mapping property
         /// to SQL field
         /// </summary>
-        /// <param name="tableName"></param>
-        /// <param name="p"></param>
+        /// <param name="selectField"></param>
         public virtual string MapAliasColumn(SelectField selectField)
         {
             if (selectField.IsMainKey)
+            {
                 return string.Format("1 AS {0}", this.EscapeColumn(selectField.Field));
+            }
             else if (!string.IsNullOrEmpty(selectField.FieldAlias))
             {
                 if (!string.IsNullOrEmpty(selectField.TableAlias))
-                    return string.Format("{0}.{1} AS {2}", 
-                        this.EscapeTable(selectField.TableAlias), 
-                        this.EscapeColumn(selectField.Field), 
+                {
+                    return string.Format("{0}.{1} AS {2}",
+                        this.EscapeTable(selectField.TableAlias),
+                        this.EscapeColumn(selectField.Field),
                         this.EscapeColumn(selectField.FieldAlias));
+                }
                 else
-                    return string.Format("{0}.{1} AS {2}", 
-                        this.EscapeTable(selectField.Table), 
-                        this.EscapeColumn(selectField.Field), 
+                {
+                    return string.Format("{0}.{1} AS {2}",
+                        this.EscapeTable(selectField.Table),
+                        this.EscapeColumn(selectField.Field),
                         this.EscapeColumn(selectField.FieldAlias));
+                }
             }
-            else 
+            else
             {
                 if (!string.IsNullOrEmpty(selectField.TableAlias))
-                    return string.Format("{0}.{1}", 
-                        this.EscapeTable(selectField.TableAlias), 
+                {
+                    return string.Format("{0}.{1}",
+                        this.EscapeTable(selectField.TableAlias),
                         this.EscapeColumn(selectField.Field));
+                }
                 else
-                    return string.Format("{0}.{1}", 
-                        this.EscapeTable(selectField.Table), 
+                {
+                    return string.Format("{0}.{1}",
+                        this.EscapeTable(selectField.Table),
                         this.EscapeColumn(selectField.Field));
+                }
             }
         }
 
@@ -296,13 +303,17 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         public virtual string MapAliasColumn(QueryField queryField)
         {
             if (!string.IsNullOrEmpty(queryField.FieldAlias))
-                return string.Format("{0}.{1}", 
-                    this.EscapeTable(queryField.Table), 
+            {
+                return string.Format("{0}.{1}",
+                    this.EscapeTable(queryField.Table),
                     this.EscapeColumn(queryField.FieldAlias));
-            else 
-                return string.Format("{0}.{1}", 
-                    this.EscapeTable(queryField.Table), 
+            }
+            else
+            {
+                return string.Format("{0}.{1}",
+                    this.EscapeTable(queryField.Table),
                     this.EscapeColumn(queryField.Field));
+            }
         }
 
         /// <summary>
@@ -316,7 +327,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
 
             if (join.JoinType == JoinType.LEFT)
             {
-                joinType = "LEFT"; 
+                joinType = "LEFT";
                 joinTable = join.ExternalTable;
             }
             else if (join.Nullable)
@@ -326,7 +337,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
             }
             else if (join.JoinType == JoinType.INNER)
             {
-                joinType = "INNER"; 
+                joinType = "INNER";
                 joinTable = join.LocalTable;
             }
 
@@ -467,7 +478,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// TODO: refactor
         public virtual void AppendWherePredicateQuery<T>(SqlQuery sqlQuery, Expression<Func<T, bool>> predicate, QueryType queryType, EntityMap entityMap, params Expression<Func<T, object>>[] includes)
         {
-            if (predicate != null && predicate.Body != null)
+            if (predicate?.Body != null)
             {
                 // WHERE
                 var queryProperties = ExpressionHelper.GetQueryProperties(predicate.Body, entityMap, this.ProviderType);
@@ -484,23 +495,25 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
 
                 if (entityMap.LogicalDelete && queryType == QueryType.Select)
                 {
-                    sqlQuery.Where.AppendFormat("({3}) AND {0}.{1} {4} {2} ", 
-                        this.EscapeTable(entityMap.TableName), 
-                        this.EscapeColumn(entityMap.LogicalDeletePropertyMetadata.ColumnName), 
+                    sqlQuery.Where.AppendFormat("({3}) AND {0}.{1} {4} {2} ",
+                        this.EscapeTable(entityMap.TableName),
+                        this.EscapeColumn(entityMap.LogicalDeletePropertyMetadata.ColumnName),
                         1, 
                         sqlBuilder,
                         this.GetSqlOperator(ExpressionType.NotEqual));
                 }
                 else
+                {
                     sqlQuery.Where.AppendFormat("{0} ", sqlBuilder);
+                }
             }
             else
             {
                 if (entityMap.LogicalDelete && queryType == QueryType.Select)
                 {
-                    sqlQuery.Where.AppendFormat("{0}.{1} {2} {3} ", 
-                        this.EscapeTable(entityMap.TableName), 
-                        this.EscapeColumn(entityMap.LogicalDeletePropertyMetadata.ColumnName), 
+                    sqlQuery.Where.AppendFormat("{0}.{1} {2} {3} ",
+                        this.EscapeTable(entityMap.TableName),
+                        this.EscapeColumn(entityMap.LogicalDeletePropertyMetadata.ColumnName),
                         this.GetSqlOperator(ExpressionType.NotEqual),
                         1);
                 }
@@ -530,8 +543,8 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         internal virtual void BuildQuerySql(
             IList<QueryExpression> queryProperties,
             EntityMap entityMap,
-            ref StringBuilder sqlBuilder, 
-            ref List<KeyValuePair<string, object>> conditions, 
+            ref StringBuilder sqlBuilder,
+            ref List<KeyValuePair<string, object>> conditions,
             ref int qLevel)
         {
             foreach (var expr in queryProperties)
@@ -540,7 +553,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
                 {
                     if (sqlBuilder.Length > 0)
                         sqlBuilder.Append(" ");
-                    
+
                     sqlBuilder
                         .Append(expr.LinkingOperator)
                         .Append(" ");
@@ -557,7 +570,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
                         {
                             var joinProperty = entityMap.RelationProperties.Where(x => x.Key.Name == qpExpr.PropertyName);
                             var truePropName = qpExpr.PropertyName.Split('.').Last();
-                            var trueNestedName = qpExpr.PropertyName.Split('.').First();
+                            var trueNestedName = qpExpr.PropertyName.Split('.')[0];
 
                             if (!joinProperty.Any()) // relation in nested item
                             {
@@ -566,11 +579,11 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
                                 joinProperty = entityMap.RelationProperties.Where(x => x.Key.Name == trueNestedName);
 
                                 if (joinProperty.Any())
-                                    isObject = joinProperty.Single().Value.Where(x => x.ExternalKey == qpExpr.PropertyName.Replace(".", "")).Count() == 0;
+                                    isObject = joinProperty.Single().Value.Count(x => x.ExternalKey == qpExpr.PropertyName.Replace(".", "")) == 0;
                                 else
                                     joinProperty = entityMap.RelationProperties.Where(x => x.Value.Select(p => p.PropertyName).Contains(truePropName));
                             }
-                            
+
                             var joinProp = joinProperty.First();
                             var prop = joinProp.Value.Where(p => p.PropertyName == truePropName);
                             var metadata = new SqlRelationPropertyMetadata(joinProp.Key, joinProp.Key);
@@ -579,7 +592,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
                         }
                         else
                         {
-                            var prop = entityMap.MappedPropertiesMetadata.Where(x => x.PropertyName == qpExpr.PropertyName).FirstOrDefault();
+                            var prop = entityMap.MappedPropertiesMetadata.FirstOrDefault(x => x.PropertyName == qpExpr.PropertyName);
 
                             if (prop == null) // possibly a relation
                             {
@@ -587,9 +600,9 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
 
                                 try
                                 {
-                                    joinProperty = entityMap.RelationProperties.Where(x => x.Key.Name == qpExpr.PropertyName).FirstOrDefault();
+                                    joinProperty = entityMap.RelationProperties.FirstOrDefault(x => x.Key.Name == qpExpr.PropertyName);
                                 }
-                                catch 
+                                catch
                                 {
                                     throw new ArgumentException("Could not find property " + qpExpr.PropertyName);
                                 }
@@ -603,19 +616,19 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
 
                         if (qpExpr.PropertyValue == null)
                         {
-                            sqlBuilder.AppendFormat("{0}.{1} {2} NULL", 
-                                this.EscapeTable(tableName), 
-                                this.EscapeColumn(columnName), 
+                            sqlBuilder.AppendFormat("{0}.{1} {2} NULL",
+                                this.EscapeTable(tableName),
+                                this.EscapeColumn(columnName),
                                 qpExpr.QueryOperator == "=" ? "IS" : "IS NOT");
                         }
                         else
                         {
                             var vKey = string.Format("{0}_p{1}", qpExpr.PropertyName.Replace(".", ""), qLevel); //Handle multiple uses of a field
-                            
-                            sqlBuilder.AppendFormat("{0}.{1} {2} {3}{4}", 
-                                this.EscapeTable(tableName), 
-                                this.EscapeColumn(columnName), 
-                                qpExpr.QueryOperator, 
+
+                            sqlBuilder.AppendFormat("{0}.{1} {2} {3}{4}",
+                                this.EscapeTable(tableName),
+                                this.EscapeColumn(columnName),
+                                qpExpr.QueryOperator,
                                 this.ParameterChar,
                                 vKey);
 
@@ -629,7 +642,9 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
                                     throw new NotSupportedException("Comparing on object level is currently not supported when multiple primary keys are applied");
                             }
                             else
+                            {
                                 conditions.Add(new KeyValuePair<string, object>(vKey, qpExpr.PropertyValue));
+                            }
                         }
 
                         qLevel++;

@@ -32,7 +32,7 @@ namespace Extended.Dapper.Core.Sql.Query
         /// </summary>
         public int? Limit { get; set; }
 
-        public SqlQuery()
+        protected SqlQuery()
         {
             this.Params = new Dictionary<string, object>();
 

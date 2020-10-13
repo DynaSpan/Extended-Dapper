@@ -14,12 +14,7 @@ namespace Extended.Dapper.Core.Sql.Query.Models
         {
             this.Table = table;
             this.Field = field;
-
-            if (parameterName == null)
-                this.ParameterName = string.Format("@p_{0}", this.Field);
-            else
-                this.ParameterName = parameterName;
-
+            this.ParameterName = parameterName ?? string.Format("@p_{0}", this.Field);
             this.FieldAlias = fieldAlias;
         }
     }
