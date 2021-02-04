@@ -167,7 +167,6 @@ namespace Extended.Dapper.Tests.Helpers
         public static IDatabaseFactory GetCreationDatabaseFactory()
         {
             var dbBackend = Environment.GetEnvironmentVariable("DBBACKEND");
-            DatabaseSettings databaseSettings = null;
 
             if (string.IsNullOrWhiteSpace(dbBackend))
                 dbBackend = "sqlite";
@@ -175,30 +174,20 @@ namespace Extended.Dapper.Tests.Helpers
             switch (dbBackend)
             {
                 case "mysql":
-                    databaseSettings = new DatabaseSettings()
-                    {
-                        Host = "extendeddappermysqltesting",
-                        User = "root",
-                        Password = "TestingPassword!",
-                        DatabaseProvider = DatabaseProvider.MySQL
-                    };
-                    break;
+                    return new DatabaseFactory("Server=extendeddappermysqltesting;User=root;Password=TestingPassword!;Old Guids=true;", DatabaseProvider.MySQL);
 
                 case "mssql":
-                    databaseSettings = new DatabaseSettings()
+                    return new DatabaseFactory(new DatabaseSettings()
                     {
                         Host = "extendeddappermssqltesting",
                         User = "SA",
                         Password = "TestingPassword!",
                         DatabaseProvider = DatabaseProvider.MSSQL
-                    };
-                    break;
+                    });
 
                 default:
                     throw new NotImplementedException($"Database backend {dbBackend} is not implemented");
             }
-
-            return new DatabaseFactory(databaseSettings);
         }
 
         public static IDatabaseFactory GetDatabaseFactory()
@@ -210,47 +199,36 @@ namespace Extended.Dapper.Tests.Helpers
 
             if (DatabaseFactory == null)
             {
-                DatabaseSettings databaseSettings = null;
-
                 switch (dbBackend)
                 {
                     case "sqlite":
-                        databaseSettings = new DatabaseSettings()
+                        DatabaseFactory = new DatabaseFactory(new DatabaseSettings()
                         {
                             Database = "./test-db.db",
                             DatabaseProvider = DatabaseProvider.SQLite
-                        };
+                        });
                         break;
 
                     case "mysql":
-                        databaseSettings = new DatabaseSettings()
-                        {
-                            Host = "extendeddappermysqltesting",
-                            User = "root",
-                            Password = "TestingPassword!",
-                            Database = "testing",
-                            DatabaseProvider = DatabaseProvider.MySQL
-                        };
+                        DatabaseFactory = new DatabaseFactory("Server=extendeddappermysqltesting;Database=testing;User=root;Password=TestingPassword!;Old Guids=true;", DatabaseProvider.MySQL);
                         break;
 
                     case "mssql":
-                        databaseSettings = new DatabaseSettings()
+                        DatabaseFactory = new DatabaseFactory(new DatabaseSettings()
                         {
                             Host = "extendeddappermssqltesting",
                             User = "SA",
                             Password = "TestingPassword!",
                             Database = "testing",
                             DatabaseProvider = DatabaseProvider.MSSQL
-                        };
+                        });
                         break;
 
                     default:
                         throw new NotImplementedException($"Database backend {dbBackend} is not implemented");
                 }
-
-                DatabaseFactory = new DatabaseFactory(databaseSettings);
             }
-            
+
             return DatabaseFactory;
         }
 
@@ -263,47 +241,36 @@ namespace Extended.Dapper.Tests.Helpers
 
             if (LegacyDatabaseFactory == null)
             {
-                DatabaseSettings databaseSettings = null;
-
                 switch (dbBackend)
                 {
                     case "sqlite":
-                        databaseSettings = new DatabaseSettings()
+                        LegacyDatabaseFactory = new DatabaseFactory(new DatabaseSettings()
                         {
                             Database = "./test-legacy-db.db",
                             DatabaseProvider = DatabaseProvider.SQLite
-                        };
+                        });
                         break;
 
                     case "mysql":
-                        databaseSettings = new DatabaseSettings()
-                        {
-                            Host = "extendeddappermysqltesting",
-                            User = "root",
-                            Password = "TestingPassword!",
-                            Database = "legacytesting",
-                            DatabaseProvider = DatabaseProvider.MySQL
-                        };
+                        LegacyDatabaseFactory = new DatabaseFactory("Server=extendeddappermysqltesting;Database=legacytesting;User=root;Password=TestingPassword!;Old Guids=true;", DatabaseProvider.MySQL);
                         break;
 
                     case "mssql":
-                        databaseSettings = new DatabaseSettings()
+                        LegacyDatabaseFactory = new DatabaseFactory(new DatabaseSettings()
                         {
                             Host = "extendeddappermssqltesting",
                             User = "SA",
                             Password = "TestingPassword!",
                             Database = "legacytesting",
                             DatabaseProvider = DatabaseProvider.MSSQL
-                        };
+                        });
                         break;
 
                     default:
                         throw new NotImplementedException($"Legacy database backend {dbBackend} is not implemented");
                 }
-
-                LegacyDatabaseFactory = new DatabaseFactory(databaseSettings);
             }
-            
+
             return LegacyDatabaseFactory;
         }
 

@@ -1,7 +1,7 @@
 DROP TABLE IF EXISTS `LegacyBook`;
 
 CREATE TABLE IF NOT EXISTS `LegacyBook` (
-    `Id` CHAR(36) PRIMARY KEY,
+    `Id` BINARY(16) PRIMARY KEY,
     `AuthorId` INT NOT NULL,
     `CategoryId` INT,
     `Name` VARCHAR(255),
