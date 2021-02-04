@@ -107,7 +107,7 @@ namespace Extended.Dapper.Core.Sql.Generator
 
             foreach (var orderBy in queryBuilder.OrderBys)
             {
-                var orderByMember = ((MemberExpression)orderBy.Key.Body).Member.Name.ToLower();
+                var orderByMember = this.GetCorrectPropertyName(orderBy.Key).ToLower();
                 var sqlMetadata   = entityMap.MappedPropertiesMetadata.Single(x => x.PropertyName.ToLower() == orderByMember);
 
                 sqlQuery.OrderBy.Add(new SelectField(){
@@ -117,6 +117,17 @@ namespace Extended.Dapper.Core.Sql.Generator
                     Field = sqlMetadata.ColumnName,
                     FieldAlias = sqlMetadata.ColumnAlias
                 }, orderBy.Value);
+            }
+        }
+
+        public string GetCorrectPropertyName<T>(Expression<Func<T, object>> expression)
+        {
+            if (expression.Body is MemberExpression expression1) {
+                return expression1.Member.Name;
+            }
+            else {
+                var op = ((UnaryExpression)expression.Body).Operand;
+                return ((MemberExpression)op).Member.Name;
             }
         }
 
