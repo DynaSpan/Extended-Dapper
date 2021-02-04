@@ -1,5 +1,9 @@
 # Changelog
 
+[0.7.0]
+- Update packages
+- Fix bug with .OrderBy on QueryBuilder where using a DateTime field would throw a CastException
+
 [0.6.7]
 - Refactor codebase
 - Add `IgnoreOnSelect` attribute
