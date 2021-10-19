@@ -31,7 +31,7 @@ namespace Extended.Dapper.Core.Sql.Metadata
         public RelationType RelationType { get; set; }
 
         public SqlRelationPropertyMetadata(
-            PropertyInfo relationPropertyInfo, 
+            PropertyInfo relationPropertyInfo,
             PropertyInfo propertyInfo) : base(propertyInfo)
         {
             var relationAttribute =

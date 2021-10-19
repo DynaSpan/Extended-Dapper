@@ -104,7 +104,7 @@ namespace Extended.Dapper.Core.Mappers
 
         /// <summary>
         /// Contains the [Deleted] property (or null if none)
-        /// </summary>        
+        /// </summary>
         public PropertyInfo LogicalDeleteProperty { get; set; }
 
         /// <summary>

@@ -139,6 +139,7 @@ namespace Extended.Dapper.Core.Sql.QueryBuilders
 
                 if (IncludedProperties?.Count() > 0)
                 {
+                    // TODO: make sure select with multiple tables works properly (check select)
                     mappedSelects = mappedSelects
                         .Where(p => IncludedProperties
                             .Any(f => ExpressionHelper.GetPropertyName(f) == p.PropertyName)).ToList();

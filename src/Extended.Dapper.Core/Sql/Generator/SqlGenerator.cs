@@ -1,11 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
-using Extended.Dapper.Core.Attributes.Entities;
 using Extended.Dapper.Core.Database;
 using Extended.Dapper.Core.Mappers;
 using Extended.Dapper.Core.Models;

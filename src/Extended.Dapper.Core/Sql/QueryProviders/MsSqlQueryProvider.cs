@@ -52,7 +52,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
                 query.AppendFormat("SELECT {0} FROM {1}", selectFields, this.EscapeTable(selectQuery.From));
 
             if (selectQuery.Joins?.Count > 0)
-                query.Append(' ').Append(string.Join(" ", selectQuery.Joins.Select(j => this.MapJoin(j, EntityMapper.GetEntityMap(j.EntityType)))));
+                query.Append(' ').AppendJoin(" ", selectQuery.Joins.Select(j => this.MapJoin(j, EntityMapper.GetEntityMap(j.EntityType))));
 
             if (selectQuery.Where != null && !string.IsNullOrEmpty(selectQuery.Where.ToString()))
                 query.AppendFormat(" WHERE {0}", selectQuery.Where);

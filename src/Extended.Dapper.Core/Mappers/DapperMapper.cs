@@ -14,7 +14,6 @@ namespace Extended.Dapper.Core.Mappers
         /// <summary>
         /// Maps a query result set to an entity
         /// </summary>
-        /// <param name="typeArr">Array with all sub-types</param>
         /// <param name="lookup">Dictionary to lookup entities</param>
         /// <param name="includes">Which children should be included</param>
         public static Func<object[], T> MapDapperEntity<T>(Dictionary<string, T> lookup, params Expression<Func<T, object>>[] includes)

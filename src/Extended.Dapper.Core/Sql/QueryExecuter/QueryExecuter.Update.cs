@@ -8,7 +8,6 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Dapper;
 using Extended.Dapper.Core.Attributes.Entities.Relations;
-using Extended.Dapper.Core.Database;
 using Extended.Dapper.Core.Extensions;
 using Extended.Dapper.Core.Helpers;
 using Extended.Dapper.Core.Mappers;
@@ -29,7 +28,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
         /// <param name="transaction"></param>
         /// <param name="updateFields"></param>
         /// <param name="includes"></param>
-        /// <param name="queryField"></param>
+        /// <param name="queryFields"></param>
         /// <param name="queryParams"></param>
         /// <param name="typeOverride"></param>
         /// <returns>True when succesfull; false otherwise</returns>

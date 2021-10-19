@@ -19,7 +19,7 @@ namespace Extended.Dapper.Core.Sql.Generator
         {
             var entityMap = EntityMapper.GetEntityMap(typeof(T));
 
-            // TODO delete children
+            // TODO: delete children
 
             // Check if it is a logical delete
             if (entityMap.LogicalDelete)

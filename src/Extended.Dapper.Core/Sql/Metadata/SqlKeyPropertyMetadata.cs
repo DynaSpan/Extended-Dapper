@@ -1,7 +1,6 @@
 using System;
 using System.Reflection;
 using Extended.Dapper.Core.Attributes.Entities;
-using Extended.Dapper.Core.Attributes.Entities.Relations;
 
 namespace Extended.Dapper.Core.Sql.Metadata
 {

@@ -5,7 +5,6 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
-using Extended.Dapper.Core.Attributes.Entities;
 using Extended.Dapper.Core.Database;
 using Extended.Dapper.Core.Database.Entities;
 using Extended.Dapper.Core.Helpers;
@@ -59,7 +58,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
             query.AppendFormat("SELECT {0} FROM {1}", selectFields, this.EscapeTable(selectQuery.From));
 
             if (selectQuery.Joins?.Count > 0)
-                query.Append(' ').Append(string.Join(" ", selectQuery.Joins.Select(j => this.MapJoin(j, EntityMapper.GetEntityMap(j.EntityType)))));
+                query.Append(' ').AppendJoin(" ", selectQuery.Joins.Select(j => this.MapJoin(j, EntityMapper.GetEntityMap(j.EntityType))));
 
             if (selectQuery.Where != null && !string.IsNullOrEmpty(selectQuery.Where.ToString()))
                 query.AppendFormat(" WHERE {0}", selectQuery.Where);
@@ -498,7 +497,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
                     sqlQuery.Where.AppendFormat("({3}) AND {0}.{1} {4} {2} ",
                         this.EscapeTable(entityMap.TableName),
                         this.EscapeColumn(entityMap.LogicalDeletePropertyMetadata.ColumnName),
-                        1, 
+                        1,
                         sqlBuilder,
                         this.GetSqlOperator(ExpressionType.NotEqual));
                 }

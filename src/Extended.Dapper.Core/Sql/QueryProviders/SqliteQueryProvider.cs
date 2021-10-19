@@ -1,9 +1,7 @@
 using System;
 using System.Data;
 using System.Linq;
-using System.Reflection;
 using System.Text;
-using Extended.Dapper.Core.Attributes.Entities;
 using Extended.Dapper.Core.Database;
 using Extended.Dapper.Core.Mappers;
 using Extended.Dapper.Core.Sql.Query;

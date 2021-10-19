@@ -95,7 +95,7 @@ namespace Extended.Dapper.Core.Extensions
         /// </summary>
         /// <param name="list"></param>
         /// <returns></returns>
-        public static Type GetListType(this IList list) 
+        public static Type GetListType(this IList list)
         {
             Type collectionType = list.GetType();
 
@@ -107,8 +107,8 @@ namespace Extended.Dapper.Core.Extensions
         /// </summary>
         /// <param name="collectionType"></param>
         /// <returns></returns>
-        public static Type GetGenericType(this Type collectionType) 
-        {   
+        public static Type GetGenericType(this Type collectionType)
+        {
             if (collectionType.IsGenericType)
                 return collectionType.GetGenericArguments()[0];
             else

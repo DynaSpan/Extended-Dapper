@@ -28,15 +28,20 @@ namespace Extended.Dapper.Core.Helpers
             Expression<Func<T, bool>> expr1;
             Expression<Func<T, bool>> expr2;
 
-            if (expressions.Count() == 0)
+            if (!expressions.Any())
                 return null;
-            else if (expressions.Count() == 1)
+
+            if (expressions.Count() == 1)
+            {
                 return expressions.First();
+            }
             else if (expressions.Count() == 2)
             {
                 expr1 = expressions.ElementAt(0);
                 expr2 = expressions.ElementAt(1);
-            } else {
+            }
+            else
+            {
                 expr1 = expressions.ElementAt(0);
                 expr2 = CombineExpressions<T>(expressions.TakeLast(expressions.Count() - 1));
             }
@@ -116,7 +121,7 @@ namespace Extended.Dapper.Core.Helpers
 
         public static object GetValuesFromCollection(MethodCallExpression callExpr)
         {
-            var expr = (callExpr.Method.IsStatic ? callExpr.Arguments.First() : callExpr.Object);
+            var expr = callExpr.Method.IsStatic ? callExpr.Arguments.First() : callExpr.Object;
 
             if (expr.NodeType is ExpressionType.MemberAccess)
             {
@@ -158,7 +163,9 @@ namespace Extended.Dapper.Core.Helpers
                         return (MemberExpression)memExpr;
                     }
                     else
+                    {
                         return (MemberExpression)expr.Arguments[0];
+                    }
 
                 case MemberExpression memberExpression:
                     return memberExpression;
@@ -283,16 +290,16 @@ namespace Extended.Dapper.Core.Helpers
         /// <param name="isNotUnary"></param>
         /// <param name="methodName"></param>
         internal static QueryParameterExpression GetMethodCallExpressionProperties(
-            MethodCallExpression methodCallExpression, 
+            MethodCallExpression methodCallExpression,
             ExpressionType linkingType,
-            EntityMap entityMap, 
+            EntityMap entityMap,
             DatabaseProvider dbProvider,
-            bool isNotUnary = false, 
+            bool isNotUnary = false,
             string methodName = null)
         {
             if (methodName == null)
                 methodName = methodCallExpression.Method.Name;
-                
+
             var exprObj = methodCallExpression.Object;
             var sqlQueryProvider = SqlQueryProviderHelper.GetProvider(dbProvider);
 
@@ -300,8 +307,7 @@ namespace Extended.Dapper.Core.Helpers
             {
                 case "Contains":
                 {
-                    if (exprObj != null
-                        && exprObj.NodeType == ExpressionType.MemberAccess
+                    if (exprObj?.NodeType == ExpressionType.MemberAccess
                         && exprObj.Type == typeof(string))
                     {
                         return GetMethodCallExpressionProperties(methodCallExpression, linkingType, entityMap, dbProvider, isNotUnary, "StringContains");
@@ -309,7 +315,7 @@ namespace Extended.Dapper.Core.Helpers
 
                     var propertyName = ExpressionHelper.GetPropertyNamePath(methodCallExpression, out var isNested);
 
-                    if (!entityMap.MappedPropertiesMetadata.Any(x => x.PropertyName == propertyName) 
+                    if (!entityMap.MappedPropertiesMetadata.Any(x => x.PropertyName == propertyName)
                         && !entityMap.RelationProperties.Any(x => x.Key.Name == propertyName))
                         throw new NotSupportedException("Can't parse the predicate");
 
@@ -332,7 +338,7 @@ namespace Extended.Dapper.Core.Helpers
 
                     var propertyName = ExpressionHelper.GetPropertyNamePath(exprObj, out bool isNested);
 
-                    if (!entityMap.MappedPropertiesMetadata.Any(x => x.PropertyName == propertyName) 
+                    if (!entityMap.MappedPropertiesMetadata.Any(x => x.PropertyName == propertyName)
                         && !entityMap.RelationProperties.Any(x => x.Key.Name == propertyName))
                         throw new NotSupportedException("Can't parse the predicate");
 

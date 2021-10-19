@@ -29,8 +29,8 @@ namespace Extended.Dapper.Core.Database
         public DatabaseFactory(string connectionString, DatabaseProvider databaseProvider)
         {
             this.DatabaseProvider       = databaseProvider;
-            this.SqlProvider            = SqlQueryProviderHelper.GetProvider(databaseProvider);   
-            this.SqlConnectionProvider  = ConnectionProvider.GetConnectionProvider(databaseProvider, connectionString);   
+            this.SqlProvider            = SqlQueryProviderHelper.GetProvider(databaseProvider);
+            this.SqlConnectionProvider  = ConnectionProvider.GetConnectionProvider(databaseProvider, connectionString);
         }
 
         /// <summary>

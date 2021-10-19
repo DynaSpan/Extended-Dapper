@@ -28,7 +28,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
                 DatabaseProvider.SQLite => new SqliteQueryProvider(databaseProvider),
                 _ => throw new NotImplementedException(),
             };
-            
+
             providerCache.Add(databaseProvider, queryProvider);
 
             return queryProvider;

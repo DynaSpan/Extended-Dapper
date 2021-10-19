@@ -75,7 +75,7 @@ namespace Extended.Dapper.Core.Sql.QueryProviders
         /// Gets the SQL selector for methodName.
         /// </summary>
         /// <param name="methodName">Name of the LINQ method</param>
-        /// <param name="isNotUnary">Indicates if the selection should be 
+        /// <param name="isNotUnary">Indicates if the selection should be
         /// reversed (e.g. IN => NOT IN)</param>
         string GetMethodCallSqlOperator(string methodName, bool isNotUnary = false);
 

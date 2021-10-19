@@ -84,11 +84,11 @@ namespace Extended.Dapper.Core.Sql.Generator
         /// <param name="doNotErases"></param>
         /// <param name="typeOverride"></param>
         DeleteSqlQuery DeleteChildren<T>(
-            string parentTable, 
-            object parentKey, 
-            string parentKeyField, 
-            string localKeyField, 
-            List<object> doNotErases, 
+            string parentTable,
+            object parentKey,
+            string parentKeyField,
+            string localKeyField,
+            List<object> doNotErases,
             Type typeOverride = null)
             where T : class;
 
