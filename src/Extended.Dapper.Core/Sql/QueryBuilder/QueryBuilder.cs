@@ -124,6 +124,8 @@ namespace Extended.Dapper.Core.Sql.QueryBuilders
 
             public IEnumerable<SelectField> GetSelectFields(EntityMap entityMap, ICollection<SqlRelationPropertyMetadata> metadata, string tableAlias = null)
             {
+                var relationTables = new Dictionary<string, int>();
+
                 var selectList = new List<SelectField>
                 {
                     new SelectField()
@@ -135,27 +137,35 @@ namespace Extended.Dapper.Core.Sql.QueryBuilders
                     }
                 };
 
+                relationTables.Add(entityMap.TableName, 0);
+
                 List<SqlPropertyMetadata> mappedSelects = metadata.Cast<SqlPropertyMetadata>().ToList();
 
                 if (IncludedProperties?.Count() > 0)
                 {
-                    // TODO: make sure select with multiple tables works properly (check select)
                     mappedSelects = mappedSelects
                         .Where(p => IncludedProperties
-                            .Any(f => ExpressionHelper.GetPropertyName(f) == p.PropertyName)).ToList();
+                            .Any(f => string.Equals(ExpressionHelper.GetPropertyName(f), p.PropertyName, StringComparison.InvariantCultureIgnoreCase))).ToList();
 
                     mappedSelects.AddRange(entityMap.PrimaryKeyPropertiesMetadata);
                 }
 
-                selectList.AddRange(mappedSelects.Select(k =>
-                    new SelectField(){
+                selectList.AddRange(mappedSelects.Select(k => {
+                    var tableName = entityMap.TableName;
+
+                    if (relationTables.ContainsKey(tableName))
+                        tableName = tableName + "_" + relationTables[tableName]++;
+                    else
+                        relationTables.Add(tableName, 0);
+
+                    return new SelectField(){
                         IsMainKey = false,
                         Table = entityMap.TableName,
                         TableAlias = tableAlias,
                         Field = k.ColumnName,
                         FieldAlias = k.ColumnAlias
-                    }
-                ));
+                    };
+                }));
 
                 return selectList;
             }

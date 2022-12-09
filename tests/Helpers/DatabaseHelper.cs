@@ -25,8 +25,8 @@ namespace Extended.Dapper.Tests.Helpers
             if (DbCreated && dbProvider == DatabaseProvider.SQLite)
             {
                 File.Delete("./test-db.db");
-                File.Delete("./test-legacy-db.db"); 
-            } 
+                File.Delete("./test-legacy-db.db");
+            }
 
             if (!DbCreated && dbProvider != DatabaseProvider.SQLite)
             {
@@ -48,7 +48,7 @@ namespace Extended.Dapper.Tests.Helpers
                             CREATE DATABASE legacytesting;";
                     }
                     
-                    createDbQuery.ExecuteNonQuery(); 
+                    createDbQuery.ExecuteNonQuery();
                 }
 
                 //Thread.Sleep(250);

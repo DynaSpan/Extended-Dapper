@@ -1,14 +1,14 @@
 #!/bin/bash
 # dotnet build --no-restore
 
-export DBBACKEND=sqlite
+export DBBACKEND="sqlite"
 echo "Running tests with backend $DBBACKEND"
 dotnet test # -v n --no-build
 
-export DBBACKEND=mssql
+export DBBACKEND="mssql"
 echo "Running tests with backend $DBBACKEND"
 dotnet test # -v n --no-build
 
-export DBBACKEND=mysql
+export DBBACKEND="mysql"
 echo "Running tests with backend $DBBACKEND"
 dotnet test # -v n --no-build

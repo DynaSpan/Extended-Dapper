@@ -38,20 +38,19 @@ namespace Extended.Dapper.Core.Mappers
                     var exp = (MemberExpression)incl.Body;
                     var type = exp.Type.GetTypeInfo();
 
-                    var property = entityMap.RelationProperties.SingleOrDefault(x => x.Key.Name == exp.Member.Name);
+                    var property = entityMap.RelationProperties.SingleOrDefault(x => string.Equals(x.Key.Name, exp.Member.Name, StringComparison.InvariantCultureIgnoreCase));
 
                     if (type.IsGenericType)
                     {
                         // Handle as list, get all entities with this type
-                        var listType     = exp.Type.GetGenericType().GetTypeInfo();
-                        var listProperty = property.Key.GetValue(entity) as IList;
+                        var listType = exp.Type.GetGenericType().GetTypeInfo();
 
                         var objList = objectArr.Where(x => x != null && x.GetType() == listType && !EntityMapper.IsAutovalueKeysEmpty(x, x.GetType()));
                         IList value = ReflectionHelper.CastListTo(listType, objList);
 
                         if (value != null)
                         {
-                            if (listProperty == null)
+                            if (!(property.Key.GetValue(entity) is IList listProperty))
                             {
                                 property.Key.SetValue(entity, value);
                             }

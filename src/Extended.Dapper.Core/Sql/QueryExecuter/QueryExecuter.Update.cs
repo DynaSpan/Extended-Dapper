@@ -169,7 +169,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                 var type = incl.Body.Type.GetTypeInfo();
 
                 var exp = (MemberExpression)incl.Body;
-                var property = entityMap.RelationProperties.SingleOrDefault(x => x.Key.Name == exp.Member.Name);
+                var property = entityMap.RelationProperties.SingleOrDefault(x => string.Equals(x.Key.Name, exp.Member.Name, StringComparison.InvariantCultureIgnoreCase));
 
                 var oneObj   = property.Key.GetValue(entity);
                 var attr     = property.Key.GetCustomAttribute<RelationAttributeBase>();
@@ -181,14 +181,14 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                     if (attr is ManyToOneAttribute)
                     {
                         var objType = oneObj.GetType();
-                        var oneObjKey = EntityMapper.GetEntityKeys(oneObj, objType).SingleOrDefault(k => k.Name == attr.LocalKey);
+                        var oneObjKey = EntityMapper.GetEntityKeys(oneObj, objType).SingleOrDefault(k => string.Equals(k.Name, attr.LocalKey, StringComparison.InvariantCultureIgnoreCase));
                         inclEntityMap = EntityMapper.GetEntityMap(objType);
 
                         // If it has no key, we can assume it is a new entity
                         if (EntityMapper.IsAutovalueKeysEmpty(oneObj, objType) && EntityMapper.IsAlternativeKeysEmpty(oneObj, objType))
                         {
                             // Insert
-                            oneObjKey = (await this.InsertEntityAndReturnId(oneObj, objType, transaction).ConfigureAwait(false)).SingleOrDefault(k => k.Name == attr.LocalKey);
+                            oneObjKey = (await this.InsertEntityAndReturnId(oneObj, objType, transaction).ConfigureAwait(false)).SingleOrDefault(k => string.Equals(k.Name, attr.LocalKey, StringComparison.InvariantCultureIgnoreCase));
 
                             if (oneObjKey == null)
                                 throw new ApplicationException("Could not insert a ManyToOne object: " + oneObj);
@@ -212,7 +212,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                                 var oneObjKeys = await this.GetEntityKeysFromAlternativeKeys(oneObj, objType, transaction).ConfigureAwait(false);
 
                                 if (oneObjKeys != null)
-                                    oneObjKey = oneObjKeys.SingleOrDefault(k => k.Name == attr.LocalKey);
+                                    oneObjKey = oneObjKeys.SingleOrDefault(k => string.Equals(k.Name, attr.LocalKey, StringComparison.InvariantCultureIgnoreCase));
                             }
                         }
 
@@ -232,7 +232,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
 
                         foreach (var listItem in listObj)
                         {
-                            var objKey = EntityMapper.GetEntityKeys(listItem, listType).SingleOrDefault(k => k.Name == attr.LocalKey);
+                            var objKey = EntityMapper.GetEntityKeys(listItem, listType).SingleOrDefault(k => string.Equals(k.Name, attr.LocalKey, StringComparison.InvariantCultureIgnoreCase));
 
                             // If it has no key, we can assume it is a new entity
                             if (EntityMapper.IsAutovalueKeysEmpty(listItem, listType) && EntityMapper.IsAlternativeKeysEmpty(listItem, listType))
@@ -244,7 +244,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
 
                                 var queryParams = new Dictionary<string, object>()
                                 {
-                                    { "p_fk_" + attr.ForeignKey, foreignKey.SingleOrDefault(k => k.Name == attr.LocalKey).Value }
+                                    { "p_fk_" + attr.ForeignKey, foreignKey.SingleOrDefault(k => string.Equals(k.Name, attr.LocalKey, StringComparison.InvariantCultureIgnoreCase)).Value }
                                 };
 
                                 var queryResult = await this.ExecuteInsertQuery(listItem, transaction, listType, false, queryField, queryParams).ConfigureAwait(false);
@@ -253,7 +253,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                                     throw new ApplicationException("Could not create a OneToMany object: " + listItem);
 
                                 var entityKeys = EntityMapper.GetEntityKeys(listItem, listType);
-                                objKey = entityKeys.SingleOrDefault(k => k.Name == attr.LocalKey);
+                                objKey = entityKeys.SingleOrDefault(k => string.Equals(k.Name, attr.LocalKey, StringComparison.InvariantCultureIgnoreCase));
 
                                 // Specific use-case, for when an object doesn't follow standard
                                 // SQL conventions with naming local keys (e.g. different key names in different classes)
@@ -275,7 +275,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
 
                                     var queryParams = new Dictionary<string, object>()
                                     {
-                                        { "p_fk_" + attr.ForeignKey, foreignKey.SingleOrDefault(k => k.Name == attr.LocalKey).Value }
+                                        { "p_fk_" + attr.ForeignKey, foreignKey.SingleOrDefault(k => string.Equals(k.Name, attr.LocalKey, StringComparison.InvariantCultureIgnoreCase)).Value }
                                     };
 
                                     var queryResult = await this.ExecuteUpdateQuery(listItem, transaction, null, null, queryField, queryParams, listType).ConfigureAwait(false);
@@ -284,7 +284,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                                         throw new ApplicationException("Could not update a OneToMany object: " + listItem);
                                 }
 
-                                objKey = EntityMapper.GetEntityKeys(listItem, listType).SingleOrDefault(k => k.Name == attr.LocalKey);
+                                objKey = EntityMapper.GetEntityKeys(listItem, listType).SingleOrDefault(k => string.Equals(k.Name, attr.LocalKey, StringComparison.InvariantCultureIgnoreCase));
 
                                 // Grab by alternative key
                                 if (EntityMapper.IsAutovalueKeysEmpty(listItem, listType) && !EntityMapper.IsAlternativeKeysEmpty(listItem, listType))
@@ -292,7 +292,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                                     var altEntityKeys = await this.GetEntityKeysFromAlternativeKeys(listItem, listType, transaction).ConfigureAwait(false);
 
                                     if (altEntityKeys != null)
-                                        objKey = altEntityKeys.SingleOrDefault(k => k.Name == attr.LocalKey);
+                                        objKey = altEntityKeys.SingleOrDefault(k => string.Equals(k.Name, attr.LocalKey, StringComparison.InvariantCultureIgnoreCase));
                                 }
                             }
 
@@ -317,7 +317,7 @@ namespace Extended.Dapper.Core.Sql.QueryExecuter
                             localKey = autoValueKeyName;
 
                         // Delete children not in list anymore
-                        var deleteQuery = this.SqlGenerator.DeleteChildren<object>(attr.TableName, foreignKey.SingleOrDefault(k => k.Name == attr.LocalKey).Value, attr.ForeignKey, localKey, currentChildrenIds, listType);
+                        var deleteQuery = this.SqlGenerator.DeleteChildren<object>(attr.TableName, foreignKey.SingleOrDefault(k => string.Equals(k.Name, attr.LocalKey, StringComparison.InvariantCultureIgnoreCase)).Value, attr.ForeignKey, localKey, currentChildrenIds, listType);
 
                         try
                         {
